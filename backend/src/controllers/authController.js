@@ -4,8 +4,10 @@ const jwt = require("jsonwebtoken");
 exports.login = async (req, res) => {
   const { identifier, password } = req.body;
 
+  let conn;
+
   try {
-    const conn = await oracledb.getConnection();
+    conn = await oracledb.getConnection();
 
     const result = await conn.execute(
       `
@@ -16,8 +18,11 @@ exports.login = async (req, res) => {
          OR u.emp_id = :id
          OR u.email = :id
       `,
-      [identifier]
+
+      { id: identifier }
     );
+
+
 
     if (result.rows.length === 0) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -29,7 +34,7 @@ exports.login = async (req, res) => {
     const dbPassword = user[1];
     const role = user[2];
 
-    // Simple password match (hashing next week)
+
     if (password !== dbPassword) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -43,7 +48,16 @@ exports.login = async (req, res) => {
     res.json({ token, role });
 
   } catch (err) {
-    console.error(err);
+    console.error("Database query error:", err);
     res.status(500).json({ message: "Login failed" });
+  } finally {
+
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (err) {
+        console.error("Error closing database connection:", err);
+      }
+    }
   }
 };

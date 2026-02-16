@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Building2, Eye, EyeOff, Lock, Mail, User, IdCard } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-type Role = 'admin' | 'student' | 'clerk' | 'canteen' | 'security' | 'warden';
+type Role = 'admin' | 'student' | 'technicalStaff' |'warden' | 'security' | 'canteenOwner' ;
 
 interface RoleOption {
   id: Role;
@@ -29,17 +31,17 @@ const roles: RoleOption[] = [
     inputType: 'studentId'
   },
   { 
-    id: 'clerk', 
-    label: 'Clerk', 
+    id: 'technicalStaff', 
+    label: 'Technical Staff', 
     color: '#06b6d4',
     bgColor: 'bg-cyan-50',
     inputType: 'employeeId'
   },
   { 
-    id: 'canteen', 
-    label: 'Canteen Staff', 
-    color: '#f59e0b',
-    bgColor: 'bg-amber-50',
+    id: 'warden', 
+    label: 'Warden', 
+    color: '#8b5cf6',
+    bgColor: 'bg-violet-50',
     inputType: 'employeeId'
   },
   { 
@@ -50,10 +52,10 @@ const roles: RoleOption[] = [
     inputType: 'employeeId'
   },
   { 
-    id: 'warden', 
-    label: 'Warden', 
-    color: '#8b5cf6',
-    bgColor: 'bg-violet-50',
+    id: 'canteenOwner', 
+    label: 'Canteen Owner', 
+    color: '#f59e0b',
+    bgColor: 'bg-amber-50',
     inputType: 'employeeId'
   },
 ];
@@ -65,6 +67,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const navigate = useNavigate();
 
   const selectedRoleData = roles.find(r => r.id === selectedRole) || roles[1];
 
@@ -94,7 +97,7 @@ export function LoginPage() {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError('');
 
@@ -103,11 +106,54 @@ export function LoginPage() {
       return;
     }
 
-    // Mock login validation
-    console.log('Login attempt:', { identifier, password, role: selectedRole });
-    alert(`Login successful as ${selectedRoleData.label}!`);
+     try {
+    const response = await axios.post(
+      "http://localhost:5000/api/auth/login",
+      {
+        identifier,
+        password,
+      }
+    );
+
+    const { token, role } = response.data;
+
+    // Store JWT
+    localStorage.setItem("token", token);
+
+    // Redirect based on role from backend
+    switch (role) {
+      case "Admin":
+        navigate("/admin-dashboard");
+        break;
+      case "Student":
+        navigate("/student-dashboard");
+        break;
+      case "Technical-Staff":
+        navigate("/technical-staff-dashboard");
+        break;
+      case "Warden":
+        navigate("/warden-dashboard");
+        break;
+      case "Security":
+        navigate("/security-dashboard");
+        break;
+      case "CanteenOwner":
+        navigate("/canteen-dashboard");
+        break;
+      default:
+        navigate("/");
+    }
+
+  } catch (err: any) {
+    if (err.response && err.response.data.message) {
+      setError(err.response.data.message);
+    } else {
+      setError("Login failed. Please try again.");
+    }
+  }
   };
 
+  
   const handleForgotPassword = () => {
     setShowForgotPassword(true);
     // In a real app, this would open a modal or navigate to a password reset page
