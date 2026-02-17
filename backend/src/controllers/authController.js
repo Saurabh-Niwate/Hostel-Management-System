@@ -2,11 +2,7 @@ const { oracledb } = require("../config/db");
 const jwt = require("jsonwebtoken");
 
 exports.login = async (req, res) => {
-  console.log("LOGIN ROUTE HIT");
   const { identifier, password } = req.body;
-  console.log("Identifier:", identifier);
-  console.log("Entered:", password);
-
 
   let conn;
 
@@ -14,19 +10,6 @@ exports.login = async (req, res) => {
     conn = await oracledb.getConnection();
 
     const result = await conn.execute(
-<<<<<<< HEAD
-      `
-      SELECT u.user_id, u.password, r.role_name
-      FROM users u
-      JOIN roles r ON u.role_id = r.role_id
-      WHERE u.student_id = :id
-         OR u.emp_id = :id
-         OR u.email = :id
-      `,
-
-      { id: identifier }
-    );
-=======
   `
   SELECT u.user_id, u.password, r.role_name
   FROM users u
@@ -37,7 +20,6 @@ exports.login = async (req, res) => {
   `,
   { id: identifier }   
 );
->>>>>>> backend
 
 
 
