@@ -1,0 +1,49 @@
+CREATE TABLE roles (
+  role_id NUMBER PRIMARY KEY,
+  role_name VARCHAR2(50) UNIQUE NOT NULL
+);
+
+CREATE SEQUENCE roles_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER roles_trigger
+BEFORE INSERT ON roles
+FOR EACH ROW
+BEGIN
+  SELECT roles_seq.NEXTVAL
+  INTO :NEW.role_id
+  FROM dual;
+END;
+/
+
+
+
+CREATE TABLE users (
+  user_id NUMBER PRIMARY KEY,
+  student_id VARCHAR2(20),
+  emp_id VARCHAR2(20),
+  email VARCHAR2(100),
+  password VARCHAR2(255) NOT NULL,
+  role_id NUMBER,
+  CONSTRAINT fk_role FOREIGN KEY (role_id)
+    REFERENCES roles(role_id)
+);
+
+CREATE SEQUENCE users_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER users_trigger
+BEFORE INSERT ON users
+FOR EACH ROW
+BEGIN
+  SELECT users_seq.NEXTVAL
+  INTO :NEW.user_id
+  FROM dual;
+END;
+/
+
+
+COMMIT;
+
