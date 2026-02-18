@@ -1,163 +1,171 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Building2, Eye, EyeOff, Lock, Mail, User, IdCard } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { Building2, Eye, EyeOff, Lock, Mail, User, IdCard } from "lucide-react";
+import { ImageWithFallback } from "./figma/ImageWithFallback";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-type Role = 'admin' | 'student' | 'technicalStaff' |'warden' | 'security' | 'canteenOwner' ;
+type Role =
+  | "admin"
+  | "student"
+  | "technicalStaff"
+  | "warden"
+  | "security"
+  | "canteenOwner";
 
 interface RoleOption {
   id: Role;
   label: string;
   color: string;
   bgColor: string;
-  inputType: 'email' | 'studentId' | 'employeeId';
+  inputType: "email" | "studentId" | "employeeId";
 }
 
 const roles: RoleOption[] = [
-  { 
-    id: 'admin', 
-    label: 'Admin', 
-    color: '#3b82f6',
-    bgColor: 'bg-blue-50',
-    inputType: 'email'
+  {
+    id: "admin",
+    label: "Admin",
+    color: "#3b82f6",
+    bgColor: "bg-blue-50",
+    inputType: "email",
   },
-  { 
-    id: 'student', 
-    label: 'Student', 
-    color: '#10b981',
-    bgColor: 'bg-emerald-50',
-    inputType: 'studentId'
+  {
+    id: "student",
+    label: "Student",
+    color: "#10b981",
+    bgColor: "bg-emerald-50",
+    inputType: "studentId",
   },
-  { 
-    id: 'technicalStaff', 
-    label: 'Technical Staff', 
-    color: '#06b6d4',
-    bgColor: 'bg-cyan-50',
-    inputType: 'employeeId'
+  {
+    id: "technicalStaff",
+    label: "Technical Staff",
+    color: "#06b6d4",
+    bgColor: "bg-cyan-50",
+    inputType: "employeeId",
   },
-  { 
-    id: 'warden', 
-    label: 'Warden', 
-    color: '#8b5cf6',
-    bgColor: 'bg-violet-50',
-    inputType: 'employeeId'
+  {
+    id: "warden",
+    label: "Warden",
+    color: "#8b5cf6",
+    bgColor: "bg-violet-50",
+    inputType: "employeeId",
   },
-  { 
-    id: 'security', 
-    label: 'Security', 
-    color: '#ef4444',
-    bgColor: 'bg-red-50',
-    inputType: 'employeeId'
+  {
+    id: "security",
+    label: "Security",
+    color: "#ef4444",
+    bgColor: "bg-red-50",
+    inputType: "employeeId",
   },
-  { 
-    id: 'canteenOwner', 
-    label: 'Canteen Owner', 
-    color: '#f59e0b',
-    bgColor: 'bg-amber-50',
-    inputType: 'employeeId'
+  {
+    id: "canteenOwner",
+    label: "Canteen Owner",
+    color: "#f59e0b",
+    bgColor: "bg-amber-50",
+    inputType: "employeeId",
   },
 ];
 
 export function LoginPage() {
-  const [selectedRole, setSelectedRole] = useState<Role>('student');
+  const [selectedRole, setSelectedRole] = useState<Role>("student");
   const [showPassword, setShowPassword] = useState(false);
-  const [identifier, setIdentifier] = useState(''); // email, student ID, or employee ID
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [identifier, setIdentifier] = useState(""); // email, student ID, or employee ID
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
 
-  const selectedRoleData = roles.find(r => r.id === selectedRole) || roles[1];
+  const selectedRoleData = roles.find((r) => r.id === selectedRole) || roles[1];
 
   const getInputLabel = () => {
     switch (selectedRoleData.inputType) {
-      case 'email':
-        return 'Email Address';
-      case 'studentId':
-        return 'Student ID';
-      case 'employeeId':
-        return 'Employee ID';
+      case "email":
+        return "Email Address";
+      case "studentId":
+        return "Student ID";
+      case "employeeId":
+        return "Employee ID";
       default:
-        return 'ID';
+        return "ID";
     }
   };
 
   const getInputPlaceholder = () => {
     switch (selectedRoleData.inputType) {
-      case 'email':
-        return 'admin@hostel.com';
-      case 'studentId':
-        return 'Enter your Student ID';
-      case 'employeeId':
-        return 'Enter your Employee ID';
+      case "email":
+        return "admin@hostel.com";
+      case "studentId":
+        return "Enter your Student ID";
+      case "employeeId":
+        return "Enter your Employee ID";
       default:
-        return 'Enter your ID';
+        return "Enter your ID";
     }
   };
 
   const handleLogin = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!identifier || !password) {
-      setError('Please fill in all fields');
+      setError("Please fill in all fields");
       return;
     }
 
-     try {
-    const response = await axios.post(
-      "http://localhost:5000/api/auth/login",
-      {
-        identifier,
-        password,
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          identifier,
+          password,
+        },
+      );
+
+      const { token, role } = response.data;
+
+      // Store JWT
+      localStorage.setItem("token", token);
+
+      // Redirect based on role from
+      if (selectedRoleData.label.toLowerCase() !== role.toLowerCase()) {
+        setError("Selected role does not match your account role");
+        return;
       }
-    );
-
-    const { token, role } = response.data;
-
-    // Store JWT
-    localStorage.setItem("token", token);
-
-    // Redirect based on role from backend
-    switch (role) {
-      case "Admin":
-        navigate("/admin-dashboard");
-        break;
-      case "Student":
-        navigate("/student-dashboard");
-        break;
-      case "Technical-Staff":
-        navigate("/technical-staff-dashboard");
-        break;
-      case "Warden":
-        navigate("/warden-dashboard");
-        break;
-      case "Security":
-        navigate("/security-dashboard");
-        break;
-      case "CanteenOwner":
-        navigate("/canteen-dashboard");
-        break;
-      default:
-        navigate("/");
+      switch (role) {
+        case "Admin":
+          navigate("/admin-dashboard");
+          break;
+        case "Student":
+          navigate("/student-dashboard");
+          break;
+        case "Technical Staff":
+          navigate("/technical-staff-dashboard");
+          break;
+        case "Warden":
+          navigate("/warden-dashboard");
+          break;
+        case "Security":
+          navigate("/security-dashboard");
+          break;
+        case "Canteen Owner":
+          navigate("/canteen-owner-dashboard");
+          break;
+        default:
+          navigate("/");
+      }
+    } catch (err: any) {
+      if (err.response && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("Login failed. Please try again.");
+      }
     }
-
-  } catch (err: any) {
-    if (err.response && err.response.data.message) {
-      setError(err.response.data.message);
-    } else {
-      setError("Login failed. Please try again.");
-    }
-  }
   };
 
-  
   const handleForgotPassword = () => {
     setShowForgotPassword(true);
     // In a real app, this would open a modal or navigate to a password reset page
-    alert('Password reset link will be sent to your registered contact.');
+    alert("Password reset link will be sent to your registered contact.");
   };
 
   return (
@@ -179,7 +187,7 @@ export function LoginPage() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              
+
               <div className="relative z-10 text-white text-center">
                 <motion.div
                   initial={{ scale: 0.8, opacity: 0 }}
@@ -227,18 +235,27 @@ export function LoginPage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-teal-500 rounded-full mb-4">
                   <Building2 className="w-8 h-8 text-white" />
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900 mb-1">Hostel Portal</h1>
+                <h1 className="text-2xl font-bold text-slate-900 mb-1">
+                  Hostel Portal
+                </h1>
                 <p className="text-slate-600">Management System</p>
               </div>
 
               <div className="mb-8">
-                <h2 className="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h2>
-                <p className="text-slate-600">Sign in to continue to your dashboard</p>
+                <h2 className="text-3xl font-bold text-slate-900 mb-2">
+                  Welcome Back
+                </h2>
+                <p className="text-slate-600">
+                  Sign in to continue to your dashboard
+                </p>
               </div>
 
               {/* Role Selection Dropdown */}
               <div className="mb-6">
-                <label htmlFor="role" className="block text-sm font-medium text-slate-700 mb-2">
+                <label
+                  htmlFor="role"
+                  className="block text-sm font-medium text-slate-700 mb-2"
+                >
                   Select Your Role
                 </label>
                 <div className="relative">
@@ -247,9 +264,9 @@ export function LoginPage() {
                     value={selectedRole}
                     onChange={(e) => {
                       setSelectedRole(e.target.value as Role);
-                      setIdentifier('');
-                      setPassword('');
-                      setError('');
+                      setIdentifier("");
+                      setPassword("");
+                      setError("");
                     }}
                     className="w-full px-4 py-3 pr-10 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition-colors appearance-none bg-white cursor-pointer"
                     style={{
@@ -263,8 +280,18 @@ export function LoginPage() {
                     ))}
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <svg
+                      className="w-5 h-5 text-slate-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -274,12 +301,15 @@ export function LoginPage() {
               <form onSubmit={handleLogin} className="space-y-5">
                 {/* ID/Email Input */}
                 <div>
-                  <label htmlFor="identifier" className="block text-sm font-medium text-slate-700 mb-2">
+                  <label
+                    htmlFor="identifier"
+                    className="block text-sm font-medium text-slate-700 mb-2"
+                  >
                     {getInputLabel()}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      {selectedRoleData.inputType === 'email' ? (
+                      {selectedRoleData.inputType === "email" ? (
                         <Mail className="w-5 h-5 text-slate-400" />
                       ) : (
                         <IdCard className="w-5 h-5 text-slate-400" />
@@ -287,13 +317,19 @@ export function LoginPage() {
                     </div>
                     <input
                       id="identifier"
-                      type={selectedRoleData.inputType === 'email' ? 'email' : 'text'}
+                      type={
+                        selectedRoleData.inputType === "email"
+                          ? "email"
+                          : "text"
+                      }
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
                       placeholder={getInputPlaceholder()}
                       className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none transition-colors"
                       style={{
-                        borderColor: identifier ? selectedRoleData.color : undefined,
+                        borderColor: identifier
+                          ? selectedRoleData.color
+                          : undefined,
                       }}
                     />
                   </div>
@@ -301,7 +337,10 @@ export function LoginPage() {
 
                 {/* Password Input */}
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-slate-700 mb-2"
+                  >
                     Password
                   </label>
                   <div className="relative">
@@ -310,13 +349,15 @@ export function LoginPage() {
                     </div>
                     <input
                       id="password"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
                       className="w-full pl-12 pr-12 py-3 border-2 border-slate-200 rounded-xl focus:outline-none transition-colors"
                       style={{
-                        borderColor: password ? selectedRoleData.color : undefined,
+                        borderColor: password
+                          ? selectedRoleData.color
+                          : undefined,
                       }}
                     />
                     <button
@@ -338,7 +379,7 @@ export function LoginPage() {
                   {error && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
+                      animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm"
                     >
@@ -358,7 +399,10 @@ export function LoginPage() {
                         accentColor: selectedRoleData.color,
                       }}
                     />
-                    <label htmlFor="remember" className="ml-2 text-sm text-slate-600">
+                    <label
+                      htmlFor="remember"
+                      className="ml-2 text-sm text-slate-600"
+                    >
                       Remember me
                     </label>
                   </div>
