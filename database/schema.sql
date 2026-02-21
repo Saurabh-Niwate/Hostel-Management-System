@@ -45,6 +45,201 @@ BEGIN
 END;
 /
 
+CREATE TABLE students (
+  user_id NUMBER PRIMARY KEY,
+  full_name VARCHAR2(100),
+  phone VARCHAR2(20),
+  guardian_name VARCHAR2(100),
+  guardian_phone VARCHAR2(20),
+  address VARCHAR2(300),
+  room_no VARCHAR2(20),
+  created_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT fk_students_user FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+);
+
+CREATE TABLE leave_requests (
+  leave_id NUMBER PRIMARY KEY,
+  user_id NUMBER NOT NULL,
+  from_date DATE NOT NULL,
+  to_date DATE NOT NULL,
+  reason VARCHAR2(500) NOT NULL,
+  status VARCHAR2(20) DEFAULT 'Pending' NOT NULL,
+  created_at DATE DEFAULT SYSDATE NOT NULL,
+  reviewed_by NUMBER,
+  reviewed_at DATE,
+  remarks VARCHAR2(500),
+  CONSTRAINT fk_leave_user FOREIGN KEY (user_id)
+    REFERENCES users(user_id),
+  CONSTRAINT fk_leave_reviewer FOREIGN KEY (reviewed_by)
+    REFERENCES users(user_id),
+  CONSTRAINT chk_leave_status CHECK (status IN ('Pending', 'Approved', 'Rejected')),
+  CONSTRAINT chk_leave_dates CHECK (from_date <= to_date)
+);
+
+CREATE SEQUENCE leave_requests_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER leave_requests_trigger
+BEFORE INSERT ON leave_requests
+FOR EACH ROW
+BEGIN
+  IF :NEW.leave_id IS NULL THEN
+    SELECT leave_requests_seq.NEXTVAL
+    INTO :NEW.leave_id
+    FROM dual;
+  END IF;
+END;
+/
+
+CREATE TABLE attendance_records (
+  attendance_id NUMBER PRIMARY KEY,
+  user_id NUMBER NOT NULL,
+  attendance_date DATE NOT NULL,
+  status VARCHAR2(20) NOT NULL,
+  remarks VARCHAR2(300),
+  created_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT fk_attendance_user FOREIGN KEY (user_id)
+    REFERENCES users(user_id),
+  CONSTRAINT chk_attendance_status CHECK (status IN ('Present', 'Absent', 'Late'))
+);
+
+CREATE SEQUENCE attendance_records_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER attendance_records_trigger
+BEFORE INSERT ON attendance_records
+FOR EACH ROW
+BEGIN
+  IF :NEW.attendance_id IS NULL THEN
+    SELECT attendance_records_seq.NEXTVAL
+    INTO :NEW.attendance_id
+    FROM dual;
+  END IF;
+END;
+/
+
+CREATE TABLE student_fees (
+  fee_id NUMBER PRIMARY KEY,
+  user_id NUMBER NOT NULL,
+  term_name VARCHAR2(50) NOT NULL,
+  amount_total NUMBER(10,2) NOT NULL,
+  amount_paid NUMBER(10,2) DEFAULT 0 NOT NULL,
+  due_date DATE,
+  status VARCHAR2(20) DEFAULT 'Pending' NOT NULL,
+  updated_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT fk_fees_user FOREIGN KEY (user_id)
+    REFERENCES users(user_id),
+  CONSTRAINT chk_fee_status CHECK (status IN ('Pending', 'Partially Paid', 'Paid', 'Overdue'))
+);
+
+CREATE SEQUENCE student_fees_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER student_fees_trigger
+BEFORE INSERT ON student_fees
+FOR EACH ROW
+BEGIN
+  IF :NEW.fee_id IS NULL THEN
+    SELECT student_fees_seq.NEXTVAL
+    INTO :NEW.fee_id
+    FROM dual;
+  END IF;
+END;
+/
+
+CREATE TABLE student_feedback (
+  feedback_id NUMBER PRIMARY KEY,
+  user_id NUMBER NOT NULL,
+  facility_area VARCHAR2(100) NOT NULL,
+  message VARCHAR2(1000) NOT NULL,
+  rating NUMBER(1),
+  status VARCHAR2(20) DEFAULT 'Open' NOT NULL,
+  created_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT fk_feedback_user FOREIGN KEY (user_id)
+    REFERENCES users(user_id),
+  CONSTRAINT chk_feedback_rating CHECK (rating BETWEEN 1 AND 5 OR rating IS NULL),
+  CONSTRAINT chk_feedback_status CHECK (status IN ('Open', 'In Review', 'Closed'))
+);
+
+CREATE SEQUENCE student_feedback_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER student_feedback_trigger
+BEFORE INSERT ON student_feedback
+FOR EACH ROW
+BEGIN
+  IF :NEW.feedback_id IS NULL THEN
+    SELECT student_feedback_seq.NEXTVAL
+    INTO :NEW.feedback_id
+    FROM dual;
+  END IF;
+END;
+/
+
+CREATE TABLE canteen_menu (
+  menu_id NUMBER PRIMARY KEY,
+  menu_date DATE NOT NULL,
+  meal_type VARCHAR2(20) NOT NULL,
+  item_name VARCHAR2(200) NOT NULL,
+  is_available NUMBER(1) DEFAULT 1 NOT NULL,
+  created_by NUMBER,
+  updated_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT fk_menu_creator FOREIGN KEY (created_by)
+    REFERENCES users(user_id),
+  CONSTRAINT chk_meal_type CHECK (meal_type IN ('Breakfast', 'Lunch', 'Snacks', 'Dinner')),
+  CONSTRAINT chk_menu_available CHECK (is_available IN (0, 1))
+);
+
+CREATE SEQUENCE canteen_menu_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER canteen_menu_trigger
+BEFORE INSERT ON canteen_menu
+FOR EACH ROW
+BEGIN
+  IF :NEW.menu_id IS NULL THEN
+    SELECT canteen_menu_seq.NEXTVAL
+    INTO :NEW.menu_id
+    FROM dual;
+  END IF;
+END;
+/
+
+CREATE TABLE system_logs (
+  log_id NUMBER PRIMARY KEY,
+  actor_user_id NUMBER NOT NULL,
+  actor_role VARCHAR2(50) NOT NULL,
+  action VARCHAR2(100) NOT NULL,
+  entity_type VARCHAR2(50),
+  entity_id NUMBER,
+  details VARCHAR2(1000),
+  created_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT fk_system_logs_actor FOREIGN KEY (actor_user_id)
+    REFERENCES users(user_id)
+);
+
+CREATE SEQUENCE system_logs_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER system_logs_trigger
+BEFORE INSERT ON system_logs
+FOR EACH ROW
+BEGIN
+  IF :NEW.log_id IS NULL THEN
+    SELECT system_logs_seq.NEXTVAL
+    INTO :NEW.log_id
+    FROM dual;
+  END IF;
+END;
+/
+
 
 COMMIT;
 

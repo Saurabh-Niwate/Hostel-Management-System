@@ -1,5 +1,6 @@
 const { oracledb } = require("../config/db");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 exports.login = async (req, res) => {
   const { identifier, password } = req.body;
@@ -34,7 +35,8 @@ exports.login = async (req, res) => {
     const role = user[2];
 
 
-    if (password !== dbPassword) {
+    const passwordMatches = await bcrypt.compare(password, dbPassword);
+    if (!passwordMatches) {
       return res.status(401).json({ message: "Invalid credentials"
        });
     }
