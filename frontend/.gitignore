@@ -1,5 +1,14 @@
 node_modules/
 dist/
+<<<<<<< HEAD
 .vscode/
 .vite/
 .env
+=======
+.env
+.vscode/
+.vite/
+.idea/
+changesFolder/
+.changesFolder/
+>>>>>>> frontend

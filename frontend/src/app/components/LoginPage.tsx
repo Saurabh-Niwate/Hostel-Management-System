@@ -103,7 +103,7 @@ export function LoginPage() {
     }
   };
 
-  const handleLogin = async (e: React.SubmitEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
