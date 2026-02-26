@@ -61,6 +61,7 @@ CREATE TABLE students (
 CREATE TABLE leave_requests (
   leave_id NUMBER PRIMARY KEY,
   user_id NUMBER NOT NULL,
+  leave_type VARCHAR2(50) NOT NULL,
   from_date DATE NOT NULL,
   to_date DATE NOT NULL,
   reason VARCHAR2(500) NOT NULL,

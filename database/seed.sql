@@ -27,11 +27,13 @@ VALUES (
   'A-101'
 );
 
+
 SELECT * FROM students;
 
-INSERT INTO leave_requests (user_id, from_date, to_date, reason)
+INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason)
 VALUES (
   2,
+  'Home Visit',
   TO_DATE('2026-02-20', 'YYYY-MM-DD'),
   TO_DATE('2026-02-22', 'YYYY-MM-DD'),
   'Family function'

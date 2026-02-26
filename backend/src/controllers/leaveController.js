@@ -1,7 +1,7 @@
 const { oracledb } = require("../config/db");
 
 exports.applyLeave = async (req, res) => {
-  const { fromDate, toDate, reason } = req.body;
+  const { leaveType, fromDate, toDate, reason } = req.body;
   const userId = req.user.userId;
   const role = req.user.role;
 
@@ -9,8 +9,8 @@ exports.applyLeave = async (req, res) => {
     return res.status(403).json({ message: "Only students can apply for leave" });
   }
 
-  if (!fromDate || !toDate || !reason || !reason.trim()) {
-    return res.status(400).json({ message: "fromDate, toDate and reason are required" });
+  if (!leaveType || !leaveType.trim() || !fromDate || !toDate || !reason || !reason.trim()) {
+    return res.status(400).json({ message: "leaveType, fromDate, toDate and reason are required" });
   }
 
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -28,14 +28,16 @@ exports.applyLeave = async (req, res) => {
 
     await conn.execute(
       `
-      INSERT INTO leave_requests (user_id, from_date, to_date, reason)
+      INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason)
       VALUES (:b_user_id,
+              :b_leave_type,
               TO_DATE(:b_from_date, 'YYYY-MM-DD'),
               TO_DATE(:b_to_date, 'YYYY-MM-DD'),
               :b_reason)
       `,
       {
         b_user_id: userId,
+        b_leave_type: leaveType.trim(),
         b_from_date: fromDate,
         b_to_date: toDate,
         b_reason: reason.trim()
@@ -75,6 +77,7 @@ exports.getMyLeaves = async (req, res) => {
       `
       SELECT
         leave_id,
+        leave_type,
         TO_CHAR(from_date, 'YYYY-MM-DD') AS from_date,
         TO_CHAR(to_date, 'YYYY-MM-DD') AS to_date,
         reason,
@@ -124,6 +127,7 @@ exports.getMyLeaveById = async (req, res) => {
       `
       SELECT
         leave_id,
+        leave_type,
         TO_CHAR(from_date, 'YYYY-MM-DD') AS from_date,
         TO_CHAR(to_date, 'YYYY-MM-DD') AS to_date,
         reason,

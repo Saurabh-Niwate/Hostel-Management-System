@@ -57,7 +57,7 @@ exports.getMyProfile = async (req, res) => {
 exports.updateMyProfile = async (req, res) => {
   const userId = req.user.userId;
   const role = req.user.role;
-  const { fullName, phone, guardianName, guardianPhone, address, roomNo } = req.body;
+  const { email, fullName, phone, guardianName, guardianPhone, address, roomNo } = req.body;
 
   if (role !== "Student") {
     return res.status(403).json({ message: "Only students can update this profile" });
@@ -66,6 +66,44 @@ exports.updateMyProfile = async (req, res) => {
   let conn;
   try {
     conn = await oracledb.getConnection();
+
+    const trimmedEmail = email ? email.trim().toLowerCase() : null;
+    if (trimmedEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
+      const duplicateEmailCheck = await conn.execute(
+        `
+        SELECT user_id
+        FROM users
+        WHERE LOWER(TRIM(email)) = :b_email
+          AND user_id <> :b_user_id
+        `,
+        {
+          b_email: trimmedEmail,
+          b_user_id: userId
+        }
+      );
+
+      if (duplicateEmailCheck.rows.length > 0) {
+        return res.status(409).json({ message: "Email already in use" });
+      }
+    }
+
+    await conn.execute(
+      `
+      UPDATE users
+      SET email = :b_email
+      WHERE user_id = :b_user_id
+      `,
+      {
+        b_email: trimmedEmail,
+        b_user_id: userId
+      },
+      { autoCommit: false }
+    );
 
     await conn.execute(
       `
@@ -109,12 +147,21 @@ exports.updateMyProfile = async (req, res) => {
         b_address: address ? address.trim() : null,
         b_room_no: roomNo ? roomNo.trim() : null
       },
-      { autoCommit: true }
+      { autoCommit: false }
     );
+
+    await conn.commit();
 
     return res.json({ message: "Student profile updated successfully" });
   } catch (err) {
     console.error(err);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Error rolling back transaction:", rollbackErr);
+      }
+    }
     return res.status(500).json({ message: "Failed to update student profile" });
   } finally {
     if (conn) {

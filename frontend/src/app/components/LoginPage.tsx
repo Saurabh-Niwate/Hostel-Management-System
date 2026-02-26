@@ -2,8 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Building2, Eye, EyeOff, Lock, Mail, User, IdCard } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
 
 type Role =
   | "admin"
@@ -95,7 +95,7 @@ export function LoginPage() {
       case "email":
         return "admin@hostel.com";
       case "studentId":
-        return "Enter your Student ID";
+        return "Enter your Student ID / Email ID";
       case "employeeId":
         return "Enter your Employee ID";
       default:
@@ -113,17 +113,21 @@ export function LoginPage() {
     }
 
     try {
-      // Mock API call simulation
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Mock successful login
-      const mockToken = "mock_jwt_token_" + Date.now();
-      const role = selectedRoleData.label;
+      const response = await api.post("/auth/login", {
+        identifier,
+        password,
+      });
+      const { token, role } = response.data;
 
       // Store JWT
-      localStorage.setItem("token", mockToken);
+      localStorage.setItem("token", token);
       localStorage.setItem("userRole", role);
       localStorage.setItem("userIdentifier", identifier);
+
+      if (selectedRoleData.label !== role) {
+        setError("Selected role does not match your account role");
+        return;
+      }
 
       // Redirect based on role
       switch (role) {
@@ -149,7 +153,11 @@ export function LoginPage() {
           navigate("/");
       }
     } catch (err: any) {
-      setError("Login failed. Please try again.");
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("Login failed. Please try again.");
+      }
     }
   };
 

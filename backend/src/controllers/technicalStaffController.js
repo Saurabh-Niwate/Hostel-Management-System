@@ -39,6 +39,7 @@ const insertSystemLog = async (
 exports.createStudent = async (req, res) => {
   const {
     studentId,
+    email,
     password,
     fullName,
     phone,
@@ -61,12 +62,23 @@ exports.createStudent = async (req, res) => {
       SELECT user_id
       FROM users
       WHERE TRIM(student_id) = :b_student_id
+         OR (:b_email IS NOT NULL AND LOWER(TRIM(email)) = :b_email)
       `,
-      { b_student_id: studentId.trim() }
+      {
+        b_student_id: studentId.trim(),
+        b_email: email ? email.trim().toLowerCase() : null
+      }
     );
 
     if (duplicateCheck.rows.length > 0) {
       return res.status(409).json({ message: "Student ID already exists" });
+    }
+
+    if (email && email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim().toLowerCase())) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
     }
 
     const roleResult = await conn.execute(
@@ -87,11 +99,12 @@ exports.createStudent = async (req, res) => {
 
     await conn.execute(
       `
-      INSERT INTO users (student_id, password, role_id)
-      VALUES (:b_student_id, :b_password, :b_role_id)
+      INSERT INTO users (student_id, email, password, role_id)
+      VALUES (:b_student_id, :b_email, :b_password, :b_role_id)
       `,
       {
         b_student_id: studentId.trim(),
+        b_email: email ? email.trim().toLowerCase() : null,
         b_password: hashedPassword,
         b_role_id: studentRoleId
       },
