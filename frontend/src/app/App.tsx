@@ -1,9 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { LoginPage } from "./components/LoginPage";
 
-function StudentDashboard() {
-  return <h1>Student Dashboard</h1>;
-}
+import { StudentDashboard } from "./modules/student/StudentDashboard";
 
 function AdminDashboard() {
   return <h1>Admin Dashboard</h1>;

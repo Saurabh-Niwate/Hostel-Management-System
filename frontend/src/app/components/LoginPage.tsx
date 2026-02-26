@@ -113,24 +113,19 @@ export function LoginPage() {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        {
-          identifier,
-          password,
-        },
-      );
+      // Mock API call simulation
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const { token, role } = response.data;
+      // Mock successful login
+      const mockToken = "mock_jwt_token_" + Date.now();
+      const role = selectedRoleData.label;
 
       // Store JWT
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", mockToken);
+      localStorage.setItem("userRole", role);
+      localStorage.setItem("userIdentifier", identifier);
 
-      // Redirect based on role from
-      if (selectedRoleData.label.toLowerCase() !== role.toLowerCase()) {
-        setError("Selected role does not match your account role");
-        return;
-      }
+      // Redirect based on role
       switch (role) {
         case "Admin":
           navigate("/admin-dashboard");
@@ -154,11 +149,7 @@ export function LoginPage() {
           navigate("/");
       }
     } catch (err: any) {
-      if (err.response && err.response.data.message) {
-        setError(err.response.data.message);
-      } else {
-        setError("Login failed. Please try again.");
-      }
+      setError("Login failed. Please try again.");
     }
   };
 
