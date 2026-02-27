@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, UserPlus, Users as UsersIcon, LogOut, Menu, X } from 'lucide-react';
 import { CreateUser } from './CreateUser';
 import { ManageUsers } from './ManageUsers';

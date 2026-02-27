@@ -140,17 +140,29 @@ export const createStaff = (input: CreateStaffInput): Staff => {
   return newStaff;
 };
 
-export const updateUser = (id: string, updates: Partial<User>): User | null => {
+export const updateUser = (id: string, updates: Partial<Omit<User,"id"|"role">> ): User | null => {
   const index = users.findIndex((user) => user.id === id);
   if (index === -1) return null;
   
+  const existingUser = users[index];
+
+if (existingUser.role === "student") {
   users[index] = {
-    ...users[index],
+    ...existingUser,
     ...updates,
-    id: users[index].id, // Prevent ID from being updated
-    role: users[index].role, // Prevent role from being updated
+    role: "student",
+    id: existingUser.id,
     updatedAt: new Date().toISOString(),
   };
+} else {
+  users[index] = {
+    ...existingUser,
+    ...updates,
+    role: "staff",
+    id: existingUser.id,
+    updatedAt: new Date().toISOString(),
+  };
+}
   
   return users[index];
 };
