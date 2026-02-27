@@ -1,14 +1,18 @@
 
 import React, { useState } from "react";
-import { User, LogOut, FileText, LayoutDashboard } from "lucide-react";
+import { User, LogOut, FileText, LayoutDashboard, CalendarCheck, CreditCard, MessageSquare, Coffee } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 
 // Components (We will define them in the same file for now for simplicity, or split later if needed)
 import { StudentProfile } from "./StudentProfile";
 import { LeaveManagement } from "./LeaveManagement";
+import { AttendanceView } from "./AttendanceView";
+import { FeesView } from "./FeesView";
+import { FeedbackView } from "./FeedbackView";
+import { CanteenMenuView } from "./CanteenMenuView";
 
-type Tab = "dashboard" | "profile" | "leave";
+type Tab = "dashboard" | "profile" | "leave" | "attendance" | "fees" | "feedback" | "canteen";
 
 export function StudentDashboard() {
     const [activeTab, setActiveTab] = useState<Tab>("dashboard");
@@ -49,6 +53,14 @@ export function StudentDashboard() {
                 return <StudentProfile />;
             case "leave":
                 return <LeaveManagement />;
+            case "attendance":
+                return <AttendanceView />;
+            case "fees":
+                return <FeesView />;
+            case "feedback":
+                return <FeedbackView />;
+            case "canteen":
+                return <CanteenMenuView />;
             default:
                 return <div>Select a tab</div>;
         }
@@ -95,6 +107,34 @@ export function StudentDashboard() {
                         onClick={() => setActiveTab("leave")}
                         isOpen={isSidebarOpen}
                     />
+                    <SidebarItem
+                        icon={<CalendarCheck size={20} />}
+                        label="Attendance"
+                        active={activeTab === "attendance"}
+                        onClick={() => setActiveTab("attendance")}
+                        isOpen={isSidebarOpen}
+                    />
+                    <SidebarItem
+                        icon={<CreditCard size={20} />}
+                        label="Fees"
+                        active={activeTab === "fees"}
+                        onClick={() => setActiveTab("fees")}
+                        isOpen={isSidebarOpen}
+                    />
+                    <SidebarItem
+                        icon={<MessageSquare size={20} />}
+                        label="Feedback"
+                        active={activeTab === "feedback"}
+                        onClick={() => setActiveTab("feedback")}
+                        isOpen={isSidebarOpen}
+                    />
+                    <SidebarItem
+                        icon={<Coffee size={20} />}
+                        label="Canteen Menu"
+                        active={activeTab === "canteen"}
+                        onClick={() => setActiveTab("canteen")}
+                        isOpen={isSidebarOpen}
+                    />
                 </nav>
 
                 <div className="p-4 border-t border-slate-100">
@@ -133,8 +173,8 @@ function SidebarItem({ icon, label, active, onClick, isOpen }: any) {
         <button
             onClick={onClick}
             className={`flex items-center w-full p-3 rounded-xl transition-all duration-200 ${active
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 } ${!isOpen && 'justify-center'}`}
         >
             {icon}
