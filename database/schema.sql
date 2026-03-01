@@ -45,6 +45,7 @@ BEGIN
 END;
 /
 
+
 CREATE TABLE students (
   user_id NUMBER PRIMARY KEY,
   full_name VARCHAR2(100),
@@ -53,6 +54,7 @@ CREATE TABLE students (
   guardian_phone VARCHAR2(20),
   address VARCHAR2(300),
   room_no VARCHAR2(20),
+  profile_image_url VARCHAR2(500),
   created_at DATE DEFAULT SYSDATE NOT NULL,
   CONSTRAINT fk_students_user FOREIGN KEY (user_id)
     REFERENCES users(user_id)

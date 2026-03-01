@@ -1,4 +1,27 @@
+const fs = require("fs");
+const path = require("path");
 const { oracledb } = require("../config/db");
+const { syncOverdueFeeStatuses } = require("../utils/feeStatus");
+
+const toPublicUrl = (req, value) => {
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${req.protocol}://${req.get("host")}${value}`;
+};
+
+const deleteProfileImageFile = (imagePath) => {
+  if (!imagePath) return;
+  const fileName = path.basename(imagePath);
+  if (!fileName) return;
+  const absolutePath = path.join(__dirname, "../../uploads/profile-images", fileName);
+  try {
+    if (fs.existsSync(absolutePath)) {
+      fs.unlinkSync(absolutePath);
+    }
+  } catch (_e) {
+    // ignore cleanup failures
+  }
+};
 
 exports.getMyProfile = async (req, res) => {
   const userId = req.user.userId;
@@ -25,6 +48,7 @@ exports.getMyProfile = async (req, res) => {
         s.guardian_phone,
         s.address,
         s.room_no,
+        s.profile_image_url,
         TO_CHAR(s.created_at, 'YYYY-MM-DD HH24:MI:SS') AS profile_created_at
       FROM users u
       JOIN roles r ON r.role_id = u.role_id
@@ -39,6 +63,7 @@ exports.getMyProfile = async (req, res) => {
       return res.status(404).json({ message: "Student profile not found" });
     }
 
+    result.rows[0].PROFILE_IMAGE_URL = toPublicUrl(req, result.rows[0].PROFILE_IMAGE_URL);
     return res.json({ profile: result.rows[0] });
   } catch (err) {
     console.error(err);
@@ -54,10 +79,141 @@ exports.getMyProfile = async (req, res) => {
   }
 };
 
+exports.uploadMyProfileImage = async (req, res) => {
+  const userId = req.user.userId;
+  const role = req.user.role;
+
+  if (role !== "Student") {
+    return res.status(403).json({ message: "Only students can upload profile image" });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: "Image file is required" });
+  }
+
+  const imagePath = `/uploads/profile-images/${req.file.filename}`;
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const previousResult = await conn.execute(
+      `
+      SELECT profile_image_url
+      FROM students
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: userId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const previousImagePath =
+      previousResult.rows && previousResult.rows[0]
+        ? previousResult.rows[0].PROFILE_IMAGE_URL
+        : null;
+
+    await conn.execute(
+      `
+      MERGE INTO students s
+      USING (SELECT :b_user_id AS user_id FROM dual) src
+      ON (s.user_id = src.user_id)
+      WHEN MATCHED THEN
+        UPDATE SET profile_image_url = :b_profile_image_url
+      WHEN NOT MATCHED THEN
+        INSERT (user_id, profile_image_url)
+        VALUES (:b_user_id, :b_profile_image_url)
+      `,
+      {
+        b_user_id: userId,
+        b_profile_image_url: imagePath
+      },
+      { autoCommit: true }
+    );
+
+    if (previousImagePath && previousImagePath !== imagePath) {
+      deleteProfileImageFile(previousImagePath);
+    }
+
+    return res.json({
+      message: "Profile image uploaded successfully",
+      profileImageUrl: toPublicUrl(req, imagePath)
+    });
+  } catch (err) {
+    console.error(err);
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (_e) {
+      // no-op cleanup failure
+    }
+    return res.status(500).json({ message: "Failed to upload profile image" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.deleteMyProfileImage = async (req, res) => {
+  const userId = req.user.userId;
+  const role = req.user.role;
+
+  if (role !== "Student") {
+    return res.status(403).json({ message: "Only students can delete profile image" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const previousResult = await conn.execute(
+      `
+      SELECT profile_image_url
+      FROM students
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: userId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const previousImagePath =
+      previousResult.rows && previousResult.rows[0]
+        ? previousResult.rows[0].PROFILE_IMAGE_URL
+        : null;
+
+    await conn.execute(
+      `
+      UPDATE students
+      SET profile_image_url = NULL
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: userId },
+      { autoCommit: true }
+    );
+
+    if (previousImagePath) {
+      deleteProfileImageFile(previousImagePath);
+    }
+
+    return res.json({ message: "Profile image removed successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to remove profile image" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
 exports.updateMyProfile = async (req, res) => {
   const userId = req.user.userId;
   const role = req.user.role;
-  const { email, fullName, phone, guardianName, guardianPhone, address, roomNo } = req.body;
+  const { email, fullName, phone, guardianName, roomNo } = req.body;
 
   if (role !== "Student") {
     return res.status(403).json({ message: "Only students can update this profile" });
@@ -115,8 +271,6 @@ exports.updateMyProfile = async (req, res) => {
           full_name = :b_full_name,
           phone = :b_phone,
           guardian_name = :b_guardian_name,
-          guardian_phone = :b_guardian_phone,
-          address = :b_address,
           room_no = :b_room_no
       WHEN NOT MATCHED THEN
         INSERT (
@@ -124,8 +278,6 @@ exports.updateMyProfile = async (req, res) => {
           full_name,
           phone,
           guardian_name,
-          guardian_phone,
-          address,
           room_no
         )
         VALUES (
@@ -133,8 +285,6 @@ exports.updateMyProfile = async (req, res) => {
           :b_full_name,
           :b_phone,
           :b_guardian_name,
-          :b_guardian_phone,
-          :b_address,
           :b_room_no
         )
       `,
@@ -143,8 +293,6 @@ exports.updateMyProfile = async (req, res) => {
         b_full_name: fullName ? fullName.trim() : null,
         b_phone: phone ? phone.trim() : null,
         b_guardian_name: guardianName ? guardianName.trim() : null,
-        b_guardian_phone: guardianPhone ? guardianPhone.trim() : null,
-        b_address: address ? address.trim() : null,
         b_room_no: roomNo ? roomNo.trim() : null
       },
       { autoCommit: false }
@@ -228,6 +376,7 @@ exports.getMyFeeStatus = async (req, res) => {
   let conn;
   try {
     conn = await oracledb.getConnection();
+    await syncOverdueFeeStatuses(conn);
 
     const result = await conn.execute(
       `

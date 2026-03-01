@@ -1,4 +1,3 @@
-
 INSERT INTO roles (role_name) VALUES ('Admin');
 INSERT INTO roles (role_name) VALUES ('Student');
 INSERT INTO roles (role_name) VALUES ('Technical Staff');
@@ -14,7 +13,7 @@ INSERT INTO users (emp_id, password, role_id) VALUES ('TES001', '$2b$10$fr1g93UK
 INSERT INTO users (emp_id, password, role_id) VALUES ('WAR001', '$2b$10$JpGvhCDmY7x6OPm3vGXA6uHqFxeJgYBdZj3EXNAnpOZfsA0UzilF6', 4);
 INSERT INTO users (emp_id, password, role_id) VALUES ('SEC001', '$2b$10$5vD75.1TpTYfxyzJFxwiPOpdGzpEe8WGZE7yVxbBMWCM3/SyenJ8y', 5);
 INSERT INTO users (emp_id, password, role_id) VALUES ('CAN001', '$2b$10$6l.Y1ydjVW5TlE7i4z8lBeeawuVrHJ5dJyVPJc8o.dZ5wTW4hloVG', 6);
-  SELECT * FROM users;
+SELECT * FROM users;
 
 INSERT INTO students (user_id, full_name, phone, guardian_name, guardian_phone, address, room_no)
 VALUES (
@@ -56,6 +55,7 @@ SELECT * FROM student_fees;
 INSERT INTO student_feedback (user_id, facility_area, message, rating, status)
 VALUES (2, 'Water Facility', 'Need better water availability during evening hours.', 3, 'Open');
 SELECT * FROM student_feedback;
+
 
 INSERT INTO canteen_menu (menu_date, meal_type, item_name, is_available, created_by)
 VALUES (TRUNC(SYSDATE), 'Breakfast', 'Idli and Sambar', 1, 6);

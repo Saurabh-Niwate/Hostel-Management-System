@@ -12,6 +12,7 @@ type StudentProfileData = {
   guardianPhone: string;
   address: string;
   roomNo: string;
+  profileImageUrl: string;
 };
 
 type Props = {
@@ -28,6 +29,7 @@ const emptyProfile: StudentProfileData = {
   guardianPhone: "",
   address: "",
   roomNo: "",
+  profileImageUrl: "",
 };
 
 const mapProfile = (raw: any): StudentProfileData => ({
@@ -40,12 +42,15 @@ const mapProfile = (raw: any): StudentProfileData => ({
   guardianPhone: raw.GUARDIAN_PHONE || "",
   address: raw.ADDRESS || "",
   roomNo: raw.ROOM_NO || "",
+  profileImageUrl: raw.PROFILE_IMAGE_URL || "",
 });
 
 export function StudentProfile({ onProfileUpdated }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [removingImage, setRemovingImage] = useState(false);
   const [profile, setProfile] = useState<StudentProfileData>(emptyProfile);
   const [editForm, setEditForm] = useState<StudentProfileData>(emptyProfile);
 
@@ -78,8 +83,6 @@ export function StudentProfile({ onProfileUpdated }: Props) {
         fullName: editForm.fullName,
         phone: editForm.phone,
         guardianName: editForm.guardianName,
-        guardianPhone: editForm.guardianPhone,
-        address: editForm.address,
         roomNo: editForm.roomNo,
       });
       await loadProfile();
@@ -93,6 +96,39 @@ export function StudentProfile({ onProfileUpdated }: Props) {
   const handleCancel = () => {
     setEditForm(profile);
     setIsEditing(false);
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      await api.post("/student/profile-image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      await loadProfile();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to upload profile image");
+    } finally {
+      setUploadingImage(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    setRemovingImage(true);
+    setError("");
+    try {
+      await api.delete("/student/profile-image");
+      await loadProfile();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to remove profile image");
+    } finally {
+      setRemovingImage(false);
+    }
   };
 
   if (loading) {
@@ -144,9 +180,35 @@ export function StudentProfile({ onProfileUpdated }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
-            <div className="w-32 h-32 bg-slate-100 rounded-full mb-4 flex items-center justify-center text-slate-300">
-              <User size={64} />
+            <div className="w-32 h-32 bg-slate-100 rounded-full mb-4 flex items-center justify-center text-slate-300 overflow-hidden">
+              {profile.profileImageUrl ? (
+                <img src={profile.profileImageUrl} alt="Student profile" className="w-full h-full object-cover" />
+              ) : (
+                <User size={64} />
+              )}
             </div>
+            <label className="mb-4 inline-block">
+              <span className="px-3 py-1.5 text-xs bg-indigo-100 text-indigo-700 rounded-lg cursor-pointer hover:bg-indigo-200">
+                {uploadingImage ? "Uploading..." : "Upload Photo"}
+              </span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleImageUpload}
+                className="hidden"
+                disabled={uploadingImage}
+              />
+            </label>
+            {profile.profileImageUrl && (
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                disabled={removingImage}
+                className="mb-4 px-3 py-1.5 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50"
+              >
+                {removingImage ? "Removing..." : "Remove Photo"}
+              </button>
+            )}
             <h3 className="text-xl font-bold text-slate-800">{profile.fullName || "Student"}</h3>
             <p className="text-slate-500">{profile.studentId}</p>
             <div className="mt-4 flex flex-wrap gap-2 justify-center">
@@ -190,6 +252,7 @@ export function StudentProfile({ onProfileUpdated }: Props) {
                 value={editForm.guardianPhone}
                 isEditing={isEditing}
                 onChange={(val) => setEditForm({ ...editForm, guardianPhone: val })}
+                readOnly
               />
               <InfoField
                 icon={<User size={18} />}
@@ -205,6 +268,7 @@ export function StudentProfile({ onProfileUpdated }: Props) {
                   value={editForm.address}
                   isEditing={isEditing}
                   onChange={(val) => setEditForm({ ...editForm, address: val })}
+                  readOnly
                 />
               </div>
             </div>
