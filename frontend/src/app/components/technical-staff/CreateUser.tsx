@@ -1,122 +1,121 @@
-import { useState } from 'react';
-import { UserPlus, Users, Briefcase } from 'lucide-react';
-import { createStudent, createStaff } from './mockData';
-import { CreateStudentInput, CreateStaffInput } from './types';
+import { useState } from "react";
+import { UserPlus, Users, Briefcase } from "lucide-react";
+import { api } from "../../lib/api";
 
 interface CreateUserProps {
   onUserCreated?: () => void;
 }
 
 export function CreateUser({ onUserCreated }: CreateUserProps) {
-  const [userType, setUserType] = useState<'student' | 'staff'>('student');
+  const [userType, setUserType] = useState<"student" | "staff">("student");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // Student form state
-  const [studentForm, setStudentForm] = useState<CreateStudentInput>({
-    studentId: '',
-    name: '',
-    email: '',
+  const [studentForm, setStudentForm] = useState({
+    studentId: "",
+    fullName: "",
+    phone: "",
+    guardianName: "",
+    guardianPhone: "",
+    address: "",
+    roomNo: "",
+    email: "",
+    password: "",
+  });
+  const [studentImageFile, setStudentImageFile] = useState<File | null>(null);
+
+  const [staffForm, setStaffForm] = useState({
+    employeeId: "",
+    email: "",
+    password: "",
+    roleName: "Warden",
   });
 
-  // Staff form state
-  const [staffForm, setStaffForm] = useState<CreateStaffInput>({
-    employeeId: '',
-    name: '',
-    email: '',
-  });
-
-  // Validation
-  const validateStudentForm = (): boolean => {
-    if (!studentForm.studentId.trim()) {
-      setError('Student ID is required');
-      return false;
-    }
-    if (!studentForm.name.trim()) {
-      setError('Name is required');
-      return false;
-    }
-    return true;
-  };
-
-  const validateStaffForm = (): boolean => {
-    if (!staffForm.employeeId.trim()) {
-      setError('Employee ID is required');
-      return false;
-    }
-    if (!staffForm.name.trim()) {
-      setError('Name is required');
-      return false;
-    }
-    if (!staffForm.email.trim()) {
-      setError('Email is required for staff');
-      return false;
-    }
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(staffForm.email)) {
-      setError('Please enter a valid email address');
-      return false;
-    }
-    return true;
-  };
-
-  // Handle student form submission
-  const handleCreateStudent = (e: React.FormEvent) => {
+  const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
-    if (!validateStudentForm()) return;
+    if (
+      !studentForm.studentId.trim() ||
+      !studentForm.password.trim() ||
+      !studentForm.fullName.trim() ||
+      !studentForm.phone.trim() ||
+      !studentForm.guardianName.trim() ||
+      !studentForm.guardianPhone.trim() ||
+      !studentForm.address.trim() ||
+      !studentForm.roomNo.trim()
+    ) {
+      setError("All student fields are required except email");
+      return;
+    }
 
     setLoading(true);
     try {
-      createStudent({
-        studentId: studentForm.studentId,
-        name: studentForm.name,
-        email: studentForm.email || undefined,
-      });
-
-      setSuccess('Student created successfully!');
-      setStudentForm({ studentId: '', name: '', email: '' });
-      
-      if (onUserCreated) {
-        onUserCreated();
+      const formData = new FormData();
+      formData.append("studentId", studentForm.studentId.trim());
+      formData.append("fullName", studentForm.fullName.trim());
+      formData.append("phone", studentForm.phone.trim());
+      formData.append("guardianName", studentForm.guardianName.trim());
+      formData.append("guardianPhone", studentForm.guardianPhone.trim());
+      formData.append("address", studentForm.address.trim());
+      formData.append("roomNo", studentForm.roomNo.trim());
+      formData.append("password", studentForm.password);
+      if (studentForm.email.trim()) {
+        formData.append("email", studentForm.email.trim());
       }
-    } catch (err) {
-      setError('Failed to create student. Please try again.');
-      console.error(err);
+      if (studentImageFile) {
+        formData.append("image", studentImageFile);
+      }
+
+      await api.post("/technical-staff/create-student", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setSuccess("Student created successfully");
+      setStudentForm({
+        studentId: "",
+        fullName: "",
+        phone: "",
+        guardianName: "",
+        guardianPhone: "",
+        address: "",
+        roomNo: "",
+        email: "",
+        password: "",
+      });
+      setStudentImageFile(null);
+      onUserCreated?.();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to create student");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle staff form submission
-  const handleCreateStaff = (e: React.FormEvent) => {
+  const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
-    if (!validateStaffForm()) return;
+    if (!staffForm.employeeId.trim() || !staffForm.password.trim() || !staffForm.roleName.trim()) {
+      setError("Employee ID, role and password are required");
+      return;
+    }
 
     setLoading(true);
     try {
-      createStaff({
-        employeeId: staffForm.employeeId,
-        name: staffForm.name,
-        email: staffForm.email,
+      await api.post("/technical-staff/create-staff", {
+        empId: staffForm.employeeId.trim(),
+        email: staffForm.email.trim() || null,
+        password: staffForm.password,
+        roleName: staffForm.roleName.trim(),
       });
-
-      setSuccess('Staff member created successfully!');
-      setStaffForm({ employeeId: '', name: '', email: '' });
-      
-      if (onUserCreated) {
-        onUserCreated();
-      }
-    } catch (err) {
-      setError('Failed to create staff member. Please try again.');
-      console.error(err);
+      setSuccess("Staff created successfully");
+      setStaffForm({ employeeId: "", email: "", password: "", roleName: "Warden" });
+      onUserCreated?.();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to create staff");
     } finally {
       setLoading(false);
     }
@@ -124,7 +123,6 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 bg-teal-100 rounded-lg">
           <UserPlus className="w-6 h-6 text-teal-700" />
@@ -135,20 +133,17 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
         </div>
       </div>
 
-      {/* User Type Toggle */}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
         <div className="grid grid-cols-2 gap-4">
           <button
             type="button"
             onClick={() => {
-              setUserType('student');
-              setError('');
-              setSuccess('');
+              setUserType("student");
+              setError("");
+              setSuccess("");
             }}
             className={`flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium transition-all ${
-              userType === 'student'
-                ? 'bg-teal-600 text-white shadow-md'
-                : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+              userType === "student" ? "bg-teal-600 text-white shadow-md" : "bg-slate-50 text-slate-600 hover:bg-slate-100"
             }`}
           >
             <Users className="w-5 h-5" />
@@ -157,14 +152,12 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
           <button
             type="button"
             onClick={() => {
-              setUserType('staff');
-              setError('');
-              setSuccess('');
+              setUserType("staff");
+              setError("");
+              setSuccess("");
             }}
             className={`flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium transition-all ${
-              userType === 'staff'
-                ? 'bg-teal-600 text-white shadow-md'
-                : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+              userType === "staff" ? "bg-teal-600 text-white shadow-md" : "bg-slate-50 text-slate-600 hover:bg-slate-100"
             }`}
           >
             <Briefcase className="w-5 h-5" />
@@ -173,168 +166,154 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
         </div>
       </div>
 
-      {/* Form */}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
-        {userType === 'student' ? (
-          <form onSubmit={handleCreateStudent} className="space-y-5 max-w-2xl">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Student Information</h3>
+        {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">{error}</div>}
+        {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm mb-4">{success}</div>}
 
-            {/* Student ID - REQUIRED */}
+        {userType === "student" ? (
+          <form onSubmit={handleCreateStudent} className="space-y-4 max-w-2xl">
+            <input
+              type="text"
+              value={studentForm.studentId}
+              onChange={(e) => setStudentForm({ ...studentForm, studentId: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Student ID (required)"
+              disabled={loading}
+              required
+            />
+            <input
+              type="text"
+              value={studentForm.fullName}
+              onChange={(e) => setStudentForm({ ...studentForm, fullName: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Full Name (required)"
+              disabled={loading}
+              required
+            />
+            <input
+              type="text"
+              value={studentForm.phone}
+              onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Student Phone (required)"
+              disabled={loading}
+              required
+            />
+            <input
+              type="text"
+              value={studentForm.guardianName}
+              onChange={(e) => setStudentForm({ ...studentForm, guardianName: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Guardian Name (required)"
+              disabled={loading}
+              required
+            />
+            <input
+              type="text"
+              value={studentForm.guardianPhone}
+              onChange={(e) => setStudentForm({ ...studentForm, guardianPhone: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Guardian Phone (required)"
+              disabled={loading}
+              required
+            />
+            <input
+              type="text"
+              value={studentForm.roomNo}
+              onChange={(e) => setStudentForm({ ...studentForm, roomNo: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Hostel Room Number (required)"
+              disabled={loading}
+              required
+            />
+            <textarea
+              value={studentForm.address}
+              onChange={(e) => setStudentForm({ ...studentForm, address: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Home Address (required)"
+              disabled={loading}
+              rows={3}
+              required
+            />
+            <input
+              type="email"
+              value={studentForm.email}
+              onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Email (optional)"
+              disabled={loading}
+            />
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Student ID <span className="text-red-500">*</span>
-              </label>
+              <label className="block text-sm text-slate-600 mb-1">Profile Photo (optional)</label>
               <input
-                type="text"
-                value={studentForm.studentId}
-                onChange={(e) => setStudentForm({ ...studentForm, studentId: e.target.value })}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                placeholder="e.g., STU001"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => setStudentImageFile(e.target.files?.[0] || null)}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
                 disabled={loading}
               />
             </div>
-
-            {/* Name - REQUIRED */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={studentForm.name}
-                onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                placeholder="Enter student's full name"
-                disabled={loading}
-              />
-            </div>
-
-            {/* Email - OPTIONAL */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Email <span className="text-slate-400 text-xs">(Optional)</span>
-              </label>
-              <input
-                type="email"
-                value={studentForm.email}
-                onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                placeholder="student@university.edu"
-                disabled={loading}
-              />
-            </div>
-
-            {/* Role - Fixed */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
-              <input
-                type="text"
-                value="Student"
-                disabled
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed"
-              />
-            </div>
-
-            {/* Messages */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-                {success}
-              </div>
-            )}
-
-            {/* Submit Button */}
+            <input
+              type="password"
+              value={studentForm.password}
+              onChange={(e) => setStudentForm({ ...studentForm, password: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Password (required)"
+              disabled={loading}
+              required
+            />
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
             >
-              {loading ? 'Creating Student...' : 'Create Student'}
+              {loading ? "Creating Student..." : "Create Student"}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleCreateStaff} className="space-y-5 max-w-2xl">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Staff Information</h3>
-
-            {/* Employee ID - REQUIRED */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Employee ID <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={staffForm.employeeId}
-                onChange={(e) => setStaffForm({ ...staffForm, employeeId: e.target.value })}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                placeholder="e.g., EMP001"
-                disabled={loading}
-              />
-            </div>
-
-            {/* Name - REQUIRED */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={staffForm.name}
-                onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                placeholder="Enter staff member's full name"
-                disabled={loading}
-              />
-            </div>
-
-            {/* Email - REQUIRED */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                value={staffForm.email}
-                onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                placeholder="staff@hostel.com"
-                disabled={loading}
-              />
-            </div>
-
-            {/* Role - Fixed */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
-              <input
-                type="text"
-                value="Staff"
-                disabled
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed"
-              />
-            </div>
-
-            {/* Messages */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-                {success}
-              </div>
-            )}
-
-            {/* Submit Button */}
+          <form onSubmit={handleCreateStaff} className="space-y-4 max-w-2xl">
+            <input
+              type="text"
+              value={staffForm.employeeId}
+              onChange={(e) => setStaffForm({ ...staffForm, employeeId: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Employee ID (required)"
+              disabled={loading}
+            />
+            <input
+              type="email"
+              value={staffForm.email}
+              onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Email (optional)"
+              disabled={loading}
+            />
+            <select
+              value={staffForm.roleName}
+              onChange={(e) => setStaffForm({ ...staffForm, roleName: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+              disabled={loading}
+            >
+              <option>Warden</option>
+              <option>Security</option>
+              <option>Canteen Owner</option>
+              <option>Admin</option>
+              <option>Technical Staff</option>
+            </select>
+            <input
+              type="password"
+              value={staffForm.password}
+              onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Password (required)"
+              disabled={loading}
+            />
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
             >
-              {loading ? 'Creating Staff...' : 'Create Staff Member'}
+              {loading ? "Creating Staff..." : "Create Staff"}
             </button>
           </form>
         )}

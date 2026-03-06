@@ -7,8 +7,9 @@ import { useNavigate } from "react-router-dom";
 import { AdminReportsOverview } from "./AdminReportsOverview";
 import { AdminLeaveManagement } from "./AdminLeaveManagement";
 import { AdminAttendanceSummary } from "./AdminAttendanceSummary";
+import { AdminStudentView } from "./AdminStudentView";
 
-type Tab = "dashboard" | "leaves" | "attendance";
+type Tab = "dashboard" | "leaves" | "attendance" | "studentView";
 
 export function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<Tab>("dashboard");
@@ -30,6 +31,8 @@ export function AdminDashboard() {
                 return <AdminLeaveManagement />;
             case "attendance":
                 return <AdminAttendanceSummary />;
+            case "studentView":
+                return <AdminStudentView />;
             default:
                 return <div>Select a tab</div>;
         }
@@ -76,6 +79,13 @@ export function AdminDashboard() {
                         label="Attendance"
                         active={activeTab === "attendance"}
                         onClick={() => setActiveTab("attendance")}
+                        isOpen={isSidebarOpen}
+                    />
+                    <SidebarItem
+                        icon={<User size={20} />}
+                        label="Student View"
+                        active={activeTab === "studentView"}
+                        onClick={() => setActiveTab("studentView")}
                         isOpen={isSidebarOpen}
                     />
                 </nav>

@@ -1,32 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+import { api } from "../../lib/api";
 
 interface Role {
-  id: string;
-  roleName: string;
-  description: string;
-  createdAt: string;
+  ROLE_ID: number;
+  ROLE_NAME: string;
 }
-
-// Dummy data
-const dummyRoles = [
-  { id: '1', roleName: 'Admin', description: 'System administrator with full access', createdAt: '2026-01-01T00:00:00Z' },
-  { id: '2', roleName: 'Student', description: 'Hostel resident student', createdAt: '2026-01-01T00:00:00Z' },
-  { id: '3', roleName: 'Clerk', description: 'Administrative clerk', createdAt: '2026-01-01T00:00:00Z' },
-  { id: '4', roleName: 'Warden', description: 'Hostel warden', createdAt: '2026-01-01T00:00:00Z' },
-  { id: '5', roleName: 'Security', description: 'Security personnel', createdAt: '2026-01-01T00:00:00Z' },
-  { id: '6', roleName: 'Canteen Staff', description: 'Canteen worker', createdAt: '2026-01-01T00:00:00Z' },
-];
 
 export function RolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setRoles(dummyRoles);
-      setLoading(false);
-    }, 300);
+    const load = async () => {
+      try {
+        const res = await api.get("/technical-staff/roles");
+        setRoles(res.data?.roles || []);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load roles");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
   if (loading) {
@@ -39,6 +35,11 @@ export function RolesPage() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200">
         <div className="px-6 py-4 border-b border-slate-200">
           <h3 className="text-lg font-bold text-slate-900">System Roles</h3>
@@ -53,17 +54,15 @@ export function RolesPage() {
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">Role ID</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">Role Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">Description</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">Created At</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {roles.map((role) => (
-                  <tr key={role.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{role.roleName}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{role.description}</td>
-                    <td className="px-6 py-4 text-sm text-slate-900">{new Date(role.createdAt).toLocaleDateString()}</td>
+                  <tr key={role.ROLE_ID} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 text-sm text-slate-900">{role.ROLE_ID}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{role.ROLE_NAME}</td>
                   </tr>
                 ))}
               </tbody>
