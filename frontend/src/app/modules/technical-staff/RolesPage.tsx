@@ -1,29 +1,22 @@
-import { useState, useEffect } from "react";
-import { api } from "../../lib/api";
+import { useState } from "react";
 
 interface Role {
   ROLE_ID: number;
   ROLE_NAME: string;
 }
 
-export function RolesPage() {
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+const DUMMY_ROLES: Role[] = [
+  { ROLE_ID: 1, ROLE_NAME: "Student" },
+  { ROLE_ID: 2, ROLE_NAME: "Warden" },
+  { ROLE_ID: 3, ROLE_NAME: "Security" },
+  { ROLE_ID: 4, ROLE_NAME: "Admin" },
+  { ROLE_ID: 5, ROLE_NAME: "Technical Staff" },
+  { ROLE_ID: 6, ROLE_NAME: "Canteen Owner" },
+];
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await api.get("/technical-staff/roles");
-        setRoles(res.data?.roles || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load roles");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+export function RolesPage() {
+  const [roles] = useState<Role[]>(DUMMY_ROLES);
+  const [loading] = useState(false);
 
   if (loading) {
     return (
@@ -35,14 +28,9 @@ export function RolesPage() {
 
   return (
     <div className="space-y-6">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200">
         <div className="px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-bold text-slate-900">System Roles</h3>
+          <h3 className="text-lg font-bold text-slate-900">System Roles (Demo Mode)</h3>
         </div>
 
         {roles.length === 0 ? (
@@ -73,3 +61,4 @@ export function RolesPage() {
     </div>
   );
 }
+

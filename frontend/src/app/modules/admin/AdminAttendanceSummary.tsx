@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Users, AlertTriangle, UserCheck, TrendingUp } from "lucide-react";
-import { api } from "../../lib/api";
 
 type SummaryRow = {
   STUDENT_ID: string;
@@ -17,35 +16,22 @@ type StudentAgg = {
   percentage: number;
 };
 
+const DUMMY_SUMMARY: SummaryRow[] = [
+  { STUDENT_ID: "STU001", STATUS: "Present", TOTAL: 20 },
+  { STUDENT_ID: "STU001", STATUS: "Absent", TOTAL: 2 },
+  { STUDENT_ID: "STU002", STATUS: "Present", TOTAL: 15 },
+  { STUDENT_ID: "STU002", STATUS: "Absent", TOTAL: 7 },
+  { STUDENT_ID: "STU003", STATUS: "Present", TOTAL: 22 },
+  { STUDENT_ID: "STU004", STATUS: "Present", TOTAL: 12 },
+  { STUDENT_ID: "STU004", STATUS: "Absent", TOTAL: 10 },
+  { STUDENT_ID: "STU005", STATUS: "Present", TOTAL: 5 },
+  { STUDENT_ID: "STU005", STATUS: "Absent", TOTAL: 17 },
+];
+
 export function AdminAttendanceSummary() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [rows, setRows] = useState<SummaryRow[]>([]);
+  const [rows] = useState<SummaryRow[]>(DUMMY_SUMMARY);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-
-  const load = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await api.get("/admin/attendance/summary", {
-        params: {
-          groupBy: "student",
-          dateFrom: dateFrom || undefined,
-          dateTo: dateTo || undefined,
-        },
-      });
-      setRows(res.data?.summary || []);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load attendance summary");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
 
   const summary = useMemo(() => {
     const byStudent = new Map<string, StudentAgg>();
@@ -85,18 +71,9 @@ export function AdminAttendanceSummary() {
     };
   }, [rows]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-800">Attendance Summary</h2>
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
       <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-3 md:items-end">
         <div>
@@ -107,7 +84,7 @@ export function AdminAttendanceSummary() {
           <label className="block text-xs text-slate-500 mb-1">To Date</label>
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
         </div>
-        <button onClick={load} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Apply Date Filter</button>
+        <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Apply Date Filter</button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -151,9 +128,8 @@ export function AdminAttendanceSummary() {
               </div>
               <div className="flex items-center">
                 <span
-                  className={`px-3 py-1 rounded-full text-sm font-bold ${
-                    student.percentage < 60 ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-bold ${student.percentage < 60 ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"
+                    }`}
                 >
                   {student.percentage}%
                 </span>
@@ -166,3 +142,4 @@ export function AdminAttendanceSummary() {
     </div>
   );
 }
+

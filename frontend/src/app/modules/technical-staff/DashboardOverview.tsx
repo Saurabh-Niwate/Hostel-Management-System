@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { api } from "../../lib/api";
+import { useState } from "react";
 
 interface DashboardMetrics {
   totalUsers: number;
@@ -14,50 +13,25 @@ interface RecentUser {
   roleName: string;
 }
 
+const DUMMY_METRICS: DashboardMetrics = {
+  totalUsers: 10,
+  totalStudents: 6,
+  totalStaff: 4,
+  totalRoles: 6,
+};
+
+const DUMMY_RECENT_USERS: RecentUser[] = [
+  { label: "STU001", email: "saurabh@example.com", roleName: "Student" },
+  { label: "EMP001", email: "warden@example.com", roleName: "Warden" },
+  { label: "STU002", email: "amit@example.com", roleName: "Student" },
+  { label: "EMP002", email: "security@example.com", roleName: "Security" },
+  { label: "STU003", email: "vijay@example.com", roleName: "Student" },
+];
+
 export function DashboardOverview() {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [rolesRes, studentsRes, staffRes, usersRes] = await Promise.all([
-          api.get("/technical-staff/roles"),
-          api.get("/technical-staff/students"),
-          api.get("/technical-staff/staff"),
-          api.get("/technical-staff/users"),
-        ]);
-
-        const roles = rolesRes.data?.roles || [];
-        const students = studentsRes.data?.students || [];
-        const staff = staffRes.data?.staff || [];
-        const users = usersRes.data?.users || [];
-
-        setMetrics({
-          totalUsers: users.length,
-          totalStudents: students.length,
-          totalStaff: staff.length,
-          totalRoles: roles.length,
-        });
-
-        const topUsers = users
-          .slice(0, 10)
-          .map((u: any) => ({
-            label: u.STUDENT_ID || u.EMP_ID || `USER-${u.USER_ID}`,
-            email: u.EMAIL || "-",
-            roleName: u.ROLE_NAME || "-",
-          }));
-        setRecentUsers(topUsers);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load dashboard data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+  const [metrics] = useState<DashboardMetrics>(DUMMY_METRICS);
+  const [recentUsers] = useState<RecentUser[]>(DUMMY_RECENT_USERS);
+  const [loading] = useState(false);
 
   if (loading) {
     return (
@@ -69,38 +43,33 @@ export function DashboardOverview() {
 
   return (
     <div className="space-y-8">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg shadow-sm border-l-4 border-teal-600 p-6">
           <p className="text-sm text-slate-600 mb-1">Total Users</p>
-          <p className="text-3xl font-bold text-slate-900">{metrics?.totalUsers ?? 0}</p>
+          <p className="text-3xl font-bold text-slate-900">{metrics.totalUsers}</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border-l-4 border-teal-600 p-6">
           <p className="text-sm text-slate-600 mb-1">Total Students</p>
-          <p className="text-3xl font-bold text-slate-900">{metrics?.totalStudents ?? 0}</p>
+          <p className="text-3xl font-bold text-slate-900">{metrics.totalStudents}</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border-l-4 border-teal-600 p-6">
           <p className="text-sm text-slate-600 mb-1">Total Staff</p>
-          <p className="text-3xl font-bold text-slate-900">{metrics?.totalStaff ?? 0}</p>
+          <p className="text-3xl font-bold text-slate-900">{metrics.totalStaff}</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border-l-4 border-teal-600 p-6">
           <p className="text-sm text-slate-600 mb-1">Total Roles</p>
-          <p className="text-3xl font-bold text-slate-900">{metrics?.totalRoles ?? 0}</p>
+          <p className="text-3xl font-bold text-slate-900">{metrics.totalRoles}</p>
         </div>
       </div>
 
       {/* Recent Users Table */}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200">
         <div className="px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-bold text-slate-900">Recent Users</h3>
+          <h3 className="text-lg font-bold text-slate-900">Recent Users (Demo Mode)</h3>
         </div>
 
         {recentUsers.length === 0 ? (
@@ -130,7 +99,7 @@ export function DashboardOverview() {
                         {user.roleName}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">-</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">2026-03-01</td>
                   </tr>
                 ))}
               </tbody>
@@ -141,3 +110,4 @@ export function DashboardOverview() {
     </div>
   );
 }
+

@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, X, Search, Clock, CheckCircle, XCircle } from "lucide-react";
-import { api } from "../../lib/api";
 
 type LeaveRow = {
   LEAVE_ID: number;
@@ -12,82 +11,46 @@ type LeaveRow = {
   STATUS: "Pending" | "Approved" | "Rejected";
 };
 
+const DUMMY_LEAVES: LeaveRow[] = [
+  { LEAVE_ID: 1, USER_ID: 101, STUDENT_ID: "STU001", FROM_DATE: "2026-03-10", TO_DATE: "2026-03-15", REASON: "Home Visit", STATUS: "Pending" },
+  { LEAVE_ID: 2, USER_ID: 102, STUDENT_ID: "STU002", FROM_DATE: "2026-03-12", TO_DATE: "2026-03-14", REASON: "Wedding", STATUS: "Approved" },
+  { LEAVE_ID: 3, USER_ID: 103, STUDENT_ID: "STU003", FROM_DATE: "2026-03-05", TO_DATE: "2026-03-06", REASON: "Medical", STATUS: "Rejected" },
+  { LEAVE_ID: 4, USER_ID: 104, STUDENT_ID: "STU004", FROM_DATE: "2026-03-18", TO_DATE: "2026-03-20", REASON: "Emergency", STATUS: "Pending" },
+];
+
 export function AdminLeaveManagement() {
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [isFetching, setIsFetching] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [error, setError] = useState("");
-  const [leaves, setLeaves] = useState<LeaveRow[]>([]);
+  const [leaves, setLeaves] = useState<LeaveRow[]>(DUMMY_LEAVES);
 
-  const loadLeaves = async (query?: string, status?: string, opts?: { background?: boolean }) => {
-    if (opts?.background) {
-      setIsFetching(true);
-    } else {
-      setInitialLoading(true);
-    }
-    setError("");
-    try {
-      const res = await api.get("/admin/leaves", {
-        params: {
-          q: query || undefined,
-          status: status || undefined,
-        },
-      });
-      setLeaves(res.data?.leaves || []);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load leave applications");
-    } finally {
-      setIsFetching(false);
-      setInitialLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadLeaves(undefined, undefined, { background: false });
-  }, []);
-
-  useEffect(() => {
-    if (initialLoading) return;
-    const id = setTimeout(() => {
-      loadLeaves(searchQuery.trim() || undefined, statusFilter || undefined, { background: true });
-    }, 500);
-    return () => clearTimeout(id);
-  }, [searchQuery, statusFilter, initialLoading]);
-
-  const updateLeaveStatus = async (leaveId: number, action: "approve" | "reject") => {
+  const updateLeaveStatus = (leaveId: number, action: "approve" | "reject") => {
     setActionLoadingId(leaveId);
-    setError("");
-    try {
-      if (action === "approve") {
-        await api.put(`/admin/leave/${leaveId}/approve`, {});
-      } else {
-        await api.put(`/admin/leave/${leaveId}/reject`, {});
-      }
-      await loadLeaves(searchQuery.trim() || undefined, statusFilter || undefined, { background: true });
-    } catch (err: any) {
-      setError(err.response?.data?.message || `Failed to ${action} leave`);
-    } finally {
+
+    // Simulate delay
+    setTimeout(() => {
+      setLeaves(prev => prev.map(l =>
+        l.LEAVE_ID === leaveId
+          ? { ...l, STATUS: action === "approve" ? "Approved" : "Rejected" }
+          : l
+      ));
       setActionLoadingId(null);
-    }
+    }, 500);
   };
 
-  const filteredLeaves = useMemo(() => leaves, [leaves]);
-
-  if (initialLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
+  const filteredLeaves = useMemo(() => {
+    return leaves.filter(l => {
+      const matchesSearch = l.STUDENT_ID.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        l.REASON.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "" || l.STATUS === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [leaves, searchQuery, statusFilter]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold text-slate-800">Leave Applications</h2>
-        {isFetching && <p className="text-sm text-slate-500">Searching...</p>}
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col md:flex-row gap-3 md:items-center">
@@ -112,8 +75,6 @@ export function AdminLeaveManagement() {
           <option value="Rejected">Rejected</option>
         </select>
       </div>
-
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
@@ -140,13 +101,12 @@ export function AdminLeaveManagement() {
                   <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{leave.REASON}</td>
                   <td className="p-4">
                     <span
-                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                        leave.STATUS === "Approved"
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${leave.STATUS === "Approved"
                           ? "bg-emerald-100 text-emerald-800"
                           : leave.STATUS === "Rejected"
                             ? "bg-red-100 text-red-800"
                             : "bg-amber-100 text-amber-800"
-                      }`}
+                        }`}
                     >
                       {leave.STATUS === "Pending" && <Clock size={12} className="mr-1" />}
                       {leave.STATUS === "Approved" && <CheckCircle size={12} className="mr-1" />}
@@ -194,3 +154,4 @@ export function AdminLeaveManagement() {
     </div>
   );
 }
+

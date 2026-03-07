@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { User, Mail, Phone, MapPin, Building, Edit2, Check, X } from "lucide-react";
-import { api } from "../../lib/api";
 
 type StudentProfileData = {
   userId: number;
@@ -19,78 +18,39 @@ type Props = {
   onProfileUpdated?: (profile: StudentProfileData) => void;
 };
 
-const emptyProfile: StudentProfileData = {
-  userId: 0,
-  studentId: "",
-  email: "",
-  fullName: "",
-  phone: "",
-  guardianName: "",
-  guardianPhone: "",
-  address: "",
-  roomNo: "",
+const DUMMY_PROFILE: StudentProfileData = {
+  userId: 1,
+  studentId: "STU12345",
+  email: "student@example.com",
+  fullName: "Saurabh Niwate",
+  phone: "9876543210",
+  guardianName: "Sunil Niwate",
+  guardianPhone: "9123456789",
+  address: "123, Hostel Block A, University Campus",
+  roomNo: "A-101",
   profileImageUrl: "",
 };
 
-const mapProfile = (raw: any): StudentProfileData => ({
-  userId: raw.USER_ID || 0,
-  studentId: raw.STUDENT_ID || "",
-  email: raw.EMAIL || "",
-  fullName: raw.FULL_NAME || "",
-  phone: raw.PHONE || "",
-  guardianName: raw.GUARDIAN_NAME || "",
-  guardianPhone: raw.GUARDIAN_PHONE || "",
-  address: raw.ADDRESS || "",
-  roomNo: raw.ROOM_NO || "",
-  profileImageUrl: raw.PROFILE_IMAGE_URL || "",
-});
-
 export function StudentProfile({ onProfileUpdated }: Props) {
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [removingImage, setRemovingImage] = useState(false);
-  const [profile, setProfile] = useState<StudentProfileData>(emptyProfile);
-  const [editForm, setEditForm] = useState<StudentProfileData>(emptyProfile);
-
-  const loadProfile = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await api.get("/student/profile");
-      const mapped = mapProfile(response.data.profile || {});
-      setProfile(mapped);
-      setEditForm(mapped);
-      onProfileUpdated?.(mapped);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load profile");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  const [profile, setProfile] = useState<StudentProfileData>(DUMMY_PROFILE);
+  const [editForm, setEditForm] = useState<StudentProfileData>(DUMMY_PROFILE);
 
   const handleSave = async () => {
     setLoading(true);
     setError("");
-    try {
-      await api.put("/student/profile", {
-        email: editForm.email,
-        fullName: editForm.fullName,
-        phone: editForm.phone,
-        guardianName: editForm.guardianName,
-        roomNo: editForm.roomNo,
-      });
-      await loadProfile();
+
+    // Simulate delay
+    setTimeout(() => {
+      setProfile(editForm);
+      onProfileUpdated?.(editForm);
       setIsEditing(false);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update profile");
       setLoading(false);
-    }
+    }, 500);
   };
 
   const handleCancel = () => {
@@ -98,37 +58,35 @@ export function StudentProfile({ onProfileUpdated }: Props) {
     setIsEditing(false);
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setUploadingImage(true);
     setError("");
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      await api.post("/student/profile-image", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      await loadProfile();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to upload profile image");
-    } finally {
-      setUploadingImage(false);
-      event.target.value = "";
-    }
+
+    // Simulate delay and local preview
+    setTimeout(() => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const updated = { ...profile, profileImageUrl: reader.result as string };
+        setProfile(updated);
+        setEditForm(updated);
+        setUploadingImage(false);
+      };
+      reader.readAsDataURL(file);
+    }, 800);
   };
 
-  const handleRemoveImage = async () => {
+  const handleRemoveImage = () => {
     setRemovingImage(true);
     setError("");
-    try {
-      await api.delete("/student/profile-image");
-      await loadProfile();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to remove profile image");
-    } finally {
+
+    setTimeout(() => {
+      const updated = { ...profile, profileImageUrl: "" };
+      setProfile(updated);
+      setEditForm(updated);
       setRemovingImage(false);
-    }
+    }, 500);
   };
 
   if (loading) {

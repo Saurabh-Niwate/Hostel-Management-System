@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, UserPlus, Users as UsersIcon, LogOut, Menu, X } from 'lucide-react';
 import { CreateUser } from './CreateUser';
 import { ManageUsers } from './ManageUsers';
 import { FeeManagement } from './FeeManagement';
-import { api } from '../../lib/api';
 
 type View = 'dashboard' | 'create-users' | 'manage-users' | 'fee-management';
 type LogRow = {
@@ -18,43 +17,25 @@ type LogRow = {
   CREATED_AT: string;
 };
 
+const DUMMY_STATS = {
+  total: 120,
+  students: 100,
+  staff: 20,
+};
+
+const DUMMY_LOGS: LogRow[] = [
+  { LOG_ID: 1, ACTOR_USER_ID: 1, ACTOR_ROLE: "Staff", ACTION: "User Created", DETAILS: "Created student STU100", CREATED_AT: "2026-03-07 10:00:00" },
+  { LOG_ID: 2, ACTOR_USER_ID: 2, ACTOR_ROLE: "Admin", ACTION: "Fee Updated", DETAILS: "Updated fee for Semester 1", CREATED_AT: "2026-03-07 11:30:00" },
+  { LOG_ID: 3, ACTOR_USER_ID: 1, ACTOR_ROLE: "Staff", ACTION: "Room Assigned", DETAILS: "Assigned Room A-101 to STU100", CREATED_AT: "2026-03-07 12:15:00" },
+];
+
 export function TechnicalStaffDashboard() {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [stats, setStats] = useState({
-    total: 0,
-    students: 0,
-    staff: 0,
-  });
-  const [logs, setLogs] = useState<LogRow[]>([]);
-
-  // Load stats
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const [studentsRes, staffRes, logsRes] = await Promise.all([
-          api.get('/technical-staff/students'),
-          api.get('/technical-staff/staff'),
-          api.get('/technical-staff/system-logs', { params: { limit: 8 } }),
-        ]);
-
-        const students = studentsRes.data?.students || [];
-        const staff = staffRes.data?.staff || [];
-        setStats({
-          students: students.length,
-          staff: staff.length,
-          total: students.length + staff.length,
-        });
-        setLogs(logsRes.data?.logs || []);
-      } catch {
-        setStats({ total: 0, students: 0, staff: 0 });
-        setLogs([]);
-      }
-    };
-    loadStats();
-  }, [refreshTrigger]);
+  const [stats] = useState(DUMMY_STATS);
+  const [logs] = useState<LogRow[]>(DUMMY_LOGS);
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -88,9 +69,8 @@ export function TechnicalStaffDashboard() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-50 transition-transform duration-300 lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-50 transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -122,11 +102,10 @@ export function TechnicalStaffDashboard() {
                     setCurrentView(item.id);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                    isActive
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${isActive
                       ? 'bg-teal-600 text-white'
                       : 'text-slate-700 hover:bg-slate-100'
-                  }`}
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span>{item.label}</span>
@@ -303,3 +282,4 @@ export function TechnicalStaffDashboard() {
     </div>
   );
 }
+

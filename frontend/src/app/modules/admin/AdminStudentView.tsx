@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { api } from "../../lib/api";
 
 type Profile = {
   USER_ID: number;
@@ -59,76 +58,68 @@ type StudentListRow = {
   PROFILE_IMAGE_URL?: string;
 };
 
+const DUMMY_STUDENTS: StudentListRow[] = [
+  { USER_ID: 101, STUDENT_ID: "STU001", FULL_NAME: "Saurabh Niwate", EMAIL: "saurabh@example.com", ROOM_NO: "A-101" },
+  { USER_ID: 102, STUDENT_ID: "STU002", FULL_NAME: "Amit Shah", EMAIL: "amit@example.com", ROOM_NO: "A-102" },
+  { USER_ID: 103, STUDENT_ID: "STU003", FULL_NAME: "Priya Patil", EMAIL: "priya@example.com", ROOM_NO: "B-201" },
+  { USER_ID: 104, STUDENT_ID: "STU004", FULL_NAME: "Rahul More", EMAIL: "rahul@example.com", ROOM_NO: "B-205" },
+];
+
+const getDummyStudentDetails = (studentId: string): StudentDetails => ({
+  profile: {
+    USER_ID: 101,
+    STUDENT_ID: studentId,
+    FULL_NAME: DUMMY_STUDENTS.find(s => s.STUDENT_ID === studentId)?.FULL_NAME || "Student",
+    EMAIL: DUMMY_STUDENTS.find(s => s.STUDENT_ID === studentId)?.EMAIL || "student@example.com",
+    PHONE: "9876543210",
+    GUARDIAN_NAME: "Sunil Niwate",
+    GUARDIAN_PHONE: "9123456789",
+    ADDRESS: "123, Hostel Block A, University Campus",
+    ROOM_NO: DUMMY_STUDENTS.find(s => s.STUDENT_ID === studentId)?.ROOM_NO || "N/A",
+  },
+  attendance: [
+    { ATTENDANCE_ID: 1, ATTENDANCE_DATE: "2026-03-01", STATUS: "Present", REMARKS: "On time" },
+    { ATTENDANCE_ID: 2, ATTENDANCE_DATE: "2026-03-02", STATUS: "Present", REMARKS: "" },
+    { ATTENDANCE_ID: 3, ATTENDANCE_DATE: "2026-03-03", STATUS: "Absent", REMARKS: "Medical" },
+  ],
+  fees: [
+    { FEE_ID: 1, TERM_NAME: "Semester 1", AMOUNT_TOTAL: 50000, AMOUNT_PAID: 50000, AMOUNT_DUE: 0, STATUS: "Paid" },
+    { FEE_ID: 2, TERM_NAME: "Semester 2", AMOUNT_TOTAL: 50000, AMOUNT_PAID: 25000, AMOUNT_DUE: 25000, STATUS: "Partial" },
+  ],
+  attendanceSummary: { present: 15, absent: 2, late: 1, total: 18 },
+  feeSummary: { paidCount: 1, pendingCount: 1, totalDue: 25000 },
+});
+
 export function AdminStudentView() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [students, setStudents] = useState<StudentListRow[]>([]);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [isFetching, setIsFetching] = useState(false);
-  const [error, setError] = useState("");
-
+  const [students] = useState<StudentListRow[]>(DUMMY_STUDENTS);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalData, setModalData] = useState<StudentDetails | null>(null);
 
-  const loadStudents = async (query?: string, opts?: { background?: boolean }) => {
-    if (opts?.background) setIsFetching(true);
-    else setInitialLoading(true);
-    setError("");
-    try {
-      const res = await api.get("/admin/students", {
-        params: {
-          q: query || undefined,
-        },
-      });
-      setStudents(res.data?.students || []);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load students list");
-    } finally {
-      setIsFetching(false);
-      setInitialLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadStudents(undefined, { background: false });
-  }, []);
-
-  useEffect(() => {
-    if (initialLoading) return;
-    const id = setTimeout(() => {
-      loadStudents(searchQuery.trim() || undefined, { background: true });
-    }, 500);
-    return () => clearTimeout(id);
-  }, [searchQuery, initialLoading]);
-
-  const openStudentModal = async (studentId: string) => {
+  const openStudentModal = (studentId: string) => {
     setModalLoading(true);
-    setError("");
-    try {
-      const res = await api.get(`/admin/students/${studentId}/details`);
-      setModalData(res.data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch student details");
-    } finally {
+
+    // Simulate delay
+    setTimeout(() => {
+      setModalData(getDummyStudentDetails(studentId));
       setModalLoading(false);
-    }
+    }, 500);
   };
 
-  if (initialLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
+  const filteredStudents = useMemo(() => {
+    return students.filter(s =>
+      s.STUDENT_ID.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.FULL_NAME || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.EMAIL || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.ROOM_NO || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }
+  }, [students, searchQuery]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-2xl font-bold text-slate-800">Student Profile, Attendance & Fees</h2>
-        {isFetching && <p className="text-sm text-slate-500">Searching...</p>}
       </div>
-
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
       <div className="bg-white rounded-xl border border-slate-200 p-4">
         <div className="relative">
@@ -157,10 +148,10 @@ export function AdminStudentView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {students.length === 0 ? (
+              {filteredStudents.length === 0 ? (
                 <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-500">No students found.</td></tr>
               ) : (
-                students.map((s) => (
+                filteredStudents.map((s) => (
                   <tr key={s.USER_ID} className="hover:bg-slate-50">
                     <td className="px-4 py-3 text-sm text-slate-900">{s.STUDENT_ID}</td>
                     <td className="px-4 py-3 text-sm text-slate-700">{s.FULL_NAME || "-"}</td>
@@ -323,3 +314,4 @@ function ModalShell({
     </div>
   );
 }
+

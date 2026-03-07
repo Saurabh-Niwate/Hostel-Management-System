@@ -1,32 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { CheckCircle2, XCircle, Calendar, TrendingUp } from "lucide-react";
-import { api } from "../../lib/api";
 
 type Row = {
   ATTENDANCE_DATE: string;
   STATUS: "Present" | "Absent" | "Late";
 };
 
-export function AttendanceView() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [rows, setRows] = useState<Row[]>([]);
+// Static dummy data
+const DUMMY_ATTENDANCE: Row[] = [
+  { ATTENDANCE_DATE: "2026-03-01", STATUS: "Present" },
+  { ATTENDANCE_DATE: "2026-03-02", STATUS: "Absent" },
+  { ATTENDANCE_DATE: "2026-03-03", STATUS: "Present" },
+  { ATTENDANCE_DATE: "2026-03-04", STATUS: "Present" },
+  { ATTENDANCE_DATE: "2026-03-05", STATUS: "Late" },
+];
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await api.get("/student/attendance");
-        setRows(res.data.attendance || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load attendance");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+export function AttendanceView() {
+  const [rows] = useState<Row[]>(DUMMY_ATTENDANCE);
 
   const stats = useMemo(() => {
     const totalDays = rows.length;
@@ -36,12 +26,9 @@ export function AttendanceView() {
     return { totalDays, presentDays, absentDays, percentage };
   }, [rows]);
 
-  if (loading) return <div className="flex items-center justify-center h-64">Loading attendance...</div>;
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-800">Attendance Overview</h2>
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card icon={<TrendingUp className="text-blue-500 mb-2" size={32} />} label="Overall Percentage" value={`${stats.percentage}%`} />
         <Card icon={<Calendar className="text-slate-500 mb-2" size={32} />} label="Total Days" value={String(stats.totalDays)} />

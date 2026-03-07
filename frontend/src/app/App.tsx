@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import { LoginPage } from "./components/LoginPage";
 
 import { StudentDashboard } from "./modules/student/StudentDashboard";
-import { TechnicalStaffDashboard } from "./components/technical-staff/TechnicalStaffDashboard";
+import { TechnicalStaffDashboard } from "./modules/technical-staff/TechnicalStaffDashboard";
 import { AdminDashboard } from "./modules/admin/AdminDashboard";
 function WardenDashboard() {
   return <h1>Warden Dashboard</h1>;

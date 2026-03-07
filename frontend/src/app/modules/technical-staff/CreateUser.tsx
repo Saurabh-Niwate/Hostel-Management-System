@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { UserPlus, Users, Briefcase } from "lucide-react";
-import { api } from "../../lib/api";
 
 interface CreateUserProps {
   onUserCreated?: () => void;
@@ -23,8 +22,6 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
     email: "",
     password: "",
   });
-  const [studentImageFile, setStudentImageFile] = useState<File | null>(null);
-
   const [staffForm, setStaffForm] = useState({
     employeeId: "",
     email: "",
@@ -32,7 +29,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
     roleName: "Warden",
   });
 
-  const handleCreateStudent = async (e: React.FormEvent) => {
+  const handleCreateStudent = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -52,27 +49,9 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
     }
 
     setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append("studentId", studentForm.studentId.trim());
-      formData.append("fullName", studentForm.fullName.trim());
-      formData.append("phone", studentForm.phone.trim());
-      formData.append("guardianName", studentForm.guardianName.trim());
-      formData.append("guardianPhone", studentForm.guardianPhone.trim());
-      formData.append("address", studentForm.address.trim());
-      formData.append("roomNo", studentForm.roomNo.trim());
-      formData.append("password", studentForm.password);
-      if (studentForm.email.trim()) {
-        formData.append("email", studentForm.email.trim());
-      }
-      if (studentImageFile) {
-        formData.append("image", studentImageFile);
-      }
-
-      await api.post("/technical-staff/create-student", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setSuccess("Student created successfully");
+    // Simulate API call
+    setTimeout(() => {
+      setSuccess("Student created successfully (Demo Mode)");
       setStudentForm({
         studentId: "",
         fullName: "",
@@ -84,16 +63,12 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
         email: "",
         password: "",
       });
-      setStudentImageFile(null);
-      onUserCreated?.();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create student");
-    } finally {
       setLoading(false);
-    }
+      onUserCreated?.();
+    }, 1000);
   };
 
-  const handleCreateStaff = async (e: React.FormEvent) => {
+  const handleCreateStaff = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -104,21 +79,13 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
     }
 
     setLoading(true);
-    try {
-      await api.post("/technical-staff/create-staff", {
-        empId: staffForm.employeeId.trim(),
-        email: staffForm.email.trim() || null,
-        password: staffForm.password,
-        roleName: staffForm.roleName.trim(),
-      });
-      setSuccess("Staff created successfully");
+    // Simulate API call
+    setTimeout(() => {
+      setSuccess("Staff created successfully (Demo Mode)");
       setStaffForm({ employeeId: "", email: "", password: "", roleName: "Warden" });
-      onUserCreated?.();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create staff");
-    } finally {
       setLoading(false);
-    }
+      onUserCreated?.();
+    }, 1000);
   };
 
   return (
@@ -142,9 +109,8 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
               setError("");
               setSuccess("");
             }}
-            className={`flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium transition-all ${
-              userType === "student" ? "bg-teal-600 text-white shadow-md" : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-            }`}
+            className={`flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium transition-all ${userType === "student" ? "bg-teal-600 text-white shadow-md" : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+              }`}
           >
             <Users className="w-5 h-5" />
             <span>Create Student</span>
@@ -156,9 +122,8 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
               setError("");
               setSuccess("");
             }}
-            className={`flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium transition-all ${
-              userType === "staff" ? "bg-teal-600 text-white shadow-md" : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-            }`}
+            className={`flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium transition-all ${userType === "staff" ? "bg-teal-600 text-white shadow-md" : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+              }`}
           >
             <Briefcase className="w-5 h-5" />
             <span>Create Staff</span>
@@ -243,16 +208,6 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
               placeholder="Email (optional)"
               disabled={loading}
             />
-            <div>
-              <label className="block text-sm text-slate-600 mb-1">Profile Photo (optional)</label>
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(e) => setStudentImageFile(e.target.files?.[0] || null)}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
-                disabled={loading}
-              />
-            </div>
             <input
               type="password"
               value={studentForm.password}
@@ -321,3 +276,4 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
     </div>
   );
 }
+

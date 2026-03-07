@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   User,
   LogOut,
@@ -19,7 +19,6 @@ import { AttendanceView } from "./AttendanceView";
 import { FeesView } from "./FeesView";
 import { FeedbackView } from "./FeedbackView";
 import { CanteenMenuView } from "./CanteenMenuView";
-import { api } from "../../lib/api";
 
 type Tab = "dashboard" | "profile" | "leave" | "attendance" | "fees" | "feedback" | "canteen";
 type LeaveStatus = "Pending" | "Approved" | "Rejected";
@@ -57,56 +56,42 @@ type SidebarItemProps = {
   isOpen: boolean;
 };
 
+// Static dummy data for dashboard overview
+const DUMMY_DASHBOARD = {
+  leaves: [
+    { id: "1", type: "Home Visit", fromDate: "2026-03-10", toDate: "2026-03-15", status: "Approved" as LeaveStatus },
+    { id: "2", type: "Sick Leave", fromDate: "2026-03-20", toDate: "2026-03-22", status: "Pending" as LeaveStatus },
+  ],
+  profile: { roomNo: "A-101" },
+  attendance: [
+    { STATUS: "Present" }, { STATUS: "Present" }, { STATUS: "Absent" }, { STATUS: "Present" },
+  ],
+  fees: [
+    { AMOUNT_DUE: 25000, STATUS: "Partial" },
+    { AMOUNT_DUE: 0, STATUS: "Paid" },
+  ],
+  menu: [
+    { IS_AVAILABLE: 1 }, { IS_AVAILABLE: 1 }, { IS_AVAILABLE: 0 }, { IS_AVAILABLE: 1 },
+  ],
+};
+
 export function StudentDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [leaves, setLeaves] = useState<LeaveItem[]>([]);
-  const [profile, setProfile] = useState<ProfileSnapshot>({ roomNo: "" });
-  const [attendance, setAttendance] = useState<AttendanceItem[]>([]);
-  const [fees, setFees] = useState<FeeItem[]>([]);
-  const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [leaves, setLeaves] = useState<LeaveItem[]>(DUMMY_DASHBOARD.leaves);
+  const [profile, setProfile] = useState<ProfileSnapshot>(DUMMY_DASHBOARD.profile);
+  const [attendance] = useState<AttendanceItem[]>(DUMMY_DASHBOARD.attendance);
+  const [fees] = useState<FeeItem[]>(DUMMY_DASHBOARD.fees);
+  const [menu] = useState<MenuItem[]>(DUMMY_DASHBOARD.menu);
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("userRole");
-    if (!token || role !== "Student") {
+    if (!token || (role !== "Student" && role !== "student")) {
       navigate("/");
     }
   }, [navigate]);
-
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        const [leavesRes, profileRes, attendanceRes, feesRes, menuRes] = await Promise.all([
-          api.get("/leave/my-leaves"),
-          api.get("/student/profile"),
-          api.get("/student/attendance"),
-          api.get("/student/fees"),
-          api.get("/student/canteen-menu"),
-        ]);
-
-        const mappedLeaves = (leavesRes.data?.leaves || []).map((row: any) => ({
-          id: String(row.LEAVE_ID),
-          type: row.LEAVE_TYPE || "General",
-          fromDate: row.FROM_DATE || "",
-          toDate: row.TO_DATE || "",
-          status: row.STATUS as LeaveStatus,
-        }));
-        setLeaves(mappedLeaves);
-
-        const roomNo = profileRes.data?.profile?.ROOM_NO || "";
-        setProfile({ roomNo });
-        setAttendance(attendanceRes.data?.attendance || []);
-        setFees(feesRes.data?.fees || []);
-        setMenu(menuRes.data?.menu || []);
-      } catch {
-        // Keep dashboard lightweight; dedicated pages handle detailed errors.
-      }
-    };
-
-    loadDashboardData();
-  }, []);
 
   const leaveStats = useMemo(() => {
     const total = leaves.length;
@@ -130,15 +115,15 @@ export function StudentDashboard() {
   }, [fees]);
 
   const menuStats = useMemo(() => {
-    const isAvailable = (value: number | string | boolean) => {
+    const isAvailableValue = (value: number | string | boolean) => {
       if (typeof value === "boolean") return value;
       if (typeof value === "number") return value === 1;
       const normalized = String(value || "").toLowerCase();
       return normalized === "1" || normalized === "y" || normalized === "yes" || normalized === "true";
     };
 
-    const available = menu.filter((m) => isAvailable(m.IS_AVAILABLE)).length;
-    return { total: menu.length, available };
+    const availableCount = menu.filter((m) => isAvailableValue(m.IS_AVAILABLE)).length;
+    return { total: menu.length, available: availableCount };
   }, [menu]);
 
   const handleLogout = () => {
@@ -231,13 +216,12 @@ export function StudentDashboard() {
                           </p>
                         </div>
                         <span
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            leave.status === "Approved"
+                          className={`text-xs px-2 py-1 rounded-full ${leave.status === "Approved"
                               ? "bg-emerald-100 text-emerald-700"
                               : leave.status === "Pending"
                                 ? "bg-amber-100 text-amber-700"
                                 : "bg-rose-100 text-rose-700"
-                          }`}
+                            }`}
                         >
                           {leave.status}
                         </span>
@@ -374,9 +358,8 @@ export function StudentDashboard() {
         <div className="p-4 border-t border-slate-100">
           <button
             onClick={handleLogout}
-            className={`flex items-center w-full p-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors ${
-              !isSidebarOpen ? "justify-center" : ""
-            }`}
+            className={`flex items-center w-full p-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors ${!isSidebarOpen ? "justify-center" : ""
+              }`}
           >
             <LogOut size={20} />
             {isSidebarOpen && <span className="ml-3 font-medium">Logout</span>}
@@ -407,11 +390,10 @@ function SidebarItem({ icon, label, active, onClick, isOpen }: SidebarItemProps)
   return (
     <button
       onClick={onClick}
-      className={`flex items-center w-full p-3 rounded-xl transition-all duration-200 ${
-        active
+      className={`flex items-center w-full p-3 rounded-xl transition-all duration-200 ${active
           ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
           : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-      } ${!isOpen ? "justify-center" : ""}`}
+        } ${!isOpen ? "justify-center" : ""}`}
     >
       {icon}
       {isOpen && <span className="ml-3 font-medium">{label}</span>}

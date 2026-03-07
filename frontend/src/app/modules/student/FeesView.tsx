@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { api } from "../../lib/api";
+import { useMemo, useState } from "react";
 
 type FeeRow = {
   FEE_ID: number;
@@ -11,24 +10,13 @@ type FeeRow = {
   STATUS: string;
 };
 
-export function FeesView() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [rows, setRows] = useState<FeeRow[]>([]);
+const DUMMY_FEES: FeeRow[] = [
+  { FEE_ID: 1, TERM_NAME: "Fall 2025", AMOUNT_TOTAL: 50000, AMOUNT_PAID: 50000, AMOUNT_DUE: 0, DUE_DATE: "2025-08-01", STATUS: "Paid" },
+  { FEE_ID: 2, TERM_NAME: "Spring 2026", AMOUNT_TOTAL: 50000, AMOUNT_PAID: 25000, AMOUNT_DUE: 25000, DUE_DATE: "2026-01-15", STATUS: "Partial" },
+];
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await api.get("/student/fees");
-        setRows(res.data.fees || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load fee details");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+export function FeesView() {
+  const [rows] = useState<FeeRow[]>(DUMMY_FEES);
 
   const totals = useMemo(() => {
     const totalFees = rows.reduce((s, r) => s + Number(r.AMOUNT_TOTAL || 0), 0);
@@ -37,12 +25,9 @@ export function FeesView() {
     return { totalFees, paidFees, pendingFees };
   }, [rows]);
 
-  if (loading) return <div className="flex items-center justify-center h-64">Loading fees...</div>;
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-800">Fee Details</h2>
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <p className="text-slate-500">Pending Balance</p>
         <p className="text-4xl font-bold text-red-600 mt-2">Rs {totals.pendingFees.toLocaleString()}</p>

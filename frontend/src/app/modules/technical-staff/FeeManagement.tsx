@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
-import { api } from "../../lib/api";
 
 type FeeRow = {
   FEE_ID: number;
@@ -32,11 +31,16 @@ const defaultForm: FeeForm = {
   status: "Pending",
 };
 
+const DUMMY_FEES: FeeRow[] = [
+  { FEE_ID: 1, USER_ID: 1, STUDENT_ID: "STU001", TERM_NAME: "Semester 1 (2025)", AMOUNT_TOTAL: 50000, AMOUNT_PAID: 50000, AMOUNT_DUE: 0, STATUS: "Paid" },
+  { FEE_ID: 2, USER_ID: 3, STUDENT_ID: "STU002", TERM_NAME: "Semester 1 (2025)", AMOUNT_TOTAL: 50000, AMOUNT_PAID: 20000, AMOUNT_DUE: 30000, STATUS: "Partially Paid" },
+  { FEE_ID: 3, USER_ID: 5, STUDENT_ID: "STU003", TERM_NAME: "Semester 1 (2025)", AMOUNT_TOTAL: 55000, AMOUNT_PAID: 0, AMOUNT_DUE: 55000, STATUS: "Pending" },
+];
+
 export function FeeManagement() {
-  const [fees, setFees] = useState<FeeRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [hasAppliedFilters, setHasAppliedFilters] = useState(false);
-  const [error, setError] = useState("");
+  const [fees, setFees] = useState<FeeRow[]>(DUMMY_FEES);
+  const [loading, setLoading] = useState(false);
+  const [hasAppliedFilters, setHasAppliedFilters] = useState(true);
   const [success, setSuccess] = useState("");
   const [studentIdFilter, setStudentIdFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -45,49 +49,42 @@ export function FeeManagement() {
   const [editingFeeId, setEditingFeeId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<FeeForm>(defaultForm);
 
-  const loadFees = async () => {
+  const loadFees = () => {
     setLoading(true);
-    setError("");
-    try {
-      const res = await api.get("/technical-staff/fees", {
-        params: {
-          studentId: studentIdFilter.trim() || undefined,
-          status: statusFilter.trim() || undefined,
-        },
-      });
-      setFees(res.data?.fees || []);
+    setTimeout(() => {
+      let filtered = DUMMY_FEES;
+      if (studentIdFilter.trim()) {
+        filtered = filtered.filter(f => f.STUDENT_ID.toLowerCase().includes(studentIdFilter.toLowerCase()));
+      }
+      if (statusFilter) {
+        filtered = filtered.filter(f => f.STATUS === statusFilter);
+      }
+      setFees(filtered);
       setHasAppliedFilters(true);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load fee records");
-    } finally {
       setLoading(false);
-    }
+    }, 500);
   };
 
-  useEffect(() => {
-    setLoading(false);
-  }, []);
-
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-    try {
-      await api.post("/technical-staff/fees", {
-        studentId: createForm.studentId.trim(),
-        termName: createForm.termName.trim(),
-        amountTotal: Number(createForm.amountTotal),
-        amountPaid: Number(createForm.amountPaid || 0),
-        dueDate: createForm.dueDate || null,
-        status: createForm.status,
-      });
-      setSuccess("Fee record created successfully");
+    setLoading(true);
+    setTimeout(() => {
+      const newFee: FeeRow = {
+        FEE_ID: Math.random(),
+        USER_ID: 999,
+        STUDENT_ID: createForm.studentId,
+        TERM_NAME: createForm.termName,
+        AMOUNT_TOTAL: Number(createForm.amountTotal),
+        AMOUNT_PAID: Number(createForm.amountPaid),
+        AMOUNT_DUE: Number(createForm.amountTotal) - Number(createForm.amountPaid),
+        STATUS: createForm.status,
+      };
+      setFees(prev => [newFee, ...prev]);
+      setSuccess("Fee record created successfully (Demo Mode)");
       setCreateForm(defaultForm);
       setIsCreateModalOpen(false);
-      await loadFees();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create fee record");
-    }
+      setLoading(false);
+    }, 1000);
   };
 
   const startEdit = (row: FeeRow) => {
@@ -102,25 +99,23 @@ export function FeeManagement() {
     });
   };
 
-  const handleUpdate = async (e: React.FormEvent) => {
+  const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingFeeId) return;
-    setError("");
-    setSuccess("");
-    try {
-      await api.put(`/technical-staff/fees/${editingFeeId}`, {
-        termName: editForm.termName.trim(),
-        amountTotal: Number(editForm.amountTotal),
-        amountPaid: Number(editForm.amountPaid || 0),
-        dueDate: editForm.dueDate || null,
-        status: editForm.status,
-      });
-      setSuccess("Fee record updated successfully");
+    setLoading(true);
+    setTimeout(() => {
+      setFees(prev => prev.map(f => f.FEE_ID === editingFeeId ? {
+        ...f,
+        TERM_NAME: editForm.termName,
+        AMOUNT_TOTAL: Number(editForm.amountTotal),
+        AMOUNT_PAID: Number(editForm.amountPaid),
+        AMOUNT_DUE: Number(editForm.amountTotal) - Number(editForm.amountPaid),
+        STATUS: editForm.status
+      } : f));
+      setSuccess("Fee record updated successfully (Demo Mode)");
       setEditingFeeId(null);
-      await loadFees();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update fee record");
-    }
+      setLoading(false);
+    }, 1000);
   };
 
   return (
@@ -134,7 +129,6 @@ export function FeeManagement() {
           onClick={() => {
             setCreateForm(defaultForm);
             setIsCreateModalOpen(true);
-            setError("");
             setSuccess("");
           }}
           className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium"
@@ -144,7 +138,6 @@ export function FeeManagement() {
         </button>
       </div>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
       {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{success}</div>}
 
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
@@ -285,3 +278,4 @@ function ModalShell({
     </div>
   );
 }
+

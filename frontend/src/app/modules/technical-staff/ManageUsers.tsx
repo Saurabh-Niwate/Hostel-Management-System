@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Users, Trash2, Search } from "lucide-react";
-import { api } from "../../lib/api";
 
 interface ManageUsersProps {
   refreshTrigger?: number;
@@ -32,18 +31,46 @@ type UserDetailsResponse = {
   } | null;
 };
 
+const DUMMY_USERS: UserRow[] = [
+  { USER_ID: 1, STUDENT_ID: "STU001", EMAIL: "saurabh@example.com", ROLE_NAME: "Student" },
+  { USER_ID: 2, EMP_ID: "EMP001", EMAIL: "warden@example.com", ROLE_NAME: "Warden" },
+  { USER_ID: 3, STUDENT_ID: "STU002", EMAIL: "amit@example.com", ROLE_NAME: "Student" },
+  { USER_ID: 4, EMP_ID: "EMP002", EMAIL: "security@example.com", ROLE_NAME: "Security" },
+];
+
+const DUMMY_ROLES: RoleRow[] = [
+  { ROLE_ID: 1, ROLE_NAME: "Student" },
+  { ROLE_ID: 2, ROLE_NAME: "Warden" },
+  { ROLE_ID: 3, ROLE_NAME: "Security" },
+  { ROLE_ID: 4, ROLE_NAME: "Admin" },
+  { ROLE_ID: 5, ROLE_NAME: "Technical Staff" },
+];
+
+const getDummyUserDetails = (userId: number): UserDetailsResponse => {
+  const user = DUMMY_USERS.find(u => u.USER_ID === userId) || DUMMY_USERS[0];
+  return {
+    user,
+    studentProfile: user.ROLE_NAME === "Student" ? {
+      FULL_NAME: user.STUDENT_ID === "STU001" ? "Saurabh Niwate" : "Amit Shah",
+      PHONE: "9876543210",
+      GUARDIAN_NAME: "Sunil Niwate",
+      GUARDIAN_PHONE: "9123456789",
+      ADDRESS: "123, Hostel Block A",
+      ROOM_NO: user.STUDENT_ID === "STU001" ? "A-101" : "A-102",
+    } : null
+  };
+};
+
 export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
-  const [users, setUsers] = useState<UserRow[]>([]);
-  const [roles, setRoles] = useState<RoleRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<UserRow[]>(DUMMY_USERS);
+  const [roles] = useState<RoleRow[]>(DUMMY_ROLES);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [selectedDetails, setSelectedDetails] = useState<UserDetailsResponse | null>(null);
   const [roleTarget, setRoleTarget] = useState<UserRow | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<UserRow | null>(null);
   const [editStudentTarget, setEditStudentTarget] = useState<UserDetailsResponse | null>(null);
-  const [editStudentImageFile, setEditStudentImageFile] = useState<File | null>(null);
   const [updatingStudent, setUpdatingStudent] = useState(false);
   const [editStudentForm, setEditStudentForm] = useState({
     email: "",
@@ -57,75 +84,29 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
   const [newRole, setNewRole] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  const fetchUserDetails = async (userId: number) => {
-    const res = await api.get(`/technical-staff/users/${userId}`);
-    return res.data as UserDetailsResponse;
-  };
+  const filteredUsers = useMemo(() => {
+    return users.filter(u =>
+      (u.STUDENT_ID || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (u.EMP_ID || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (u.EMAIL || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.ROLE_NAME.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [users, searchQuery]);
 
-  const loadUsers = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await api.get("/technical-staff/users", {
-        params: { q: searchQuery || undefined },
-      });
-      setUsers(response.data.users || []);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load users");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const loadRoles = async () => {
-      try {
-        const res = await api.get("/technical-staff/roles");
-        const rows = res.data?.roles || [];
-        setRoles(rows);
-      } catch {
-        setRoles([]);
-      }
-    };
-    loadRoles();
-  }, []);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      loadUsers();
-    }, 200);
-    return () => clearTimeout(timeout);
-  }, [searchQuery, refreshTrigger]);
-
-  const handleDelete = async (userId: number) => {
-    if (!confirm("Are you sure you want to delete this user? This will use force delete.")) return;
-    setError("");
-    setSuccess("");
-    try {
-      await api.delete(`/technical-staff/users/${userId}`, {
-        params: { force: true },
-      });
-      setSuccess("User deleted successfully (force)");
-      loadUsers();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to delete user");
-    }
+  const handleDelete = (userId: number) => {
+    if (!confirm("Are you sure you want to delete this user? (Demo Mode)")) return;
+    setUsers(prev => prev.filter(u => u.USER_ID !== userId));
+    setSuccess("User deleted successfully (Demo Mode)");
   };
 
   const getIdentifier = (u: UserRow) => u.STUDENT_ID || u.EMP_ID || "-";
 
-  const handleViewDetails = async (u: UserRow) => {
-    setError("");
+  const handleViewDetails = (u: UserRow) => {
     setSuccess("");
     setRoleTarget(null);
     setPasswordTarget(null);
     setEditStudentTarget(null);
-    try {
-      const data = await fetchUserDetails(u.USER_ID);
-      setSelectedDetails(data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch user details");
-    }
+    setSelectedDetails(getDummyUserDetails(u.USER_ID));
   };
 
   const openRolePanel = (u: UserRow) => {
@@ -134,7 +115,6 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
     setEditStudentTarget(null);
     setRoleTarget(u);
     setNewRole(u.ROLE_NAME || "");
-    setError("");
     setSuccess("");
   };
 
@@ -144,42 +124,23 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
     setEditStudentTarget(null);
     setPasswordTarget(u);
     setNewPassword("");
-    setError("");
     setSuccess("");
   };
 
-  const handleRoleUpdate = async (e: React.FormEvent) => {
+  const handleRoleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!roleTarget || !newRole.trim()) return;
-    setError("");
-    setSuccess("");
-    try {
-      await api.put(`/technical-staff/users/${roleTarget.USER_ID}/role`, {
-        roleName: newRole.trim(),
-      });
-      setSuccess(`Role updated for ${getIdentifier(roleTarget)}`);
-      setRoleTarget(null);
-      loadUsers();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update role");
-    }
+    setUsers(prev => prev.map(u => u.USER_ID === roleTarget.USER_ID ? { ...u, ROLE_NAME: newRole } : u));
+    setSuccess(`Role updated to ${newRole} for ${getIdentifier(roleTarget)} (Demo)`);
+    setRoleTarget(null);
   };
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
+  const handlePasswordReset = (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordTarget || !newPassword.trim()) return;
-    setError("");
-    setSuccess("");
-    try {
-      await api.put(`/technical-staff/users/${passwordTarget.USER_ID}/password`, {
-        newPassword: newPassword.trim(),
-      });
-      setSuccess(`Password reset for ${getIdentifier(passwordTarget)}`);
-      setPasswordTarget(null);
-      setNewPassword("");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to reset password");
-    }
+    setSuccess(`Password reset for ${getIdentifier(passwordTarget)} (Demo)`);
+    setPasswordTarget(null);
+    setNewPassword("");
   };
 
   const openEditStudentFromDetails = () => {
@@ -194,47 +155,17 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
       address: selectedDetails.studentProfile?.ADDRESS || "",
       roomNo: selectedDetails.studentProfile?.ROOM_NO || "",
     });
-    setEditStudentImageFile(null);
   };
 
-  const handleUpdateStudent = async (e: React.FormEvent) => {
+  const handleUpdateStudent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editStudentTarget?.user.STUDENT_ID) return;
-    setError("");
-    setSuccess("");
     setUpdatingStudent(true);
-    try {
-      await api.put(`/technical-staff/students/${editStudentTarget.user.STUDENT_ID}`, {
-        email: editStudentForm.email.trim() || null,
-        fullName: editStudentForm.fullName.trim() || null,
-        phone: editStudentForm.phone.trim() || null,
-        guardianName: editStudentForm.guardianName.trim() || null,
-        guardianPhone: editStudentForm.guardianPhone.trim() || null,
-        address: editStudentForm.address.trim() || null,
-        roomNo: editStudentForm.roomNo.trim() || null,
-      });
-
-      if (editStudentImageFile) {
-        const formData = new FormData();
-        formData.append("image", editStudentImageFile);
-        await api.post(
-          `/technical-staff/students/${editStudentTarget.user.STUDENT_ID}/profile-image`,
-          formData,
-          { headers: { "Content-Type": "multipart/form-data" } }
-        );
-      }
-
-      const freshDetails = await fetchUserDetails(editStudentTarget.user.USER_ID);
-      setSelectedDetails(freshDetails);
-      setSuccess(`Student updated: ${editStudentTarget.user.STUDENT_ID}`);
+    setTimeout(() => {
+      setSuccess(`Student updated: ${editStudentTarget.user.STUDENT_ID} (Demo)`);
       setEditStudentTarget(null);
-      setEditStudentImageFile(null);
-      await loadUsers();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update student");
-    } finally {
       setUpdatingStudent(false);
-    }
+    }, 500);
   };
 
   return (
@@ -245,11 +176,10 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
         </div>
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Manage Users</h2>
-          <p className="text-slate-600 text-sm">View and delete users in the system</p>
+          <p className="text-slate-600 text-sm">View and manage users in the system</p>
         </div>
       </div>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
       {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{success}</div>}
 
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
@@ -279,10 +209,10 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
             <tbody className="divide-y divide-slate-200">
               {loading ? (
                 <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-500">Loading users...</td></tr>
-              ) : users.length === 0 ? (
+              ) : filteredUsers.length === 0 ? (
                 <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-500">No users found</td></tr>
               ) : (
-                users.map((u) => (
+                filteredUsers.map((u) => (
                   <tr key={u.USER_ID} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 text-sm text-slate-900">{u.STUDENT_ID || u.EMP_ID || `USER-${u.USER_ID}`}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">{u.EMAIL || "-"}</td>
@@ -319,21 +249,6 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
               >
                 Edit Student
               </button>
-            </div>
-          )}
-          {selectedDetails.user.ROLE_NAME === "Student" && (
-            <div className="mb-4 flex items-center gap-3">
-              <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
-                {selectedDetails.studentProfile?.PROFILE_IMAGE_URL ? (
-                  <img
-                    src={selectedDetails.studentProfile.PROFILE_IMAGE_URL}
-                    alt="Student profile"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xs">No Photo</span>
-                )}
-              </div>
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
@@ -401,15 +316,6 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
             <input value={editStudentForm.guardianPhone} onChange={(e) => setEditStudentForm({ ...editStudentForm, guardianPhone: e.target.value })} placeholder="Guardian Phone" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <input value={editStudentForm.roomNo} onChange={(e) => setEditStudentForm({ ...editStudentForm, roomNo: e.target.value })} placeholder="Room No" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <textarea value={editStudentForm.address} onChange={(e) => setEditStudentForm({ ...editStudentForm, address: e.target.value })} placeholder="Address" className="w-full px-3 py-2 border border-slate-300 rounded-lg" rows={3} />
-            <div>
-              <label className="block text-sm text-slate-600 mb-1">Profile Photo (optional)</label>
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(e) => setEditStudentImageFile(e.target.files?.[0] || null)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
-              />
-            </div>
             <button type="submit" disabled={updatingStudent} className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50">
               {updatingStudent ? "Updating..." : "Update Student"}
             </button>
@@ -441,3 +347,4 @@ function ModalShell({
     </div>
   );
 }
+

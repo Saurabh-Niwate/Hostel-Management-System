@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Plus, Calendar, Clock, AlertCircle, X, CheckCircle, Trash2, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { format } from "date-fns";
-import { api } from "../../lib/api";
 
 type LeaveStatus = "Pending" | "Approved" | "Rejected";
 
@@ -20,25 +19,42 @@ type Props = {
   onLeavesUpdated?: (leaves: Leave[]) => void;
 };
 
-const mapLeave = (row: any): Leave => ({
-  id: String(row.LEAVE_ID),
-  type: row.LEAVE_TYPE || "Leave",
-  startDate: row.FROM_DATE,
-  endDate: row.TO_DATE,
-  reason: row.REASON || "",
-  status: row.STATUS as LeaveStatus,
-  appliedOn: row.CREATED_AT ? row.CREATED_AT.split(" ")[0] : "",
-});
+const DUMMY_LEAVES: Leave[] = [
+  {
+    id: "1",
+    type: "Home Visit",
+    startDate: "2026-03-10",
+    endDate: "2026-03-15",
+    reason: "Going home for festival",
+    status: "Approved",
+    appliedOn: "2026-03-01",
+  },
+  {
+    id: "2",
+    type: "Sick Leave",
+    startDate: "2026-03-20",
+    endDate: "2026-03-22",
+    reason: "Not feeling well",
+    status: "Pending",
+    appliedOn: "2026-03-05",
+  },
+  {
+    id: "3",
+    type: "Outing",
+    startDate: "2026-03-08",
+    endDate: "2026-03-08",
+    reason: "Shopping",
+    status: "Rejected",
+    appliedOn: "2026-03-06",
+  },
+];
 
 export function LeaveManagement({ onLeavesUpdated }: Props) {
   const [activeTab, setActiveTab] = useState<"list" | "apply">("list");
-  const [leaves, setLeaves] = useState<Leave[]>([]);
-  const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
-  const [selectedLeaveId, setSelectedLeaveId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadingDetail, setLoadingDetail] = useState(false);
-  const [error, setError] = useState("");
+  const [leaves, setLeaves] = useState<Leave[]>(DUMMY_LEAVES);
+  const [selectedLeaveId, setSelectedLeaveId] = useState<string | null>(DUMMY_LEAVES[0]?.id || null);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     type: "Home Visit",
@@ -47,91 +63,52 @@ export function LeaveManagement({ onLeavesUpdated }: Props) {
     reason: "",
   });
 
-  const loadLeaves = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await api.get("/leave/my-leaves");
-      const mapped = (response.data.leaves || []).map(mapLeave);
-      setLeaves(mapped);
-      onLeavesUpdated?.(mapped);
-      if (mapped.length === 0) {
-        setSelectedLeave(null);
-        setSelectedLeaveId(null);
-      } else if (!selectedLeaveId || !mapped.some((l: Leave) => l.id === selectedLeaveId)) {
-        setSelectedLeaveId(mapped[0].id);
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch leave requests");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const selectedLeave = leaves.find(l => l.id === selectedLeaveId) || null;
 
-  useEffect(() => {
-    loadLeaves();
-  }, []);
-
-  useEffect(() => {
-    const loadLeaveDetail = async () => {
-      if (!selectedLeaveId) {
-        setSelectedLeave(null);
-        return;
-      }
-
-      setLoadingDetail(true);
-      try {
-        const response = await api.get(`/leave/${selectedLeaveId}`);
-        setSelectedLeave(mapLeave(response.data.leave || {}));
-      } catch (err: any) {
-        setSelectedLeave(null);
-        setError(err.response?.data?.message || "Failed to fetch leave details");
-      } finally {
-        setLoadingDetail(false);
-      }
-    };
-
-    loadLeaveDetail();
-  }, [selectedLeaveId]);
-
-  const handleApply = async (e: React.FormEvent) => {
+  const handleApply = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError("");
-    try {
-      await api.post("/leave/apply", {
-        leaveType: formData.type,
-        fromDate: formData.startDate,
-        toDate: formData.endDate,
+
+    // Simulate delay
+    setTimeout(() => {
+      const newLeave: Leave = {
+        id: String(Date.now()),
+        type: formData.type,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
         reason: formData.reason,
-      });
+        status: "Pending",
+        appliedOn: format(new Date(), "yyyy-MM-dd"),
+      };
+
+      const updated = [newLeave, ...leaves];
+      setLeaves(updated);
+      onLeavesUpdated?.(updated);
       setFormData({ type: "Home Visit", startDate: "", endDate: "", reason: "" });
       setActiveTab("list");
-      await loadLeaves();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to apply leave");
-    } finally {
+      setSelectedLeaveId(newLeave.id);
       setSubmitting(false);
-    }
+    }, 800);
   };
 
-  const handleCancelLeave = async (id: string, e: React.MouseEvent) => {
+  const handleCancelLeave = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setError("");
-    try {
-      await api.delete(`/leave/${id}`);
-      if (selectedLeaveId === id) {
-        setSelectedLeaveId(null);
-      }
-      await loadLeaves();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to cancel leave");
+    const updated = leaves.filter(l => l.id !== id);
+    setLeaves(updated);
+    onLeavesUpdated?.(updated);
+    if (selectedLeaveId === id) {
+      setSelectedLeaveId(updated[0]?.id || null);
     }
   };
 
   const renderDate = (value: string) => {
     if (!value) return "-";
-    return format(new Date(value), "MMM d, yyyy");
+    try {
+      return format(new Date(value), "MMM d, yyyy");
+    } catch {
+      return value;
+    }
   };
 
   return (
@@ -168,9 +145,7 @@ export function LeaveManagement({ onLeavesUpdated }: Props) {
       {activeTab === "list" ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            {loading ? (
-              <div className="bg-white p-6 rounded-xl border border-slate-100">Loading leaves...</div>
-            ) : leaves.length === 0 ? (
+            {leaves.length === 0 ? (
               <div className="bg-white p-6 rounded-xl border border-slate-100 text-slate-500">
                 No leave requests found.
               </div>
@@ -180,11 +155,10 @@ export function LeaveManagement({ onLeavesUpdated }: Props) {
                   layoutId={leave.id}
                   key={leave.id}
                   onClick={() => setSelectedLeaveId(leave.id)}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                    selectedLeaveId === leave.id
+                  className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedLeaveId === leave.id
                       ? "bg-blue-50 border-blue-200 shadow-md ring-1 ring-blue-500"
                       : "bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm"
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -210,7 +184,7 @@ export function LeaveManagement({ onLeavesUpdated }: Props) {
 
           <div className="lg:col-span-1">
             <AnimatePresence mode="wait">
-              {selectedLeaveId ? (
+              {selectedLeaveId && selectedLeave ? (
                 <motion.div
                   key={selectedLeaveId}
                   initial={{ opacity: 0, x: 20 }}
@@ -225,38 +199,34 @@ export function LeaveManagement({ onLeavesUpdated }: Props) {
                     </button>
                   </div>
 
-                  {loadingDetail || !selectedLeave ? (
-                    <div className="text-slate-500 text-sm">Loading leave details...</div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</label>
-                        <p className="text-slate-800 font-medium">{selectedLeave.type}</p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                          Duration
-                        </label>
-                        <p className="text-slate-800 font-medium">
-                          {renderDate(selectedLeave.startDate)} - {renderDate(selectedLeave.endDate)}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Reason</label>
-                        <p className="text-slate-600 text-sm leading-relaxed mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                          {selectedLeave.reason}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</label>
-                        <div className="mt-1">
-                          <StatusBadge status={selectedLeave.status} />
-                        </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</label>
+                      <p className="text-slate-800 font-medium">{selectedLeave.type}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        Duration
+                      </label>
+                      <p className="text-slate-800 font-medium">
+                        {renderDate(selectedLeave.startDate)} - {renderDate(selectedLeave.endDate)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Reason</label>
+                      <p className="text-slate-600 text-sm leading-relaxed mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        {selectedLeave.reason}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</label>
+                      <div className="mt-1">
+                        <StatusBadge status={selectedLeave.status} />
                       </div>
                     </div>
-                  )}
+                  </div>
 
-                  {selectedLeave && selectedLeave.status === "Pending" && (
+                  {selectedLeave.status === "Pending" && (
                     <div className="mt-8 pt-6 border-t border-slate-100">
                       <button
                         onClick={(e) => handleCancelLeave(selectedLeave.id, e)}

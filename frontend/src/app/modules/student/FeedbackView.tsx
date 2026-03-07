@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MessageSquare, Send, CheckCircle2, Clock, AlertCircle } from "lucide-react";
-import { api } from "../../lib/api";
 
 type FeedbackRow = {
   FEEDBACK_ID: number;
@@ -11,60 +10,44 @@ type FeedbackRow = {
   CREATED_AT: string;
 };
 
+const DUMMY_FEEDBACKS: FeedbackRow[] = [
+  { FEEDBACK_ID: 1, FACILITY_AREA: "Maintenance", MESSAGE: "Fan is not working in Room A-101", RATING: 2, STATUS: "Resolved", CREATED_AT: "2026-03-01" },
+  { FEEDBACK_ID: 2, FACILITY_AREA: "Food / Canteen", MESSAGE: "Need better options for breakfast", RATING: 3, STATUS: "Pending", CREATED_AT: "2026-03-05" },
+];
+
 export function FeedbackView() {
-  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [facilityArea, setFacilityArea] = useState("Maintenance");
   const [message, setMessage] = useState("");
   const [rating, setRating] = useState<string>("5");
-  const [feedbacks, setFeedbacks] = useState<FeedbackRow[]>([]);
+  const [feedbacks, setFeedbacks] = useState<FeedbackRow[]>(DUMMY_FEEDBACKS);
 
-  const loadFeedback = async () => {
-    try {
-      const res = await api.get("/student/feedback");
-      setFeedbacks(res.data?.feedback || []);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load feedback");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadFeedback();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     setIsSubmitting(true);
-    try {
-      await api.post("/student/feedback", {
-        facilityArea: facilityArea.trim(),
-        message: message.trim(),
-        rating: Number(rating),
-      });
+
+    // Simulate API delay
+    setTimeout(() => {
+      const newFeedback: FeedbackRow = {
+        FEEDBACK_ID: feedbacks.length + 1,
+        FACILITY_AREA: facilityArea.trim(),
+        MESSAGE: message.trim(),
+        RATING: Number(rating),
+        STATUS: "Pending",
+        CREATED_AT: new Date().toISOString().split("T")[0],
+      };
+
+      setFeedbacks([newFeedback, ...feedbacks]);
       setSuccess("Feedback submitted successfully");
       setMessage("");
       setRating("5");
-      await loadFeedback();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to submit feedback");
-    } finally {
       setIsSubmitting(false);
-    }
+    }, 500);
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">
@@ -151,9 +134,8 @@ export function FeedbackView() {
               </div>
               <div className="ml-14 md:ml-0 flex items-center">
                 <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium flex items-center ${
-                    item.STATUS === "Resolved" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-medium flex items-center ${item.STATUS === "Resolved" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                    }`}
                 >
                   {item.STATUS}
                 </span>
@@ -172,3 +154,4 @@ export function FeedbackView() {
     </div>
   );
 }
+

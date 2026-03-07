@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { api } from "../../lib/api";
+import { useState } from "react";
 
 interface Staff {
   USER_ID: number;
@@ -8,24 +7,16 @@ interface Staff {
   ROLE_NAME: string;
 }
 
-export function StaffPage() {
-  const [staff, setStaff] = useState<Staff[]>([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+const DUMMY_STAFF: Staff[] = [
+  { USER_ID: 2, EMP_ID: "EMP001", EMAIL: "warden@example.com", ROLE_NAME: "Warden" },
+  { USER_ID: 4, EMP_ID: "EMP002", EMAIL: "security@example.com", ROLE_NAME: "Security" },
+  { USER_ID: 6, EMP_ID: "EMP003", EMAIL: "canteen@example.com", ROLE_NAME: "Canteen Owner" },
+  { USER_ID: 8, EMP_ID: "EMP004", EMAIL: "tech@example.com", ROLE_NAME: "Technical Staff" },
+];
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await api.get("/technical-staff/staff");
-        setStaff(res.data?.staff || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load staff");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+export function StaffPage() {
+  const [staff] = useState<Staff[]>(DUMMY_STAFF);
+  const [loading] = useState(false);
 
   if (loading) {
     return (
@@ -37,14 +28,9 @@ export function StaffPage() {
 
   return (
     <div className="space-y-6">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200">
         <div className="px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-bold text-slate-900">Staff Members</h3>
+          <h3 className="text-lg font-bold text-slate-900">Staff Members (Demo Mode)</h3>
         </div>
 
         {staff.length === 0 ? (
@@ -81,3 +67,4 @@ export function StaffPage() {
     </div>
   );
 }
+

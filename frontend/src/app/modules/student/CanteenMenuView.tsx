@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Coffee, Utensils, UtensilsCrossed, Apple, Clock } from "lucide-react";
-import { api } from "../../lib/api";
 
 type MenuRow = {
   MENU_ID: number;
@@ -9,6 +8,14 @@ type MenuRow = {
   ITEM_NAME: string;
   IS_AVAILABLE: string | number | boolean | null;
 };
+
+const DUMMY_MENU: MenuRow[] = [
+  { MENU_ID: 1, MENU_DATE: "2026-03-06", MEAL_TYPE: "Breakfast", ITEM_NAME: "Idli Sambar", IS_AVAILABLE: 1 },
+  { MENU_ID: 2, MENU_DATE: "2026-03-06", MEAL_TYPE: "Breakfast", ITEM_NAME: "Tea/Coffee", IS_AVAILABLE: 1 },
+  { MENU_ID: 3, MENU_DATE: "2026-03-06", MEAL_TYPE: "Lunch", ITEM_NAME: "Chana Masala & Rice", IS_AVAILABLE: 1 },
+  { MENU_ID: 4, MENU_DATE: "2026-03-06", MEAL_TYPE: "Snacks", ITEM_NAME: "Samosa", IS_AVAILABLE: 0 },
+  { MENU_ID: 5, MENU_DATE: "2026-03-06", MEAL_TYPE: "Dinner", ITEM_NAME: "Dal Makhani & Roti", IS_AVAILABLE: 1 },
+];
 
 const iconByMeal: Record<string, JSX.Element> = {
   Breakfast: <Coffee size={24} className="text-amber-600" />,
@@ -25,29 +32,13 @@ const colorByMeal: Record<string, { bg: string; border: string }> = {
 };
 
 export function CanteenMenuView() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [menuRows, setMenuRows] = useState<MenuRow[]>([]);
+  const [menuRows, setMenuRows] = useState<MenuRow[]>(DUMMY_MENU);
   const [menuDate, setMenuDate] = useState("");
 
-  const loadMenu = async (selectedDate?: string) => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await api.get("/student/canteen-menu", {
-        params: selectedDate ? { date: selectedDate } : undefined,
-      });
-      setMenuRows(res.data?.menu || []);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load canteen menu");
-    } finally {
-      setLoading(false);
-    }
+  const loadMenu = (selectedDate?: string) => {
+    // In a real app we'd fetch by date. For static, just reset or keep same dummy data.
+    setMenuRows(DUMMY_MENU);
   };
-
-  useEffect(() => {
-    loadMenu();
-  }, []);
 
   const grouped = useMemo(() => {
     const map = new Map<string, MenuRow[]>();
@@ -69,14 +60,6 @@ export function CanteenMenuView() {
     return false;
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-      </div>
-    );
-  }
-
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -85,8 +68,6 @@ export function CanteenMenuView() {
 
   return (
     <div className="space-y-6">
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
-
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Canteen Menu</h2>
@@ -151,3 +132,4 @@ export function CanteenMenuView() {
     </div>
   );
 }
+
