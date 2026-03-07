@@ -4,11 +4,9 @@ import { LoginPage } from "./components/LoginPage";
 import { StudentDashboard } from "./modules/student/StudentDashboard";
 import { TechnicalStaffDashboard } from "./modules/technical-staff/TechnicalStaffDashboard";
 import { AdminDashboard } from "./modules/admin/AdminDashboard";
+import { SecurityDashboard } from "./modules/security/SecurityDashboard";
 function WardenDashboard() {
   return <h1>Warden Dashboard</h1>;
-}
-function SecurityDashboard() {
-  return <h1>Security Dashboard</h1>;
 }
 function CanteenOwnerDashboard() {
   return <h1>Canteen Owner Dashboard</h1>;
