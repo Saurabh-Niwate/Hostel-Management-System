@@ -15,6 +15,14 @@ INSERT INTO users (emp_id, password, role_id) VALUES ('SEC001', '$2b$10$5vD75.1T
 INSERT INTO users (emp_id, password, role_id) VALUES ('CAN001', '$2b$10$6l.Y1ydjVW5TlE7i4z8lBeeawuVrHJ5dJyVPJc8o.dZ5wTW4hloVG', 6);
 SELECT * FROM users;
 
+INSERT INTO rooms (room_no, block_name, floor_no, capacity, room_type, is_active)
+VALUES ('A-101', 'Block A', 1, 3, 'Regular', 1);
+INSERT INTO rooms (room_no, block_name, floor_no, capacity, room_type, is_active)
+VALUES ('A-102', 'Block A', 1, 3, 'Regular', 1);
+INSERT INTO rooms (room_no, block_name, floor_no, capacity, room_type, is_active)
+VALUES ('B-201', 'Block B', 2, 2, 'Regular', 1);
+SELECT * FROM rooms;
+
 INSERT INTO students (user_id, full_name, phone, guardian_name, guardian_phone, address, room_no)
 VALUES (
   2,
@@ -36,6 +44,18 @@ VALUES (
   TO_DATE('2026-02-20', 'YYYY-MM-DD'),
   TO_DATE('2026-02-22', 'YYYY-MM-DD'),
   'Family function'
+);
+INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status, reviewed_by, reviewed_at, remarks)
+VALUES (
+  2,
+  'Medical Visit',
+  TO_DATE('2026-03-10', 'YYYY-MM-DD'),
+  TO_DATE('2026-03-12', 'YYYY-MM-DD'),
+  'Doctor appointment outside hostel',
+  'Approved',
+  1,
+  SYSDATE,
+  'Approved for medical purpose'
 );
 
 SELECT * FROM leave_requests;
@@ -68,6 +88,20 @@ SELECT * FROM canteen_menu;
 INSERT INTO system_logs (actor_user_id, actor_role, action, entity_type, entity_id, details)
 VALUES (3, 'Technical Staff', 'SEED_INIT', 'SYSTEM', NULL, 'Initial seed data loaded');
 SELECT * FROM system_logs;
+
+INSERT INTO entry_exit_logs (user_id, exit_time, entry_time, status, leave_id, exit_remarks, entry_remarks, created_by, updated_by)
+VALUES (
+  2,
+  SYSDATE - (3/24),
+  SYSDATE - (1/24),
+  'IN',
+  2,
+  'Left for doctor visit',
+  'Returned after consultation',
+  5,
+  5
+);
+SELECT * FROM entry_exit_logs;
 
 COMMIT;
  

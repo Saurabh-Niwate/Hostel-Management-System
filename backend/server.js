@@ -16,6 +16,8 @@ app.use("/api/student", require("./src/routes/studentRoutes"));
 app.use("/api/leave", require("./src/routes/leaveRoutes"));
 app.use("/api/technical-staff", require("./src/routes/technicalStaffRoutes"));
 app.use("/api/admin", require("./src/routes/adminRoutes"));
+app.use("/api/warden", require("./src/routes/wardenRoutes"));
+app.use("/api/security", require("./src/routes/securityRoutes"));
 
 async function start() {
   await initialize();

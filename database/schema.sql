@@ -1,4 +1,5 @@
 
+
 CREATE TABLE roles (
   role_id NUMBER PRIMARY KEY,
   role_name VARCHAR2(50) UNIQUE NOT NULL
@@ -60,6 +61,18 @@ CREATE TABLE students (
     REFERENCES users(user_id)
 );
 
+CREATE TABLE rooms (
+  room_no VARCHAR2(20) PRIMARY KEY,
+  block_name VARCHAR2(50),
+  floor_no NUMBER(3),
+  capacity NUMBER(3) DEFAULT 1 NOT NULL,
+  room_type VARCHAR2(30) DEFAULT 'Regular' NOT NULL,
+  is_active NUMBER(1) DEFAULT 1 NOT NULL,
+  created_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT chk_rooms_capacity CHECK (capacity > 0),
+  CONSTRAINT chk_rooms_active CHECK (is_active IN (0, 1))
+);
+
 CREATE TABLE leave_requests (
   leave_id NUMBER PRIMARY KEY,
   user_id NUMBER NOT NULL,
@@ -119,6 +132,46 @@ BEGIN
   IF :NEW.attendance_id IS NULL THEN
     SELECT attendance_records_seq.NEXTVAL
     INTO :NEW.attendance_id
+    FROM dual;
+  END IF;
+END;
+/
+
+CREATE TABLE entry_exit_logs (
+  log_id NUMBER PRIMARY KEY,
+  user_id NUMBER NOT NULL,
+  exit_time DATE NOT NULL,
+  entry_time DATE,
+  status VARCHAR2(10) DEFAULT 'OUT' NOT NULL,
+  leave_id NUMBER,
+  exit_remarks VARCHAR2(300),
+  entry_remarks VARCHAR2(300),
+  created_by NUMBER NOT NULL,
+  updated_by NUMBER,
+  created_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT fk_entry_exit_user FOREIGN KEY (user_id)
+    REFERENCES users(user_id),
+  CONSTRAINT fk_entry_exit_leave FOREIGN KEY (leave_id)
+    REFERENCES leave_requests(leave_id),
+  CONSTRAINT fk_entry_exit_created_by FOREIGN KEY (created_by)
+    REFERENCES users(user_id),
+  CONSTRAINT fk_entry_exit_updated_by FOREIGN KEY (updated_by)
+    REFERENCES users(user_id),
+  CONSTRAINT chk_entry_exit_status CHECK (status IN ('OUT', 'IN')),
+  CONSTRAINT chk_entry_exit_time CHECK (entry_time IS NULL OR entry_time >= exit_time)
+);
+
+CREATE SEQUENCE entry_exit_logs_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER entry_exit_logs_trigger
+BEFORE INSERT ON entry_exit_logs
+FOR EACH ROW
+BEGIN
+  IF :NEW.log_id IS NULL THEN
+    SELECT entry_exit_logs_seq.NEXTVAL
+    INTO :NEW.log_id
     FROM dual;
   END IF;
 END;
@@ -245,4 +298,11 @@ END;
 
 
 COMMIT;
+
+SELECT leave_id, user_id, status, from_date, to_date
+FROM leave_requests
+WHERE user_id = 2;
+
+
+
 
