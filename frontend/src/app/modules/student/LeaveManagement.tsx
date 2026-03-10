@@ -18,6 +18,7 @@ interface Leave {
 
 type Props = {
   onLeavesUpdated?: (leaves: Leave[]) => void;
+  initialTab?: "list" | "apply";
 };
 
 const mapLeave = (row: any): Leave => ({
@@ -30,8 +31,8 @@ const mapLeave = (row: any): Leave => ({
   appliedOn: row.CREATED_AT ? row.CREATED_AT.split(" ")[0] : "",
 });
 
-export function LeaveManagement({ onLeavesUpdated }: Props) {
-  const [activeTab, setActiveTab] = useState<"list" | "apply">("list");
+export function LeaveManagement({ onLeavesUpdated, initialTab = "list" }: Props) {
+  const [activeTab, setActiveTab] = useState<"list" | "apply">(initialTab);
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [selectedLeaveId, setSelectedLeaveId] = useState<string | null>(null);
@@ -71,6 +72,10 @@ export function LeaveManagement({ onLeavesUpdated }: Props) {
   useEffect(() => {
     loadLeaves();
   }, []);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     const loadLeaveDetail = async () => {

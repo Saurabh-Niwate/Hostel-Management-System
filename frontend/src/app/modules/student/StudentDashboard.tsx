@@ -59,6 +59,7 @@ type SidebarItemProps = {
 
 export function StudentDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+  const [leaveInitialTab, setLeaveInitialTab] = useState<"list" | "apply">("list");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [leaves, setLeaves] = useState<LeaveItem[]>([]);
   const [profile, setProfile] = useState<ProfileSnapshot>({ roomNo: "" });
@@ -171,7 +172,10 @@ export function StudentDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <button
-                onClick={() => setActiveTab("leave")}
+                onClick={() => {
+                  setLeaveInitialTab("apply");
+                  setActiveTab("leave");
+                }}
                 className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm text-left hover:border-blue-200"
               >
                 <p className="text-sm text-slate-500">Quick Action</p>
@@ -274,6 +278,7 @@ export function StudentDashboard() {
       case "leave":
         return (
           <LeaveManagement
+            initialTab={leaveInitialTab}
             onLeavesUpdated={(updatedLeaves) => {
               setLeaves(
                 updatedLeaves.map((l) => ({
@@ -338,7 +343,10 @@ export function StudentDashboard() {
             icon={<FileText size={20} />}
             label="Leave Management"
             active={activeTab === "leave"}
-            onClick={() => setActiveTab("leave")}
+            onClick={() => {
+              setLeaveInitialTab("list");
+              setActiveTab("leave");
+            }}
             isOpen={isSidebarOpen}
           />
           <SidebarItem
