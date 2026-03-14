@@ -2,8 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Building2, Eye, EyeOff, Lock, Mail, User, IdCard } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+
 
 type Role =
   | "admin"
@@ -95,7 +95,7 @@ export function LoginPage() {
       case "email":
         return "admin@hostel.com";
       case "studentId":
-        return "Enter your Student ID";
+        return "Enter your Student ID / Email ID";
       case "employeeId":
         return "Enter your Employee ID";
       default:
@@ -103,7 +103,7 @@ export function LoginPage() {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -112,46 +112,50 @@ export function LoginPage() {
       return;
     }
 
-    try {
-      // Mock API call simulation
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Demo mode: Any password works
+    // Role is determined by the selectedRole
+    const roleMap: Record<Role, string> = {
+      admin: "Admin",
+      student: "Student",
+      technicalStaff: "Technical Staff",
+      warden: "Warden",
+      security: "Security",
+      canteenOwner: "Canteen Owner",
+    };
 
-      // Mock successful login
-      const mockToken = "mock_jwt_token_" + Date.now();
-      const role = selectedRoleData.label;
+    const role = roleMap[selectedRole];
+    const token = "demo-token-" + Math.random().toString(36).substring(7);
 
-      // Store JWT
-      localStorage.setItem("token", mockToken);
-      localStorage.setItem("userRole", role);
-      localStorage.setItem("userIdentifier", identifier);
+    // Store JWT (Demo)
+    localStorage.setItem("token", token);
+    localStorage.setItem("userRole", role);
+    localStorage.setItem("userIdentifier", identifier);
 
-      // Redirect based on role
-      switch (role) {
-        case "Admin":
-          navigate("/admin-dashboard");
-          break;
-        case "Student":
-          navigate("/student-dashboard");
-          break;
-        case "Technical Staff":
-          navigate("/technical-staff-dashboard");
-          break;
-        case "Warden":
-          navigate("/warden-dashboard");
-          break;
-        case "Security":
-          navigate("/security-dashboard");
-          break;
-        case "Canteen Owner":
-          navigate("/canteen-owner-dashboard");
-          break;
-        default:
-          navigate("/");
-      }
-    } catch (err: any) {
-      setError("Login failed. Please try again.");
+    // Redirect based on role
+    switch (role) {
+      case "Admin":
+        navigate("/admin-dashboard");
+        break;
+      case "Student":
+        navigate("/student-dashboard");
+        break;
+      case "Technical Staff":
+        navigate("/technical-staff-dashboard");
+        break;
+      case "Warden":
+        navigate("/warden-dashboard");
+        break;
+      case "Security":
+        navigate("/security-dashboard");
+        break;
+      case "Canteen Owner":
+        navigate("/canteen-owner-dashboard");
+        break;
+      default:
+        navigate("/");
     }
   };
+
 
   const handleForgotPassword = () => {
     setShowForgotPassword(true);

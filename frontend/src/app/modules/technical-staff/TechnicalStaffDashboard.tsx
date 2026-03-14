@@ -1,35 +1,47 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, UserPlus, Users as UsersIcon, LogOut, Menu, X } from 'lucide-react';
 import { CreateUser } from './CreateUser';
 import { ManageUsers } from './ManageUsers';
-import { getUserStats } from './mockData';
+import { FeeManagement } from './FeeManagement';
 
-type View = 'dashboard' | 'create-users' | 'manage-users';
+type View = 'dashboard' | 'create-users' | 'manage-users' | 'fee-management';
+type LogRow = {
+  LOG_ID: number;
+  ACTOR_USER_ID: number;
+  ACTOR_ROLE: string;
+  ACTION: string;
+  ENTITY_TYPE?: string;
+  ENTITY_ID?: number;
+  DETAILS?: string;
+  CREATED_AT: string;
+};
+
+const DUMMY_STATS = {
+  total: 120,
+  students: 100,
+  staff: 20,
+};
+
+const DUMMY_LOGS: LogRow[] = [
+  { LOG_ID: 1, ACTOR_USER_ID: 1, ACTOR_ROLE: "Staff", ACTION: "User Created", DETAILS: "Created student STU100", CREATED_AT: "2026-03-07 10:00:00" },
+  { LOG_ID: 2, ACTOR_USER_ID: 2, ACTOR_ROLE: "Admin", ACTION: "Fee Updated", DETAILS: "Updated fee for Semester 1", CREATED_AT: "2026-03-07 11:30:00" },
+  { LOG_ID: 3, ACTOR_USER_ID: 1, ACTOR_ROLE: "Staff", ACTION: "Room Assigned", DETAILS: "Assigned Room A-101 to STU100", CREATED_AT: "2026-03-07 12:15:00" },
+];
 
 export function TechnicalStaffDashboard() {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [stats, setStats] = useState({
-    total: 0,
-    students: 0,
-    staff: 0,
-  });
-
-  // Load stats
-  useEffect(() => {
-    const loadStats = () => {
-      const data = getUserStats();
-      setStats(data);
-    };
-    loadStats();
-  }, [refreshTrigger]);
+  const [stats] = useState(DUMMY_STATS);
+  const [logs] = useState<LogRow[]>(DUMMY_LOGS);
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userIdentifier');
       navigate('/');
     }
   };
@@ -42,6 +54,7 @@ export function TechnicalStaffDashboard() {
     { id: 'dashboard' as View, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'create-users' as View, label: 'Create Users', icon: UserPlus },
     { id: 'manage-users' as View, label: 'Manage Users', icon: UsersIcon },
+    { id: 'fee-management' as View, label: 'Fee Management', icon: UsersIcon },
   ];
 
   return (
@@ -56,9 +69,8 @@ export function TechnicalStaffDashboard() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-50 transition-transform duration-300 lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-50 transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -90,11 +102,10 @@ export function TechnicalStaffDashboard() {
                     setCurrentView(item.id);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
-                    isActive
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${isActive
                       ? 'bg-teal-600 text-white'
                       : 'text-slate-700 hover:bg-slate-100'
-                  }`}
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span>{item.label}</span>
@@ -134,11 +145,13 @@ export function TechnicalStaffDashboard() {
                     {currentView === 'dashboard' && 'Dashboard Overview'}
                     {currentView === 'create-users' && 'Create New User'}
                     {currentView === 'manage-users' && 'Manage Users'}
+                    {currentView === 'fee-management' && 'Fee Management'}
                   </h2>
                   <p className="text-sm text-slate-600">
                     {currentView === 'dashboard' && 'Welcome to your dashboard'}
                     {currentView === 'create-users' && 'Add students or staff to the system'}
                     {currentView === 'manage-users' && 'View and manage all users'}
+                    {currentView === 'fee-management' && 'Create and update student fee records'}
                   </p>
                 </div>
               </div>
@@ -221,13 +234,40 @@ export function TechnicalStaffDashboard() {
                 </div>
               </div>
 
-              {/* Info Card */}
-              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-teal-900 mb-2">Welcome to Technical Staff Dashboard</h3>
-                <p className="text-teal-800">
-                  Use the sidebar to navigate between different sections. You can create new users,
-                  manage existing ones, and view system statistics all in one place.
-                </p>
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-200">
+                  <h3 className="text-lg font-bold text-slate-900">Recent System Logs</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 border-b border-slate-200">
+                      <tr>
+                        <th className="text-left px-6 py-3 text-sm font-semibold text-slate-700">Time</th>
+                        <th className="text-left px-6 py-3 text-sm font-semibold text-slate-700">Action</th>
+                        <th className="text-left px-6 py-3 text-sm font-semibold text-slate-700">Actor</th>
+                        <th className="text-left px-6 py-3 text-sm font-semibold text-slate-700">Details</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {logs.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-6 text-sm text-slate-500 text-center">
+                            No logs available
+                          </td>
+                        </tr>
+                      ) : (
+                        logs.map((log) => (
+                          <tr key={log.LOG_ID} className="hover:bg-slate-50">
+                            <td className="px-6 py-3 text-sm text-slate-600">{log.CREATED_AT}</td>
+                            <td className="px-6 py-3 text-sm font-medium text-slate-900">{log.ACTION}</td>
+                            <td className="px-6 py-3 text-sm text-slate-600">{log.ACTOR_ROLE} (#{log.ACTOR_USER_ID})</td>
+                            <td className="px-6 py-3 text-sm text-slate-600">{log.DETAILS || '-'}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -235,8 +275,11 @@ export function TechnicalStaffDashboard() {
           {currentView === 'create-users' && <CreateUser onUserCreated={handleUserCreated} />}
 
           {currentView === 'manage-users' && <ManageUsers refreshTrigger={refreshTrigger} />}
+
+          {currentView === 'fee-management' && <FeeManagement />}
         </main>
       </div>
     </div>
   );
 }
+
