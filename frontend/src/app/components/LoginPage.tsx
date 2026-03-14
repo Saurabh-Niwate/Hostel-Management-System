@@ -149,7 +149,7 @@ export function LoginPage() {
         navigate("/security-dashboard");
         break;
       case "Canteen Owner":
-        navigate("/canteen-owner-dashboard");
+        navigate("/canteen");
         break;
       default:
         navigate("/");
