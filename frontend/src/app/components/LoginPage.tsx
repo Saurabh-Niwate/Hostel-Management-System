@@ -5,6 +5,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
+
 type Role =
   | "admin"
   | "student"
@@ -160,6 +161,7 @@ export function LoginPage() {
       }
     }
   };
+
 
   const handleForgotPassword = () => {
     setShowForgotPassword(true);

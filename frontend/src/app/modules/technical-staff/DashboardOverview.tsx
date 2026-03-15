@@ -78,29 +78,29 @@ export function DashboardOverview() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg shadow-sm border-l-4 border-teal-600 p-6">
           <p className="text-sm text-slate-600 mb-1">Total Users</p>
-          <p className="text-3xl font-bold text-slate-900">{metrics?.totalUsers ?? 0}</p>
+          <p className="text-3xl font-bold text-slate-900">{metrics.totalUsers}</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border-l-4 border-teal-600 p-6">
           <p className="text-sm text-slate-600 mb-1">Total Students</p>
-          <p className="text-3xl font-bold text-slate-900">{metrics?.totalStudents ?? 0}</p>
+          <p className="text-3xl font-bold text-slate-900">{metrics.totalStudents}</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border-l-4 border-teal-600 p-6">
           <p className="text-sm text-slate-600 mb-1">Total Staff</p>
-          <p className="text-3xl font-bold text-slate-900">{metrics?.totalStaff ?? 0}</p>
+          <p className="text-3xl font-bold text-slate-900">{metrics.totalStaff}</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border-l-4 border-teal-600 p-6">
           <p className="text-sm text-slate-600 mb-1">Total Roles</p>
-          <p className="text-3xl font-bold text-slate-900">{metrics?.totalRoles ?? 0}</p>
+          <p className="text-3xl font-bold text-slate-900">{metrics.totalRoles}</p>
         </div>
       </div>
 
       {/* Recent Users Table */}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200">
         <div className="px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-bold text-slate-900">Recent Users</h3>
+          <h3 className="text-lg font-bold text-slate-900">Recent Users (Demo Mode)</h3>
         </div>
 
         {recentUsers.length === 0 ? (

@@ -166,3 +166,4 @@ export function AdminAttendanceSummary() {
     </div>
   );
 }
+

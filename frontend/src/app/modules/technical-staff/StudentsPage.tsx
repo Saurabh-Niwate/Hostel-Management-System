@@ -45,7 +45,7 @@ export function StudentsPage() {
       )}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200">
         <div className="px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-bold text-slate-900">Students</h3>
+          <h3 className="text-lg font-bold text-slate-900">Students (Demo Mode)</h3>
         </div>
 
         {students.length === 0 ? (
