@@ -5,13 +5,13 @@ import { StudentDashboard } from "./modules/student/StudentDashboard";
 import { TechnicalStaffDashboard } from "./modules/technical-staff/TechnicalStaffDashboard";
 import { AdminDashboard } from "./modules/admin/AdminDashboard";
 import { SecurityDashboard } from "./modules/security/SecurityDashboard";
-function WardenDashboard() {
-  return <h1>Warden Dashboard</h1>;
-}
-function CanteenOwnerDashboard() {
-  return <h1>Canteen Owner Dashboard</h1>;
-}
-
+import { WardenDashboard } from "./modules/warden/WardenDashboard";
+import {
+  CanteenLayout,
+  CanteenDashboard,
+  MenuManagement,
+  FoodAvailability,
+} from "./modules/canteen";
 
 export default function App() {
   return (
@@ -22,7 +22,11 @@ export default function App() {
       <Route path="/technical-staff-dashboard" element={< TechnicalStaffDashboard />} />
       <Route path="/warden-dashboard" element={<WardenDashboard />} />
       <Route path="/security-dashboard" element={<SecurityDashboard />} />
-      <Route path="/canteen-owner-dashboard" element={<CanteenOwnerDashboard />} />
+      <Route path="/canteen-owner-dashboard" element={<CanteenLayout />}>
+        <Route index element={<CanteenDashboard />} />
+        <Route path="menu" element={<MenuManagement />} />
+        <Route path="night-orders" element={<FoodAvailability />} />
+      </Route>
     </Routes>
   );
 }

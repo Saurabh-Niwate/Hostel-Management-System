@@ -16,6 +16,108 @@ const isValidIsoDate = (value) => {
 const allowedLeaveStatuses = new Set(["Pending", "Approved", "Rejected"]);
 const allowedAttendanceStatuses = new Set(["Present", "Absent"]);
 
+exports.getRooms = async (req, res) => {
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const result = await conn.execute(
+      `
+      SELECT
+        r.room_no,
+        r.block_name,
+        r.floor_no,
+        r.capacity,
+        r.room_type,
+        r.is_active,
+        COUNT(s.user_id) AS occupied
+      FROM rooms r
+      LEFT JOIN students s ON TRIM(s.room_no) = TRIM(r.room_no)
+      GROUP BY
+        r.room_no,
+        r.block_name,
+        r.floor_no,
+        r.capacity,
+        r.room_type,
+        r.is_active
+      ORDER BY r.block_name, r.floor_no, r.room_no
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    return res.json({ rooms: result.rows || [] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch rooms" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.getStudents = async (req, res) => {
+  const { q, roomNo } = req.query;
+  const normalizedQuery = q ? String(q).trim().toLowerCase() : null;
+  const normalizedRoomNo = roomNo ? String(roomNo).trim() : null;
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const result = await conn.execute(
+      `
+      SELECT
+        u.user_id,
+        u.student_id,
+        u.email,
+        s.full_name,
+        s.phone,
+        s.guardian_name,
+        s.guardian_phone,
+        s.address,
+        s.room_no,
+        s.profile_image_url
+      FROM users u
+      JOIN roles r ON r.role_id = u.role_id
+      LEFT JOIN students s ON s.user_id = u.user_id
+      WHERE r.role_name = 'Student'
+        AND (
+          :b_query IS NULL
+          OR LOWER(TRIM(u.student_id)) LIKE '%' || :b_query || '%'
+          OR LOWER(TRIM(NVL(s.full_name, ''))) LIKE '%' || :b_query || '%'
+          OR LOWER(TRIM(NVL(u.email, ''))) LIKE '%' || :b_query || '%'
+        )
+        AND (:b_room_no IS NULL OR TRIM(s.room_no) = :b_room_no)
+      ORDER BY u.student_id
+      `,
+      {
+        b_query: normalizedQuery,
+        b_room_no: normalizedRoomNo
+      },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    return res.json({ students: result.rows || [] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch students" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
 exports.markAttendance = async (req, res) => {
   const { roomNo, attendanceDate, records } = req.body;
 

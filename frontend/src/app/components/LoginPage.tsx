@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Building2, Eye, EyeOff, Lock, Mail, User, IdCard } from "lucide-react";
+import { Building2, Eye, EyeOff, Lock, Mail, IdCard } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
