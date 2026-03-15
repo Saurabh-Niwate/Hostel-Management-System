@@ -1,0 +1,2030 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" version="29.6.1" pages="9">
+  <diagram id="level0" name="Level 0 - Context">
+    <mxGraphModel dx="418" dy="173" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="student" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Student" vertex="1">
+          <mxGeometry height="60" width="140" x="440" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="admin" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Admin" vertex="1">
+          <mxGeometry height="60" width="140" x="170" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="staff" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Technical Staff" vertex="1">
+          <mxGeometry height="60" width="140" x="440" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="system" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="Hostel Management System" vertex="1">
+          <mxGeometry height="140" width="150" x="550" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="student" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.219;entryY=0.076;entryDx=0;entryDy=0;entryPerimeter=0;" target="system" value="login, profile update,&amp;nbsp;&lt;div&gt;leave request,&amp;nbsp;&lt;/div&gt;&lt;div&gt;feedback, data view&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.2135" y="-11" as="geometry">
+            <mxPoint x="-10" y="-6" as="offset" />
+            <Array as="points">
+              <mxPoint x="570" y="220" />
+              <mxPoint x="570" y="255" />
+              <mxPoint x="577" y="255" />
+              <mxPoint x="577" y="260" />
+              <mxPoint x="583" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="system" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0;exitDx=0;exitDy=0;" target="student" value="auth result, profile,&amp;nbsp;&lt;div&gt;leave status,&lt;div&gt;&amp;nbsp;attendance, fees, menu&lt;/div&gt;&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.1808" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="460" y="351" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0.02;entryY=0.638;entryDx=0;entryDy=0;entryPerimeter=0;" target="system" value="login, leave review, reports,&lt;div&gt;&amp;nbsp;student detail requests&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="system" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.25;entryDx=0;entryDy=0;exitX=0.014;exitY=0.396;exitDx=0;exitDy=0;exitPerimeter=0;" target="admin" value="auth result, leave queue,&lt;div&gt;&amp;nbsp;reports, student records&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="385" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="staff" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="system" value="login, user management,&lt;div&gt;&amp;nbsp;fee management,&lt;/div&gt;&lt;div&gt;&amp;nbsp;role updates, logs&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.0333" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="560" y="530" />
+              <mxPoint x="570" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="system" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.09;exitY=0.785;exitDx=0;exitDy=0;exitPerimeter=0;" target="staff" value="auth result, user data,&amp;nbsp;&lt;div&gt;fee data, roles,&amp;nbsp;&lt;/div&gt;&lt;div&gt;logs, status&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.0778" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="460" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="warden" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Warden" vertex="1">
+          <mxGeometry height="60" width="140" x="710" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="security" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Security" vertex="1">
+          <mxGeometry height="60" width="140" x="670" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="warden" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0;entryDx=0;entryDy=0;" target="system" value="login, room lookup,&amp;nbsp;&lt;div&gt;attendance marking,&amp;nbsp;&lt;/div&gt;&lt;div&gt;leave status check&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.3595" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="830" y="350" />
+              <mxPoint x="690" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="system" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="warden" value="auth result, room students,&lt;div&gt;&amp;nbsp;attendance data, leave status&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="670" y="275" />
+              <mxPoint x="720" y="275" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="security" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="system" value="login, mark exit/entry,&amp;nbsp;&lt;div&gt;today logs,&amp;nbsp;&lt;/div&gt;&lt;div&gt;outside-student checks&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.3103" y="-10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="690" y="520" />
+              <mxPoint x="690" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="system" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="security" value="auth result, gate status,&lt;div&gt;&amp;nbsp;today logs,&amp;nbsp;&lt;/div&gt;&lt;div&gt;leave-linked student status&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.5785" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="770" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="canteenowner" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Canteen Owner" vertex="1">
+          <mxGeometry height="60" width="150" x="990" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="canteenowner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="system" value="login, manage menu,&lt;div&gt;&amp;nbsp;manage night food orders&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="960" y="420" />
+              <mxPoint x="960" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="system" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="canteenowner" value="auth result, menu data,&lt;div&gt;&amp;nbsp;order list, update status&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="970" y="380" />
+              <mxPoint x="970" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="level1" name="Level 1 - Main Processes">
+    <mxGraphModel dx="3264" dy="2407" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p5" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.0 Staff User and Fee Management" vertex="1">
+          <mxGeometry height="130" width="130" x="312.5" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="l43" edge="1" parent="1" source="sec1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p7" value="gate log, exit,&amp;nbsp;&lt;div&gt;entry, status actions&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p6" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable&#xa;;" value="6.0 Warden&lt;div&gt;&amp;nbsp;Operations&lt;/div&gt;" vertex="1">
+          <mxGeometry height="130" width="135" x="312.5" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="p4" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="4.0 Admin Reporting and Review" vertex="1">
+          <mxGeometry height="130" width="130" x="312.5" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="2.0 Student Self-Service" vertex="1">
+          <mxGeometry height="130" width="130" x="312.5" y="-230" as="geometry" />
+        </mxCell>
+        <mxCell id="p3" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="3.0 Leave&amp;nbsp;&lt;div&gt;Management&lt;/div&gt;" vertex="1">
+          <mxGeometry height="130" width="130" x="312.5" y="-80" as="geometry" />
+        </mxCell>
+        <mxCell id="l23" edge="1" parent="1" source="p4" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="a1" value="report outputs">
+          <mxGeometry relative="1" x="0.0477" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="675" y="135" />
+            </Array>
+            <mxPoint x="470" y="150" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Student" vertex="1">
+          <mxGeometry height="50" width="130" x="30" y="-210" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Admin" vertex="1">
+          <mxGeometry height="50" width="130" x="610" y="-210" as="geometry" />
+        </mxCell>
+        <mxCell id="t1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Technical Staff" vertex="1">
+          <mxGeometry height="50" width="130" x="30" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="p1" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="1.0 Authentication" vertex="1">
+          <mxGeometry height="130" width="130" x="315" y="-420" as="geometry" />
+        </mxCell>
+        <mxCell id="l1" edge="1" parent="1" source="s1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p1" value="credentials">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="130" y="-240" />
+              <mxPoint x="350" y="-240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l2" edge="1" parent="1" source="a1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p1" value="credentials">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="630" y="-260" />
+              <mxPoint x="410" y="-260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l3" edge="1" parent="1" source="t1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p1" value="credentials">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-10" y="135" />
+              <mxPoint x="-10" y="-330" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l5" edge="1" parent="1" source="p1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="s1" value="token, role">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="330" y="-270" />
+              <mxPoint x="60" y="-270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l6" edge="1" parent="1" source="p1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="a1" value="token, role">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="-300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l7" edge="1" parent="1" source="p1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="t1" value="token, role">
+          <mxGeometry relative="1" x="0.3459" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="20" y="-320" />
+              <mxPoint x="20" y="90" />
+              <mxPoint x="95" y="90" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l8" edge="1" parent="1" source="s1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p2" value="profile, attendance,&amp;nbsp;&lt;div&gt;fees, feedback, menu&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.2121" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="360" y="-170" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l9" edge="1" parent="1" source="p2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="s1" value="student outputs">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="-110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l17" edge="1" parent="1" source="s1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p3" value="apply/view/&lt;div&gt;cancel leave&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.3936" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="120" y="-60" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l18" edge="1" parent="1" source="p3" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="s1" value="leave history/status">
+          <mxGeometry relative="1" x="-0.4116" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="80" y="-15" />
+            </Array>
+            <mxPoint x="210" y="90" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l19" edge="1" parent="1" source="a1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p3" value="review leaves">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l20" edge="1" parent="1" source="p3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="a1" value="queue/decision result">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="380" y="-40" />
+              <mxPoint x="540" y="-40" />
+              <mxPoint x="540" y="-185" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l22" edge="1" parent="1" source="a1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p4" value="reports, summaries,&lt;div&gt;&amp;nbsp;details&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.2946" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="650" y="80" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="w1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Warden" vertex="1">
+          <mxGeometry height="50" width="130" x="610" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="sec1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Security" vertex="1">
+          <mxGeometry height="50" width="130" x="30" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="co1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Canteen Owner" vertex="1">
+          <mxGeometry height="50" width="150" x="610" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="p8" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.0 Canteen&amp;nbsp;&lt;div&gt;Operations&lt;/div&gt;" vertex="1">
+          <mxGeometry height="130" width="130" x="315" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="l30" edge="1" parent="1" source="t1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p5" value="user, fee, role,&lt;div&gt;&amp;nbsp;log actions&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="145" />
+              <mxPoint x="180" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l31" edge="1" parent="1" source="p5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="t1" value="lists, status,&lt;div&gt;&amp;nbsp;roles, logs&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l37" edge="1" parent="1" source="w1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p1" value="credentials">
+          <mxGeometry relative="1" x="-0.2851" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="680" y="130" />
+              <mxPoint x="750" y="130" />
+              <mxPoint x="750" y="-320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l38" edge="1" parent="1" source="p1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="w1" value="token, role">
+          <mxGeometry relative="1" x="0.4022" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="780" y="-340" />
+              <mxPoint x="780" y="150" />
+              <mxPoint x="710" y="150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l39" edge="1" parent="1" source="sec1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p1" value="credentials">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="95" y="470" />
+              <mxPoint x="-40" y="470" />
+              <mxPoint x="-40" y="-340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l40" edge="1" parent="1" source="p1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sec1" value="token, role">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-80" y="-360" />
+              <mxPoint x="-80" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l42" edge="1" parent="1" source="p6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="w1" value="attendance results,&lt;div&gt;&amp;nbsp;room students,&amp;nbsp;&lt;/div&gt;&lt;div&gt;leave status&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="520" y="400" />
+              <mxPoint x="520" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l44" edge="1" parent="1" source="p7" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sec1" value="gate status, logs,&lt;div&gt;&amp;nbsp;outside-student list&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="535" />
+              <mxPoint x="300" y="535" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l45" edge="1" parent="1" source="co1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p1" value="credentials">
+          <mxGeometry relative="1" x="0.1351" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="745" y="480" />
+              <mxPoint x="810" y="480" />
+              <mxPoint x="810" y="-355" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l46" edge="1" parent="1" source="p1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="co1" value="token, role">
+          <mxGeometry relative="1" x="-0.1652" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="840" y="-370" />
+              <mxPoint x="840" y="535" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l47" edge="1" parent="1" source="co1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p8" value="menu and&lt;div&gt;&amp;nbsp;order actions&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="675" y="710" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l48" edge="1" parent="1" source="p8" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="co1" value="menu data, order list,&lt;div&gt;&amp;nbsp;update results&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="745" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l49" edge="1" parent="1" source="p8" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p2" value="menu/order data&amp;nbsp;&lt;div&gt;for students&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.594" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="860" y="780" />
+              <mxPoint x="860" y="-130" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZeMvs0wwuYMTNzx91HCK-6" edge="1" parent="1" source="w1" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="p6" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="570" y="215" />
+              <mxPoint x="570" y="435" />
+            </Array>
+            <mxPoint x="1170" y="425" as="sourcePoint" />
+            <mxPoint x="380" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LzGSNo5KQ7ZTDrfwvoG9-1" connectable="0" parent="ZeMvs0wwuYMTNzx91HCK-6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="attendance, room,&lt;div&gt;&amp;nbsp;student, leave-status&lt;/div&gt;&lt;div&gt;&amp;nbsp;actions&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="0.2036" y="-2" as="geometry">
+            <mxPoint x="12" y="-15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p7" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="7.0 Security Gate Control" vertex="1">
+          <mxGeometry height="130" width="135" x="315" y="510" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="level2student" name="Level 2 - Student Self-Service">
+    <mxGraphModel dx="2278" dy="944" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="sp5" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="2.5 View Fee Status" vertex="1">
+          <mxGeometry height="100" width="107.5" x="300" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="sp2" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="2.2 Update&lt;div&gt;&amp;nbsp;Profile&lt;/div&gt;" vertex="1">
+          <mxGeometry height="100" width="100" x="305" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="stu" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Student" vertex="1">
+          <mxGeometry height="50" width="130" x="40" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="sp1" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="2.1 View&lt;div&gt;&amp;nbsp;Profile&lt;/div&gt;" vertex="1">
+          <mxGeometry height="100" width="100" x="305" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="sp3" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="2.3 Manage&lt;div&gt;&amp;nbsp;Profile Image&lt;/div&gt;" vertex="1">
+          <mxGeometry height="100" width="105" x="302.5" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="sp4" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="2.4 View Attendance" vertex="1">
+          <mxGeometry height="100" width="105" x="302.5" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="sp6" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="2.6 Submit/View Feedback" vertex="1">
+          <mxGeometry height="100" width="110" x="301.25" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="sp7" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="2.7 View Canteen Menu" vertex="1">
+          <mxGeometry height="100" width="110" x="302.5" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="sd1" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D1 Users and Roles" vertex="1">
+          <mxGeometry height="60" width="180" x="580" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="sd2" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D2 Student Profiles" vertex="1">
+          <mxGeometry height="60" width="180" x="580" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="sd4" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D4 Attendance Records" vertex="1">
+          <mxGeometry height="60" width="180" x="580" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="sd5" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D5 Fee Records" vertex="1">
+          <mxGeometry height="60" width="180" x="580" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="sd6" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D6 Feedback Records" vertex="1">
+          <mxGeometry height="60" width="180" x="580" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="sd7" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D7 Canteen Menu" vertex="1">
+          <mxGeometry height="60" width="180" x="580" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="sd9" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D9 Profile Image Files" vertex="1">
+          <mxGeometry height="60" width="180" x="580" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="se1" edge="1" parent="1" source="sp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sp1" value="profile request">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="se2" edge="1" parent="1" source="sp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="stu" value="profile data">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="110" y="60" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se3" edge="1" parent="1" source="sp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sd1" value="account data">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="490" y="20" />
+              <mxPoint x="490" y="20" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se4" edge="1" parent="1" source="sp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sd2" value="profile data">
+          <mxGeometry relative="1" x="0.451" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="420" y="60" />
+              <mxPoint x="420" y="140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se5" edge="1" parent="1" source="stu" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sp2" value="updated profile details">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="280" />
+              <mxPoint x="355" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se6" edge="1" parent="1" source="sp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="stu" value="update status">
+          <mxGeometry relative="1" x="-0.2059" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="130" y="210" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se7" edge="1" parent="1" source="sp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sd1" value="email update">
+          <mxGeometry relative="1" x="0.2383" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="470" y="180" />
+              <mxPoint x="470" y="50" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se8" edge="1" parent="1" source="sp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sd2" value="profile update">
+          <mxGeometry relative="1" x="0.1114" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="510" y="210" />
+              <mxPoint x="510" y="160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se9" edge="1" parent="1" source="stu" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sp3" value="image upload/delete">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="210" y="360" />
+              <mxPoint x="210" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se10" edge="1" parent="1" source="sp3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="stu" value="image URL/status">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="160" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se11" edge="1" parent="1" source="sp3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sd2" value="image reference">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="240" />
+              <mxPoint x="550" y="240" />
+              <mxPoint x="550" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se12" edge="1" parent="1" source="sp3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sd9" value="image file">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="se13" edge="1" parent="1" source="stu" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sp4" value="attendance request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="160" y="450" />
+              <mxPoint x="355" y="450" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se14" edge="1" parent="1" source="sp4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="stu" value="attendance list">
+          <mxGeometry relative="1" x="-0.1679" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="140" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se15" edge="1" parent="1" source="sp4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sd4" value="attendance data">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="489" y="430" />
+              <mxPoint x="489" y="390" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se16" edge="1" parent="1" source="stu" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sp5" value="fee request">
+          <mxGeometry relative="1" x="0.4457" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="130" y="550" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se17" edge="1" parent="1" source="sp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="stu" value="fee status">
+          <mxGeometry relative="1" x="-0.3167" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="110" y="590" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se18" edge="1" parent="1" source="sp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sd5" value="fee data">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="550" />
+              <mxPoint x="480" y="470" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se19" edge="1" parent="1" source="stu" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sp6" value="feedback message /&lt;div&gt;&amp;nbsp;history request&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.4706" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="90" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se20" edge="1" parent="1" source="sp6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="stu" value="submit status /&lt;div&gt;&amp;nbsp;feedback history&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.4546" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="70" y="720" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se21" edge="1" parent="1" source="sp6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sd6" value="feedback write/read">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="500" y="680" />
+              <mxPoint x="500" y="550" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se22" edge="1" parent="1" source="sp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sp7" value="menu request">
+          <mxGeometry relative="1" x="0.3329" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="354" y="650" />
+              <mxPoint x="450" y="650" />
+              <mxPoint x="450" y="830" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se23" edge="1" parent="1" source="sp7" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="stu" value="menu items">
+          <mxGeometry relative="1" x="-0.6073" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="50" y="840" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se24" edge="1" parent="1" source="sp7" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sd7" value="menu data">
+          <mxGeometry relative="1" x="0.2542" y="10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="530" y="850" />
+              <mxPoint x="530" y="660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UKqIrUTvlb7vHJNiz4zb-1" edge="1" parent="1" source="stu" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sp2" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="230" />
+            </Array>
+            <mxPoint x="170" y="375" as="sourcePoint" />
+            <mxPoint x="355" y="110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="level2leave" name="Level 2 - Leave Management">
+    <mxGraphModel dx="1864" dy="773" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="stu2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Student" vertex="1">
+          <mxGeometry height="50" width="130" x="30" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="adm2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Admin" vertex="1">
+          <mxGeometry height="50" width="130" x="30" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="lp1" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="3.1 Apply Leave" vertex="1">
+          <mxGeometry height="100" width="105" x="294.85" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="lp2" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="3.2 View My Leaves" vertex="1">
+          <mxGeometry height="100" width="107.5" x="293.44" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="lp3" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="3.3 Cancel&amp;nbsp;&lt;div&gt;Pending Leave&lt;/div&gt;" vertex="1">
+          <mxGeometry height="100" width="107.5" x="294.85" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="lp4" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="3.4 View Leave Queue" vertex="1">
+          <mxGeometry height="100" width="108.75" x="292.19" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="lp5" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="3.5 Approve Leave" vertex="1">
+          <mxGeometry height="100" width="108.12" x="293.13" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="lp6" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="3.6 Reject Leave" vertex="1">
+          <mxGeometry height="100" width="107.81" x="292.04" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="ld3" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D3 Leave Requests" vertex="1">
+          <mxGeometry height="60" width="180" x="470" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="le1" edge="1" parent="1" source="stu2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="lp1" value="leave details">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="227" y="220" />
+              <mxPoint x="227" y="170" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le2" edge="1" parent="1" source="lp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="stu2" value="submission status">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le3" edge="1" parent="1" source="lp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ld3" value="create leave">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="le4" edge="1" parent="1" source="stu2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="lp2" value="history request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le5" edge="1" parent="1" source="lp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="stu2" value="leave history">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le6" edge="1" parent="1" source="lp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ld3" value="read own leaves">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="510" y="235" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le7" edge="1" parent="1" source="stu2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="lp3" value="cancel request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="95" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le8" edge="1" parent="1" source="lp3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="stu2" value="cancel status">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="50" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le9" edge="1" parent="1" source="lp3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ld3" value="delete pending&amp;nbsp;&lt;div&gt;leave&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.2179" y="-4" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le10" edge="1" parent="1" source="adm2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="lp4" value="queue request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="510" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le11" edge="1" parent="1" source="lp4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="adm2" value="leave queue">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="130" y="540" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le12" edge="1" parent="1" source="lp4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ld3" value="read all leaves">
+          <mxGeometry relative="1" x="0.1207" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="500" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le13" edge="1" parent="1" source="adm2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="lp5" value="approve decision + remarks">
+          <mxGeometry relative="1" x="0.4984" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="110" y="640" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le14" edge="1" parent="1" source="lp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="adm2" value="approval status">
+          <mxGeometry relative="1" x="-0.3303" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="95" y="670" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le15" edge="1" parent="1" source="lp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ld3" value="update approved status">
+          <mxGeometry relative="1" x="-0.6593" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="540" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le16" edge="1" parent="1" source="adm2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="lp6" value="reject decision + remarks">
+          <mxGeometry relative="1" x="0.4975" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="80" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le17" edge="1" parent="1" source="lp6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="adm2" value="rejection status">
+          <mxGeometry relative="1" x="-0.4648" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="60" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="le18" edge="1" parent="1" source="lp6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ld3" value="update rejected status">
+          <mxGeometry relative="1" x="-0.3388" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="560" y="750" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="level2admin" name="Level 2 - Admin Reporting and Review">
+    <mxGraphModel dx="4100" dy="1700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ap2" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="4.2 View Student Leave History" vertex="1">
+          <mxGeometry height="120" width="125" x="282.5" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="adm3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Admin" vertex="1">
+          <mxGeometry height="50" width="130" x="40" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="ap1" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="4.1 View All Leaves" vertex="1">
+          <mxGeometry height="120" width="120" x="285" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ap3" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="4.3 Generate Overview Report" vertex="1">
+          <mxGeometry height="120" width="125" x="285" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="ap4" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="4.4 Generate Attendance Summary" vertex="1">
+          <mxGeometry height="120" width="125" x="285" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="ap5" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="4.5 View Student Details" vertex="1">
+          <mxGeometry height="120" width="127.5" x="285" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D1 Users and Roles" vertex="1">
+          <mxGeometry height="60" width="180" x="570" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="ad2" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D2 Student Profiles" vertex="1">
+          <mxGeometry height="60" width="180" x="570" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D3 Leave Requests" vertex="1">
+          <mxGeometry height="60" width="180" x="580" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D4 Attendance Records" vertex="1">
+          <mxGeometry height="60" width="180" x="580" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="ad5" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D5 Fee Records" vertex="1">
+          <mxGeometry height="60" width="180" x="570" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="ad6" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D6 Feedback Records" vertex="1">
+          <mxGeometry height="60" width="180" x="580" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="ae1" edge="1" parent="1" source="ap2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ap1" value="all-leaves request">
+          <mxGeometry relative="1" x="-0.3878" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="260" y="390" />
+              <mxPoint x="260" y="90" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae2" edge="1" parent="1" source="ap1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="adm3" value="leave list">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="50" y="70" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae3" edge="1" parent="1" source="ap1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ad3" value="read leaves">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="90" />
+              <mxPoint x="460" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae4" edge="1" parent="1" source="adm3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ap2" value="student leave&lt;div&gt;&amp;nbsp;request&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.1361" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="160" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae5" edge="1" parent="1" source="ap2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="adm3" value="student leave history">
+          <mxGeometry relative="1" x="-0.198" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="140" y="450" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae6" edge="1" parent="1" source="ap2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ad3" value="read leaves&lt;div&gt;&amp;nbsp;by student&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.4864" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="345" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae7" edge="1" parent="1" source="adm3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ap3" value="date range filters">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="110" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae8" edge="1" parent="1" source="ap3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="adm3" value="overview report">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="80" y="230" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae9" edge="1" parent="1" source="ap3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ad3" value="read">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="470" y="280" />
+              <mxPoint x="470" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae10" edge="1" parent="1" source="ap3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ad4" value="read">
+          <mxGeometry relative="1" x="0.2523" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="400" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae11" edge="1" parent="1" source="ap3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ad5" value="read">
+          <mxGeometry relative="1" x="0.8462" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="420" y="230" />
+              <mxPoint x="420" y="460" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae12" edge="1" parent="1" source="ap3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ad6" value="read">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="521" y="220" />
+              <mxPoint x="521" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae13" edge="1" parent="1" source="adm3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ap4" value="range + groupBy">
+          <mxGeometry relative="1" x="0.3115" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="120" y="540" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae14" edge="1" parent="1" source="ap4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="adm3" value="attendance summary">
+          <mxGeometry relative="1" x="-0.3728" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="100" y="570" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae15" edge="1" parent="1" source="ap4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ad4" value="read attendance">
+          <mxGeometry relative="1" x="-0.6471" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="490" y="540" />
+              <mxPoint x="490" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae16" edge="1" parent="1" source="adm3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ap5" value="student detail request">
+          <mxGeometry relative="1" x="0.4928" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="70" y="690" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae17" edge="1" parent="1" source="ap5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="adm3" value="student profile + attendance + fees">
+          <mxGeometry relative="1" x="-0.5969" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="50" y="720" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae18" edge="1" parent="1" source="ap5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ad1" value="read student account">
+          <mxGeometry relative="1" x="-0.4455" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="550" y="680" />
+              <mxPoint x="550" y="560" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae19" edge="1" parent="1" source="ap5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ad2" value="read profile">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="620" y="710" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae20" edge="1" parent="1" source="ap5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ad4" value="read attendance">
+          <mxGeometry relative="1" x="-0.7061" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="520" y="640" />
+              <mxPoint x="520" y="390" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae21" edge="1" parent="1" source="ap5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ad5" value="read fees">
+          <mxGeometry relative="1" x="-0.749" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="540" y="660" />
+              <mxPoint x="540" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="level2staff" name="Level 2 - Technical Staff Management">
+    <mxGraphModel dx="2563" dy="2163" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ts" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Technical Staff" vertex="1">
+          <mxGeometry height="50" width="140" x="40" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="tp1" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.1 Create Student Account" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="-100" as="geometry" />
+        </mxCell>
+        <mxCell id="tp2" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.2 Create Staff Account" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="tp3" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.3 View Users and Roles" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="tp4" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.4 Update User Role" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="tp5" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.5 Update Student Profile" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="tp6" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.6 Manage Student Image" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="tp7" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.7 Reset User Password" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="830" as="geometry" />
+        </mxCell>
+        <mxCell id="tp8" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.8 Delete User" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="tp9" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.9 Manage Fee Records" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="1130" as="geometry" />
+        </mxCell>
+        <mxCell id="tp10" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.10 View System Logs" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="1280" as="geometry" />
+        </mxCell>
+        <mxCell id="td1" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D1 Users and Roles" vertex="1">
+          <mxGeometry height="60" width="180" x="640" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="td8" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D8 System Logs" vertex="1">
+          <mxGeometry height="60" width="180" x="640" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="te1" edge="1" parent="1" source="ts" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="tp1" value="student account details">
+          <mxGeometry relative="1" x="0.5815" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="60" y="-50" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te2" edge="1" parent="1" source="tp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ts" value="creation status">
+          <mxGeometry relative="1" x="-0.5219" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="50" y="-80" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te3" edge="1" parent="1" source="tp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td1" value="create user">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="500" y="-40" />
+              <mxPoint x="500" y="70" />
+              <mxPoint x="700" y="70" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te4" edge="1" parent="1" source="tp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td2" value="create student&lt;div&gt;&amp;nbsp;profile&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.747" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="450" y="-20" />
+              <mxPoint x="450" y="280" />
+              <mxPoint x="660" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te5" edge="1" parent="1" source="tp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td8" value="write audit">
+          <mxGeometry relative="1" x="0.8494" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="440" />
+              <mxPoint x="440" y="930" />
+              <mxPoint x="650" y="930" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te6" edge="1" parent="1" source="ts" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="tp2" value="staff account&lt;div&gt;&amp;nbsp;details&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.536" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="90" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te7" edge="1" parent="1" source="tp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ts" value="creation status">
+          <mxGeometry relative="1" x="-0.3071" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="80" y="100" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te8" edge="1" parent="1" source="tp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td1" value="create user">
+          <mxGeometry relative="1" x="-0.4174" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="670" y="90" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te9" edge="1" parent="1" source="tp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td8" value="write audit">
+          <mxGeometry relative="1" x="0.6071" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="370" y="185" />
+              <mxPoint x="530" y="185" />
+              <mxPoint x="530" y="850" />
+              <mxPoint x="700" y="850" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te10" edge="1" parent="1" source="ts" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="tp3" value="list/filter request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te11" edge="1" parent="1" source="tp3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ts" value="users, roles, details">
+          <mxGeometry relative="1" x="-0.2106" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="100" y="275" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te12" edge="1" parent="1" source="tp3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td1" value="read users/roles">
+          <mxGeometry relative="1" x="0.5816" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="370" y="200" />
+              <mxPoint x="650" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te13" edge="1" parent="1" source="tp3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td2" value="read&amp;nbsp;&lt;div&gt;student&amp;nbsp;&lt;div&gt;profile&lt;/div&gt;&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.66" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="410" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te14" edge="1" parent="1" source="ts" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="tp4" value="role update request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="250" y="430" />
+              <mxPoint x="250" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te15" edge="1" parent="1" source="tp4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ts" value="role update status">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te16" edge="1" parent="1" source="tp4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td1" value="update role">
+          <mxGeometry relative="1" x="0.6675" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="470" y="365" />
+              <mxPoint x="470" y="140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te17" edge="1" parent="1" source="tp4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td8" value="write audit">
+          <mxGeometry relative="1" x="0.5741" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="510" y="380" />
+              <mxPoint x="510" y="880" />
+              <mxPoint x="680" y="880" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te18" edge="1" parent="1" source="ts" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="tp5" value="student profile&lt;div&gt;&amp;nbsp;update&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="250" y="445" />
+              <mxPoint x="250" y="560" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te19" edge="1" parent="1" source="tp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ts" value="update status">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="210" y="600" />
+              <mxPoint x="210" y="460" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te20" edge="1" parent="1" source="tp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td1" value="update user email">
+          <mxGeometry relative="1" x="0.5692" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="480" y="570" />
+              <mxPoint x="480" y="220" />
+              <mxPoint x="680" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te21" edge="1" parent="1" source="tp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td2" value="update student&lt;div&gt;&amp;nbsp;profile&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.3333" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="520" y="550" />
+              <mxPoint x="520" y="440" />
+              <mxPoint x="730" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te22" edge="1" parent="1" source="tp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td8" value="write audit">
+          <mxGeometry relative="1" x="0.2754" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="370" y="650" />
+              <mxPoint x="540" y="650" />
+              <mxPoint x="540" y="820" />
+              <mxPoint x="730" y="820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te23" edge="1" parent="1" source="ts" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="tp6" value="image upload">
+          <mxGeometry relative="1" x="0.5395" as="geometry">
+            <mxPoint x="-1" as="offset" />
+            <Array as="points">
+              <mxPoint x="170" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te24" edge="1" parent="1" source="tp6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ts" value="image status">
+          <mxGeometry relative="1" x="-0.5967" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="160" y="720" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te25" edge="1" parent="1" source="tp6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td2" value="update image&lt;div&gt;&amp;nbsp;reference&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.8609" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="490" y="690" />
+              <mxPoint x="490" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te26" edge="1" parent="1" source="tp6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td9" value="store&amp;nbsp;&lt;div&gt;image&lt;div&gt;&amp;nbsp;file&lt;/div&gt;&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.8475" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="500" y="710" />
+              <mxPoint x="500" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te27" edge="1" parent="1" source="tp6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td8" value="write audit">
+          <mxGeometry relative="1" x="0.3459" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="490" y="760" />
+              <mxPoint x="490" y="910" />
+              <mxPoint x="660" y="910" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te28" edge="1" parent="1" source="ts" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="tp7" value="password reset request">
+          <mxGeometry relative="1" x="0.6845" as="geometry">
+            <mxPoint x="-1" as="offset" />
+            <Array as="points">
+              <mxPoint x="150" y="860" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te29" edge="1" parent="1" source="tp7" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ts" value="reset status">
+          <mxGeometry relative="1" x="-0.6949" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="140" y="890" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te31" edge="1" parent="1" source="tp7" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td8" value="write audit">
+          <mxGeometry relative="1" x="0.5385" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="370" y="970" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te32" edge="1" parent="1" source="ts" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="tp8" value="delete request">
+          <mxGeometry relative="1" x="0.727" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="130" y="1010" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te33" edge="1" parent="1" source="tp8" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ts" value="delete status">
+          <mxGeometry relative="1" x="-0.7368" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="120" y="1040" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te34" edge="1" parent="1" source="td5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td1" value="delete user">
+          <mxGeometry relative="1" x="0.6484" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="550" y="710" />
+              <mxPoint x="550" y="240" />
+              <mxPoint x="700" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te35" edge="1" parent="1" source="tp8" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td2" value="delete student&amp;nbsp;&lt;div&gt;profile&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.7826" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="450" y="1040" />
+              <mxPoint x="450" y="410" />
+              <mxPoint x="680" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te36" edge="1" parent="1" source="tp8" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td8" value="write audit">
+          <mxGeometry relative="1" x="0.5017" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="480" y="1050" />
+              <mxPoint x="480" y="990" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te37" edge="1" parent="1" source="ts" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="tp9" value="fee create/update/list request">
+          <mxGeometry relative="1" x="0.7425" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="110" y="1150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te38" edge="1" parent="1" source="tp9" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ts" value="fee data/status">
+          <mxGeometry relative="1" x="-0.7189" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="90" y="1180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te39" edge="1" parent="1" source="tp9" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td5" value="read/write&amp;nbsp;&lt;div&gt;fees&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.875" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="470" y="1190" />
+              <mxPoint x="470" y="730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te40" edge="1" parent="1" source="tp9" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td1" value="read student&lt;div&gt;&amp;nbsp;identity&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.8822" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="460" y="1160" />
+              <mxPoint x="460" y="160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te41" edge="1" parent="1" source="tp9" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td8" value="write audit">
+          <mxGeometry relative="1" x="0.658" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="490" y="1200" />
+              <mxPoint x="490" y="1010" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te42" edge="1" parent="1" source="ts" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="tp10" value="log filter request">
+          <mxGeometry relative="1" x="0.7507" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="70" y="1300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te43" edge="1" parent="1" source="tp10" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ts" value="audit trail">
+          <mxGeometry relative="1" x="-0.7522" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="50" y="1340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te44" edge="1" parent="1" source="tp10" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td8" value="read logs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="td2" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D2 Student Profiles" vertex="1">
+          <mxGeometry height="60" width="180" x="640" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="td9" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D9 Profile Image Files" vertex="1">
+          <mxGeometry height="60" width="180" x="640" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="td5" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D5 Fee Records" vertex="1">
+          <mxGeometry height="60" width="180" x="640" y="670" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="level2warden" name="Level 2 - Warden Operations">
+    <mxGraphModel dx="2050" dy="1850" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="we1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Warden" vertex="1">
+          <mxGeometry height="50" width="130" x="40" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="wp1" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="6.1 Mark Attendance" vertex="1">
+          <mxGeometry height="120" width="120" x="295" y="-10" as="geometry" />
+        </mxCell>
+        <mxCell id="wp2" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="6.2 View Room Students" vertex="1">
+          <mxGeometry height="120" width="120" x="295" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="wp3" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="6.3 View Attendance By Date" vertex="1">
+          <mxGeometry height="120" width="120" x="295" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="wp4" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="6.4 View Student Basic Details" vertex="1">
+          <mxGeometry height="120" width="120" x="295" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="wp5" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="6.5 Check Leave Status" vertex="1">
+          <mxGeometry height="120" width="120" x="295" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="wd2" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D2 Student Profiles" vertex="1">
+          <mxGeometry height="60" width="180" x="620" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="wd3" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D3 Leave Requests" vertex="1">
+          <mxGeometry height="60" width="180" x="620" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="wd4" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D4 Attendance Records" vertex="1">
+          <mxGeometry height="60" width="180" x="620" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="wd10" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D10 Rooms" vertex="1">
+          <mxGeometry height="60" width="180" x="620" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wle1" edge="1" parent="1" source="we1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wp1" value="room attendance records">
+          <mxGeometry relative="1" x="0.5121" as="geometry">
+            <mxPoint x="-1" as="offset" />
+            <Array as="points">
+              <mxPoint x="80" y="60" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle2" edge="1" parent="1" source="wp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="we1" value="attendance status">
+          <mxGeometry relative="1" x="-0.466" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="60" y="30" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle3" edge="1" parent="1" source="wp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wd10" value="validate room">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="30" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle4" edge="1" parent="1" source="wp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wd2" value="verify room students">
+          <mxGeometry relative="1" x="0.443" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="440" y="50" />
+              <mxPoint x="440" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle5" edge="1" parent="1" source="wp1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wd4" value="insert/update&amp;nbsp;&lt;div&gt;attendance&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.6893" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="480" y="40" />
+              <mxPoint x="480" y="140" />
+              <mxPoint x="590" y="140" />
+              <mxPoint x="590" y="270" />
+              <mxPoint x="700" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle6" edge="1" parent="1" source="we1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wp2" value="room request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="130" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle7" edge="1" parent="1" source="wp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="we1" value="room + student list">
+          <mxGeometry relative="1" x="-0.3054" y="-10" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle8" edge="1" parent="1" source="wp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wd10" value="read room">
+          <mxGeometry relative="1" x="0.2615" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="410" y="90" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle9" edge="1" parent="1" source="wp2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wd2" value="read room students">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="200" />
+              <mxPoint x="540" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle10" edge="1" parent="1" source="we1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wp3" value="date/room filter">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="220" y="370" />
+              <mxPoint x="220" y="345" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle11" edge="1" parent="1" source="wp3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="we1" value="attendance list">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle12" edge="1" parent="1" source="wp3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wd4" value="read&lt;div&gt;&amp;nbsp;attendance&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.5294" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="517" y="330" />
+              <mxPoint x="517" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle13" edge="1" parent="1" source="wp3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wd2" value="read student&lt;div&gt;&amp;nbsp;room/profile&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.5867" y="-10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="430" y="290" />
+              <mxPoint x="430" y="210" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle14" edge="1" parent="1" source="we1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wp4" value="studentId request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="105" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle15" edge="1" parent="1" source="wp4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="we1" value="student basic details">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="455" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle16" edge="1" parent="1" source="wp4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wd2" value="read student&lt;div&gt;&amp;nbsp;profile&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.5192" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="490" y="455" />
+              <mxPoint x="490" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle17" edge="1" parent="1" source="we1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wp5" value="room/status filter">
+          <mxGeometry relative="1" x="0.1659" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="90" y="550" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle18" edge="1" parent="1" source="wp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="we1" value="leave status list">
+          <mxGeometry relative="1" x="-0.2211" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="60" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle19" edge="1" parent="1" source="wp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wd3" value="read leave requests">
+          <mxGeometry relative="1" x="-0.2582" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="570" y="610" />
+              <mxPoint x="570" y="510" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle20" edge="1" parent="1" source="wp5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wd2" value="read room/student data">
+          <mxGeometry relative="1" x="-0.7673" y="5" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="530" y="565" />
+              <mxPoint x="530" y="230" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="level2security" name="Level 2 - Security Gate Control">
+    <mxGraphModel dx="2563" dy="2063" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="sce1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Security" vertex="1">
+          <mxGeometry height="50" width="130" x="40" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="spg1" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="7.1 Mark Exit" vertex="1">
+          <mxGeometry height="120" width="120" x="295" y="-30" as="geometry" />
+        </mxCell>
+        <mxCell id="spg2" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="7.2 Mark Entry" vertex="1">
+          <mxGeometry height="120" width="120" x="295" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="spg3" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="7.3 View Today&#39;s Logs" vertex="1">
+          <mxGeometry height="120" width="120" x="295" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="spg4" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="7.4 View Students Outside" vertex="1">
+          <mxGeometry height="120" width="120" x="295" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="spg5" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="7.5 Check Student Gate Status" vertex="1">
+          <mxGeometry height="120" width="120" x="290" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="sdg2" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D2 Student Profiles" vertex="1">
+          <mxGeometry height="60" width="180" x="600" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ycsQ_2Y6Rv3EFn-vc-Qe-1" edge="1" parent="1" source="sdg3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="sdg2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sdg3" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D3 Leave Requests" vertex="1">
+          <mxGeometry height="60" width="180" x="600" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="sdg11" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D11 Entry Exit Logs" vertex="1">
+          <mxGeometry height="60" width="180" x="600" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="sle1" edge="1" parent="1" source="sce1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="spg1" value="student exit request">
+          <mxGeometry relative="1" x="0.5238" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="90" y="30" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle2" edge="1" parent="1" source="spg1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sce1" value="exit status">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="60" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle3" edge="1" parent="1" source="spg1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sdg2" value="read student profile">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="520" y="50" />
+              <mxPoint x="520" y="90" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle4" edge="1" parent="1" source="spg1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sdg3" value="validate&amp;nbsp;&lt;div&gt;approved leave&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.5673" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="410" y="100" />
+              <mxPoint x="460" y="100" />
+              <mxPoint x="460" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle5" edge="1" parent="1" source="spg1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sdg11" value="create OUT log">
+          <mxGeometry relative="1" x="0.7942" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="450" />
+              <mxPoint x="450" y="340" />
+              <mxPoint x="690" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle6" edge="1" parent="1" source="sce1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="spg2" value="student entry request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="130" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle7" edge="1" parent="1" source="spg2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sce1" value="entry status">
+          <mxGeometry relative="1" x="-0.4474" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle8" edge="1" parent="1" source="spg2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sdg2" value="read&amp;nbsp;&lt;div&gt;student profile&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.3009" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="490" y="130" />
+              <mxPoint x="490" y="130" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle9" edge="1" parent="1" source="spg2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sdg11" value="close OUT&amp;nbsp;&lt;div&gt;log / mark IN&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.68" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="355" y="240" />
+              <mxPoint x="440" y="240" />
+              <mxPoint x="440" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle10" edge="1" parent="1" source="sce1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="spg3" value="today log request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="220" y="360" />
+              <mxPoint x="220" y="335" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle11" edge="1" parent="1" source="spg3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sce1" value="today&#39;s logs">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle12" edge="1" parent="1" source="spg3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sdg11" value="read gate logs">
+          <mxGeometry relative="1" x="0.5636" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="420" y="310" />
+              <mxPoint x="420" y="370" />
+              <mxPoint x="660" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle13" edge="1" parent="1" source="sce1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="spg4" value="outside-students request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="130" y="450" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle14" edge="1" parent="1" source="spg4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sce1" value="outside-student list">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="233" y="420" />
+              <mxPoint x="233" y="375" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle15" edge="1" parent="1" source="spg4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sdg11" value="read open&amp;nbsp;&lt;div&gt;OUT logs&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="570" y="470" />
+              <mxPoint x="570" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle16" edge="1" parent="1" source="sce1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="spg5" value="student status request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="90" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle17" edge="1" parent="1" source="spg5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sce1" value="inside/outside + leave status">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="50" y="555" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle18" edge="1" parent="1" source="spg5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sdg2" value="read student&amp;nbsp;&lt;div&gt;profile&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.7992" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="430" y="540" />
+              <mxPoint x="430" y="110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle19" edge="1" parent="1" source="spg5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sdg3" value="read approved&lt;div&gt;&amp;nbsp;leave&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.7109" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="490" y="600" />
+              <mxPoint x="490" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sle20" edge="1" parent="1" source="spg5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sdg11" value="read open gate log">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="580" y="555" />
+              <mxPoint x="580" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="level2canteenowner" name="Level 2 - Canteen Operations">
+    <mxGraphModel dx="1708" dy="1708" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="coe1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Canteen Owner" vertex="1">
+          <mxGeometry height="50" width="150" x="40" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="cop1" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.1 View Daily Menu" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="-60" as="geometry" />
+        </mxCell>
+        <mxCell id="cop2" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.2 Create Menu Item" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="cop3" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.3 Update Menu Item" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="cop4" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.4 View Night Food Orders" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="cop5" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.5 Update Night Order Status" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="cod7" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D7 Canteen Menu" vertex="1">
+          <mxGeometry height="60" width="180" x="600" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="cod8" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D8 System Logs" vertex="1">
+          <mxGeometry height="60" width="180" x="600" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="cod12" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D12 Night Food Orders" vertex="1">
+          <mxGeometry height="60" width="180" x="600" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="coe2" edge="1" parent="1" source="coe1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cop1" value="menu request">
+          <mxGeometry relative="1" x="0.3503" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="70" y="30" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe3" edge="1" parent="1" source="cop1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="coe1" value="menu items">
+          <mxGeometry relative="1" x="-0.3591" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="60" y="-30" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe4" edge="1" parent="1" source="cop1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod7" value="read menu">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="coe5" edge="1" parent="1" source="coe1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cop2" value="new menu item details">
+          <mxGeometry relative="1" x="0.4179" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="100" y="160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe6" edge="1" parent="1" source="cop2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="coe1" value="create status">
+          <mxGeometry relative="1" x="-0.3392" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="80" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe7" edge="1" parent="1" source="cop2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod7" value="insert menu item">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="coe8" edge="1" parent="1" source="cop2" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod8" value="write audit">
+          <mxGeometry relative="1" x="0.3023" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="460" y="190" />
+              <mxPoint x="460" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe9" edge="1" parent="1" source="coe1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cop3" value="menu update request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="305" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe10" edge="1" parent="1" source="cop3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="coe1" value="update status">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="115" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe11" edge="1" parent="1" source="cop3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod7" value="update menu item">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="570" y="260" />
+              <mxPoint x="570" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe12" edge="1" parent="1" source="cop3" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod8" value="write audit">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="510" y="340" />
+              <mxPoint x="510" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe13" edge="1" parent="1" source="coe1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cop4" value="night order filters">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe14" edge="1" parent="1" source="cop4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="coe1" value="night order list">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="115" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe15" edge="1" parent="1" source="cop4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod12" value="read orders">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="coe16" edge="1" parent="1" source="coe1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cop5" value="order status update">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="90" y="510" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe17" edge="1" parent="1" source="cop5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="coe1" value="update result">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="60" y="545" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe18" edge="1" parent="1" source="cop5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod12" value="update order status">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="565" y="520" />
+              <mxPoint x="565" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="coe19" edge="1" parent="1" source="cop5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod8" value="write audit">
+          <mxGeometry relative="1" x="0.5516" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="460" y="545" />
+              <mxPoint x="460" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

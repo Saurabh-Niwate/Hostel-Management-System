@@ -85,22 +85,17 @@ INSERT INTO canteen_menu (menu_date, meal_type, item_name, is_available, created
 VALUES (TRUNC(SYSDATE), 'Dinner', 'Chapati, Paneer Curry', 1, 6);
 SELECT * FROM canteen_menu;
 
+INSERT INTO night_food_orders (user_id, order_date, item_name, quantity, notes, status, updated_by)
+VALUES (2, TRUNC(SYSDATE), 'Veg Sandwich', 1, 'Less spicy', 'Pending', 6);
+INSERT INTO night_food_orders (user_id, order_date, item_name, quantity, notes, status, updated_by)
+VALUES (2, TRUNC(SYSDATE), 'Cold Coffee', 2, 'No ice', 'Preparing', 6);
+SELECT * FROM night_food_orders;
+
 INSERT INTO system_logs (actor_user_id, actor_role, action, entity_type, entity_id, details)
 VALUES (3, 'Technical Staff', 'SEED_INIT', 'SYSTEM', NULL, 'Initial seed data loaded');
 SELECT * FROM system_logs;
 
-INSERT INTO entry_exit_logs (user_id, exit_time, entry_time, status, leave_id, exit_remarks, entry_remarks, created_by, updated_by)
-VALUES (
-  2,
-  SYSDATE - (3/24),
-  SYSDATE - (1/24),
-  'IN',
-  2,
-  'Left for doctor visit',
-  'Returned after consultation',
-  5,
-  5
-);
+
 SELECT * FROM entry_exit_logs;
 
 COMMIT;

@@ -132,7 +132,7 @@ export function GateEntryExit() {
             <input
               required
               type="text"
-              placeholder="e.g. STU2024101"
+              placeholder="e.g. STU101"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent w-full transition-all text-lg font-medium"

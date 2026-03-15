@@ -13,6 +13,11 @@ const isValidIsoDate = (value) => {
   );
 };
 
+const getCurrentIndiaDate = () =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata"
+  }).format(new Date());
+
 const getStudentProfile = async (conn, studentId) => {
   const result = await conn.execute(
     `
@@ -101,7 +106,7 @@ exports.markExit = async (req, res) => {
 
   const normalizedStudentId = String(studentId).trim();
   const normalizedRemarks = remarks ? String(remarks).trim() : null;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getCurrentIndiaDate();
 
   let conn;
   try {
@@ -340,7 +345,7 @@ exports.getStudentStatus = async (req, res) => {
   }
 
   const normalizedStudentId = String(studentId).trim();
-  const referenceDate = date ? String(date).trim() : new Date().toISOString().slice(0, 10);
+  const referenceDate = date ? String(date).trim() : getCurrentIndiaDate();
 
   let conn;
   try {

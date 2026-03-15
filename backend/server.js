@@ -18,6 +18,7 @@ app.use("/api/technical-staff", require("./src/routes/technicalStaffRoutes"));
 app.use("/api/admin", require("./src/routes/adminRoutes"));
 app.use("/api/warden", require("./src/routes/wardenRoutes"));
 app.use("/api/security", require("./src/routes/securityRoutes"));
+app.use("/api/canteen-owner", require("./src/routes/canteenOwnerRoutes"));
 
 async function start() {
   await initialize();
