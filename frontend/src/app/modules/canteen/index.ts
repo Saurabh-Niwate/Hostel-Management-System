@@ -1,4 +1,5 @@
 export { CanteenLayout } from "./CanteenLayout";
 export { CanteenDashboard } from "./CanteenDashboard";
 export { MenuManagement } from "./MenuManagement";
-export { FoodAvailability } from "./FoodAvailability";
+export { DinnerPollManagement } from "./DinnerPollManagement";
+export { CanteenProfileSettings } from "./CanteenProfileSettings";

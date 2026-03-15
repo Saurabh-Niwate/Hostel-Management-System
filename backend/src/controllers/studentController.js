@@ -562,3 +562,209 @@ exports.getCanteenMenu = async (req, res) => {
     }
   }
 };
+
+exports.getDinnerPollsForStudents = async (req, res) => {
+  const role = req.user.role;
+  const userId = req.user.userId;
+
+  if (role !== "Student") {
+    return res.status(403).json({ message: "Only students can view dinner polls" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const pollsResult = await conn.execute(
+      `
+      SELECT
+        p.poll_id,
+        p.title,
+        TO_CHAR(p.dinner_date, 'YYYY-MM-DD') AS dinner_date,
+        TO_CHAR(p.closes_at, 'YYYY-MM-DD HH24:MI:SS') AS closes_at,
+        CASE
+          WHEN p.status = 'Closed' OR p.closes_at < SYSDATE THEN 'Closed'
+          WHEN TRUNC(p.dinner_date) > TRUNC(SYSDATE) THEN 'Scheduled'
+          ELSE 'Active'
+        END AS poll_status
+      FROM dinner_polls p
+      ORDER BY p.dinner_date DESC, p.poll_id DESC
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const pollRows = pollsResult.rows || [];
+    if (!pollRows.length) {
+      return res.json({ polls: [] });
+    }
+
+    const pollIds = pollRows.map((row) => row.POLL_ID);
+    const pollBinds = {};
+    const pollPlaceholders = pollIds.map((id, index) => {
+      const key = `b_poll_id_${index}`;
+      pollBinds[key] = id;
+      return `:${key}`;
+    });
+
+    const optionsResult = await conn.execute(
+      `
+      SELECT
+        o.option_id,
+        o.poll_id,
+        o.option_name,
+        o.description,
+        o.display_order,
+        (
+          SELECT COUNT(*)
+          FROM dinner_poll_votes v
+          WHERE v.option_id = o.option_id
+        ) AS vote_count
+      FROM dinner_poll_options o
+      WHERE o.poll_id IN (${pollPlaceholders.join(", ")})
+      ORDER BY o.poll_id, o.display_order, o.option_id
+      `,
+      pollBinds,
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const votesResult = await conn.execute(
+      `
+      SELECT poll_id, option_id
+      FROM dinner_poll_votes
+      WHERE user_id = :b_user_id
+        AND poll_id IN (${pollPlaceholders.join(", ")})
+      `,
+      {
+        b_user_id: userId,
+        ...pollBinds
+      },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const myVoteMap = new Map((votesResult.rows || []).map((row) => [row.POLL_ID, row.OPTION_ID]));
+    const optionRows = optionsResult.rows || [];
+    const polls = pollRows.map((poll) => {
+      const options = optionRows
+        .filter((option) => option.POLL_ID === poll.POLL_ID)
+        .map((option) => ({
+          OPTION_ID: option.OPTION_ID,
+          OPTION_NAME: option.OPTION_NAME,
+          DESCRIPTION: option.DESCRIPTION,
+          DISPLAY_ORDER: option.DISPLAY_ORDER,
+          VOTE_COUNT: Number(option.VOTE_COUNT || 0)
+        }));
+
+      return {
+        ...poll,
+        MY_OPTION_ID: myVoteMap.get(poll.POLL_ID) || null,
+        TOTAL_VOTES: options.reduce((sum, option) => sum + option.VOTE_COUNT, 0),
+        OPTIONS: options
+      };
+    });
+
+    return res.json({ polls });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch dinner polls" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.voteDinnerPoll = async (req, res) => {
+  const role = req.user.role;
+  const userId = req.user.userId;
+  const { pollId } = req.params;
+  const { optionId } = req.body;
+
+  if (role !== "Student") {
+    return res.status(403).json({ message: "Only students can vote in dinner polls" });
+  }
+  if (!pollId || Number.isNaN(Number(pollId)) || !optionId || Number.isNaN(Number(optionId))) {
+    return res.status(400).json({ message: "Valid pollId and optionId are required" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const pollResult = await conn.execute(
+      `
+      SELECT poll_id, status, closes_at
+      FROM dinner_polls
+      WHERE poll_id = :b_poll_id
+      `,
+      { b_poll_id: Number(pollId) },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    if (!pollResult.rows.length) {
+      return res.status(404).json({ message: "Dinner poll not found" });
+    }
+
+    const poll = pollResult.rows[0];
+    if (poll.STATUS === "Closed" || new Date(poll.CLOSES_AT) < new Date()) {
+      return res.status(400).json({ message: "This poll is already closed" });
+    }
+
+    const optionResult = await conn.execute(
+      `
+      SELECT option_id
+      FROM dinner_poll_options
+      WHERE option_id = :b_option_id
+        AND poll_id = :b_poll_id
+      `,
+      {
+        b_option_id: Number(optionId),
+        b_poll_id: Number(pollId)
+      }
+    );
+
+    if (!optionResult.rows.length) {
+      return res.status(404).json({ message: "Selected option does not belong to this poll" });
+    }
+
+    await conn.execute(
+      `
+      MERGE INTO dinner_poll_votes v
+      USING (
+        SELECT :b_poll_id AS poll_id, :b_user_id AS user_id, :b_option_id AS option_id
+        FROM dual
+      ) src
+      ON (v.poll_id = src.poll_id AND v.user_id = src.user_id)
+      WHEN MATCHED THEN
+        UPDATE SET
+          v.option_id = src.option_id,
+          v.voted_at = SYSDATE
+      WHEN NOT MATCHED THEN
+        INSERT (poll_id, option_id, user_id, voted_at)
+        VALUES (src.poll_id, src.option_id, src.user_id, SYSDATE)
+      `,
+      {
+        b_poll_id: Number(pollId),
+        b_user_id: userId,
+        b_option_id: Number(optionId)
+      },
+      { autoCommit: true }
+    );
+
+    return res.json({ message: "Vote submitted successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to submit vote" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};

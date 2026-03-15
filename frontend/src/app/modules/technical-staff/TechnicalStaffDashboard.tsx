@@ -1,12 +1,15 @@
 import { useState,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, Users as UsersIcon, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Users as UsersIcon, LogOut, Menu, X, ShieldCheck, Wallet, BedDouble } from 'lucide-react';
+import { motion, AnimatePresence } from "motion/react";
 import { CreateUser } from './CreateUser';
 import { ManageUsers } from './ManageUsers';
 import { FeeManagement } from './FeeManagement';
+import { RoomManagement } from './RoomManagement';
+import { StaffProfileSettings } from '../../components/StaffProfileSettings';
 import { api } from '../../lib/api';
 
-type View = 'dashboard' | 'create-users' | 'manage-users' | 'fee-management';
+type View = 'dashboard' | 'create-users' | 'manage-users' | 'room-management' | 'fee-management' | 'profile';
 type LogRow = {
   LOG_ID: number;
   ACTOR_USER_ID: number;
@@ -21,35 +24,47 @@ type LogRow = {
 export function TechnicalStaffDashboard() {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<View>('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [stats, setStats] = useState({
     total: 0,
     students: 0,
     staff: 0,
+    rooms: 0,
   });
   const [logs, setLogs] = useState<LogRow[]>([]);
 
   // Load stats
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('userRole');
+    if (!token || role !== 'Technical Staff') {
+      navigate('/');
+    }
+  }, [navigate]);
+
+  useEffect(() => {
     const loadStats = async () => {
       try {
-        const [studentsRes, staffRes, logsRes] = await Promise.all([
+        const [studentsRes, staffRes, roomsRes, logsRes] = await Promise.all([
           api.get('/technical-staff/students'),
           api.get('/technical-staff/staff'),
+          api.get('/technical-staff/rooms'),
           api.get('/technical-staff/system-logs', { params: { limit: 8 } }),
         ]);
 
         const students = studentsRes.data?.students || [];
         const staff = staffRes.data?.staff || [];
+        const rooms = roomsRes.data?.rooms || [];
         setStats({
           students: students.length,
           staff: staff.length,
           total: students.length + staff.length,
+          rooms: rooms.length,
         });
         setLogs(logsRes.data?.logs || []);
       } catch {
-        setStats({ total: 0, students: 0, staff: 0 });
+        setStats({ total: 0, students: 0, staff: 0, rooms: 0 });
         setLogs([]);
       }
     };
@@ -73,42 +88,65 @@ export function TechnicalStaffDashboard() {
     { id: 'dashboard' as View, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'create-users' as View, label: 'Create Users', icon: UserPlus },
     { id: 'manage-users' as View, label: 'Manage Users', icon: UsersIcon },
-    { id: 'fee-management' as View, label: 'Fee Management', icon: UsersIcon },
+    { id: 'room-management' as View, label: 'Room Management', icon: BedDouble },
+    { id: 'fee-management' as View, label: 'Fee Management', icon: Wallet },
+    { id: 'profile' as View, label: 'Profile', icon: UsersIcon },
   ];
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+  const viewTitle =
+    currentView === 'dashboard'
+      ? 'Technical Staff Dashboard'
+      : currentView === 'create-users'
+        ? 'Create Users'
+        : currentView === 'manage-users'
+          ? 'Manage Users'
+          : currentView === 'room-management'
+            ? 'Room Management'
+          : currentView === 'profile'
+            ? 'Profile'
+          : 'Fee Management';
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-50 transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+  const viewDescription =
+    currentView === 'dashboard'
+      ? 'User operations, fee handling, and system activity from one control panel.'
+      : currentView === 'create-users'
+        ? 'Add new students or staff members with the required hostel details.'
+        : currentView === 'manage-users'
+          ? 'Search, view, edit, and remove users from the system.'
+          : currentView === 'room-management'
+            ? 'Create, edit, activate, or remove hostel rooms.'
+          : currentView === 'profile'
+            ? 'View your account details and update your password.'
+          : 'Create and update student fee records with current status.';
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex">
+      <motion.aside
+        initial={{ width: 280 }}
+        animate={{ width: 280 }}
+        className={`fixed top-0 left-0 h-full w-[280px] bg-cyan-900 border-r border-cyan-800 z-30 text-white flex flex-col transition-transform duration-300 ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-6 border-b border-slate-200">
+          <div className="p-6 border-b border-cyan-800/50">
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-bold text-slate-900">Hostel Portal</h1>
-                <p className="text-sm text-slate-600">Technical Staff</p>
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="w-5 h-5 text-cyan-300" />
+                <div>
+                  <h1 className="text-xl font-bold tracking-wide">Technical Portal</h1>
+                  <p className="text-xs text-cyan-200">{localStorage.getItem('userIdentifier') || 'TECHNICAL'}</p>
+                </div>
               </div>
               <button
-                onClick={() => setSidebarOpen(false)}
-                className="lg:hidden p-1 hover:bg-slate-100 rounded-lg transition-colors"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-2 hover:bg-cyan-800 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-slate-600" />
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1">
             {navigationItems.map((item) => {
               const Icon = item.icon;
@@ -119,11 +157,11 @@ export function TechnicalStaffDashboard() {
                   key={item.id}
                   onClick={() => {
                     setCurrentView(item.id);
-                    setSidebarOpen(false);
+                    setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${isActive
-                      ? 'bg-teal-600 text-white'
-                      : 'text-slate-700 hover:bg-slate-100'
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${isActive
+                      ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-950/40'
+                      : 'text-cyan-100 hover:bg-cyan-800 hover:text-white'
                     }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -133,58 +171,52 @@ export function TechnicalStaffDashboard() {
             })}
           </nav>
 
-          {/* Logout */}
-          <div className="p-4 border-t border-slate-200">
+          <div className="p-4 border-t border-cyan-800/50">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 text-red-200 hover:bg-red-900/30 rounded-xl font-medium transition-colors"
             >
               <LogOut className="w-5 h-5" />
               <span>Logout</span>
             </button>
           </div>
         </div>
-      </aside>
+      </motion.aside>
 
-      {/* Main Content */}
-      <div className="lg:ml-64">
-        {/* Header */}
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className="lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                >
-                  <Menu className="w-6 h-6 text-slate-700" />
-                </button>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">
-                    {currentView === 'dashboard' && 'Dashboard Overview'}
-                    {currentView === 'create-users' && 'Create New User'}
-                    {currentView === 'manage-users' && 'Manage Users'}
-                    {currentView === 'fee-management' && 'Fee Management'}
-                  </h2>
-                  <p className="text-sm text-slate-600">
-                    {currentView === 'dashboard' && 'Welcome to your dashboard'}
-                    {currentView === 'create-users' && 'Add students or staff to the system'}
-                    {currentView === 'manage-users' && 'View and manage all users'}
-                    {currentView === 'fee-management' && 'Create and update student fee records'}
-                  </p>
-                </div>
-              </div>
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-6 flex items-start gap-4">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900">{viewTitle}</h2>
+              <p className="text-slate-500 mt-1">{viewDescription}</p>
             </div>
           </div>
-        </header>
 
-        {/* Content */}
-        <main className="p-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentView}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
           {currentView === 'dashboard' && (
             <div className="space-y-6">
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-slate-600 mb-1">Total Users</p>
@@ -196,7 +228,7 @@ export function TechnicalStaffDashboard() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-slate-600 mb-1">Students</p>
@@ -208,7 +240,7 @@ export function TechnicalStaffDashboard() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-slate-600 mb-1">Staff Members</p>
@@ -219,15 +251,26 @@ export function TechnicalStaffDashboard() {
                     </div>
                   </div>
                 </div>
+
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-slate-600 mb-1">Rooms</p>
+                      <p className="text-3xl font-bold text-slate-900">{stats.rooms}</p>
+                    </div>
+                    <div className="p-3 bg-cyan-100 rounded-lg">
+                      <BedDouble className="w-6 h-6 text-cyan-700" />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Quick Actions */}
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <h3 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <button
                     onClick={() => setCurrentView('create-users')}
-                    className="flex items-center gap-3 p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-left"
+                    className="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-left"
                   >
                     <div className="p-2 bg-teal-100 rounded-lg">
                       <UserPlus className="w-5 h-5 text-teal-700" />
@@ -240,7 +283,7 @@ export function TechnicalStaffDashboard() {
 
                   <button
                     onClick={() => setCurrentView('manage-users')}
-                    className="flex items-center gap-3 p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-left"
+                    className="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-left"
                   >
                     <div className="p-2 bg-blue-100 rounded-lg">
                       <UsersIcon className="w-5 h-5 text-blue-700" />
@@ -250,10 +293,23 @@ export function TechnicalStaffDashboard() {
                       <p className="text-sm text-slate-600">View, edit, and delete users</p>
                     </div>
                   </button>
+
+                  <button
+                    onClick={() => setCurrentView('room-management')}
+                    className="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                  >
+                    <div className="p-2 bg-cyan-100 rounded-lg">
+                      <BedDouble className="w-5 h-5 text-cyan-700" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900">Manage Rooms</p>
+                      <p className="text-sm text-slate-600">Create, edit, and delete rooms</p>
+                    </div>
+                  </button>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-200">
                   <h3 className="text-lg font-bold text-slate-900">Recent System Logs</h3>
                 </div>
@@ -295,9 +351,15 @@ export function TechnicalStaffDashboard() {
 
           {currentView === 'manage-users' && <ManageUsers refreshTrigger={refreshTrigger} />}
 
+          {currentView === 'room-management' && <RoomManagement />}
+
           {currentView === 'fee-management' && <FeeManagement />}
-        </main>
-      </div>
+
+          {currentView === 'profile' && <StaffProfileSettings />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </main>
     </div>
   );
 }

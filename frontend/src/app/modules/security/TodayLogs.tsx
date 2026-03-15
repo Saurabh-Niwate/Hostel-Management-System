@@ -55,11 +55,7 @@ export function TodayLogs() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Today's Logs</h2>
-          <p className="text-sm text-slate-500">Gate entry and exit activity for today.</p>
-        </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4">
         <button
           onClick={loadLogs}
           className="flex items-center px-4 py-2 border border-slate-200 bg-white rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"

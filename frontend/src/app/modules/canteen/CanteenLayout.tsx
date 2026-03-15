@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, UtensilsCrossed, Package, LogOut, Menu, X, User } from "lucide-react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { LayoutDashboard, UtensilsCrossed, Vote, LogOut, Menu, X, ChefHat, User } from "lucide-react";
+import { motion } from "motion/react";
 
 export function CanteenLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -24,71 +26,74 @@ export function CanteenLayout() {
   const menuItems = [
     { icon: LayoutDashboard, label: "Overview", path: "/canteen-owner-dashboard" },
     { icon: UtensilsCrossed, label: "Menu Management", path: "/canteen-owner-dashboard/menu" },
-    { icon: Package, label: "Night Orders", path: "/canteen-owner-dashboard/night-orders" }
+    { icon: Vote, label: "Dinner Polls", path: "/canteen-owner-dashboard/dinner-polls" },
+    { icon: User, label: "Profile", path: "/canteen-owner-dashboard/profile" }
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="flex items-center justify-between px-4 py-3">
+    <div className="min-h-screen bg-slate-50 flex">
+      <motion.aside
+        initial={{ width: 280 }}
+        animate={{ width: 280 }}
+        className={`fixed h-full z-30 flex flex-col bg-orange-900 border-r border-orange-800 text-white transition-transform duration-300 ${
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        <div className="p-6 flex items-center justify-between border-b border-orange-800/50">
           <div className="flex items-center gap-3">
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
-              {isMobileMenuOpen ? <X className="h-5 w-5 text-gray-600" /> : <Menu className="h-5 w-5 text-gray-600" />}
-            </button>
+            <ChefHat className="h-5 w-5 text-orange-300" />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Hostel Canteen</h1>
-              <p className="text-sm text-gray-500">Management System</p>
+              <h1 className="text-xl font-bold tracking-wide truncate">Canteen Portal</h1>
+              <p className="text-xs text-orange-200">{localStorage.getItem("userIdentifier") || "CANTEEN"}</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
-              <User className="h-4 w-4 text-gray-600" />
-              <div className="text-sm">
-                <p className="font-medium text-gray-900">Canteen Owner</p>
-                <p className="text-xs text-gray-500">{localStorage.getItem("userIdentifier") || "-"}</p>
-              </div>
-            </div>
-            <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
-          </div>
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="lg:hidden p-2 hover:bg-orange-800 rounded-lg">
+            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
-      </header>
 
-      <div className="flex">
-        <aside
-          className={`fixed lg:sticky top-[57px] left-0 h-[calc(100vh-57px)] w-64 bg-white border-r border-gray-200 transition-transform duration-300 z-30 ${
-            isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-          }`}
-        >
-          <nav className="p-4 space-y-1">
-            {menuItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === "/canteen-owner-dashboard"}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"
-                  }`
-                }
-              >
-                <item.icon className="h-5 w-5" />
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
-          </nav>
-        </aside>
+        <nav className="p-4 space-y-2 flex-1">
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === "/canteen-owner-dashboard"}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                  isActive ? "bg-orange-600 text-white shadow-lg shadow-orange-950/40" : "text-orange-100 hover:bg-orange-800 hover:text-white"
+                }`
+              }
+            >
+              <item.icon className="h-5 w-5" />
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
 
-        {isMobileMenuOpen && <div className="fixed inset-0 bg-black/50 lg:hidden z-20" onClick={() => setIsMobileMenuOpen(false)} />}
+        <div className="p-4 border-t border-orange-800/50">
+          <button onClick={handleLogout} className="flex items-center w-full p-3 text-red-200 hover:bg-red-900/30 rounded-xl transition-colors">
+            <LogOut className="h-5 w-5" />
+            <span className="ml-3 font-medium">Logout</span>
+          </button>
+        </div>
+      </motion.aside>
 
-        <main className="flex-1 p-4 lg:p-8 min-h-[calc(100vh-57px)]">
+      {isMobileMenuOpen && <div className="fixed inset-0 bg-black/50 lg:hidden z-20" onClick={() => setIsMobileMenuOpen(false)} />}
+
+      <main className="flex-1 p-8 ml-0 lg:ml-[280px] min-h-screen">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-slate-900">
+              {menuItems.find((item) => item.path === location.pathname)?.label || "Canteen Owner Dashboard"}
+            </h2>
+            <p className="text-slate-500 mt-1">
+              Daily menu updates and student dinner voting for hostel meals.
+            </p>
+          </div>
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

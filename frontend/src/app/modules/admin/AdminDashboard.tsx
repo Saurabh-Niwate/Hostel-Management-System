@@ -8,8 +8,9 @@ import { AdminReportsOverview } from "./AdminReportsOverview";
 import { AdminLeaveManagement } from "./AdminLeaveManagement";
 import { AdminAttendanceSummary } from "./AdminAttendanceSummary";
 import { AdminStudentView } from "./AdminStudentView";
+import { StaffProfileSettings } from "../../components/StaffProfileSettings";
 
-type Tab = "dashboard" | "leaves" | "attendance" | "studentView";
+type Tab = "dashboard" | "leaves" | "attendance" | "studentView" | "profile";
 
 export function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<Tab>("dashboard");
@@ -33,6 +34,8 @@ export function AdminDashboard() {
                 return <AdminAttendanceSummary />;
             case "studentView":
                 return <AdminStudentView />;
+            case "profile":
+                return <StaffProfileSettings />;
             default:
                 return <div>Select a tab</div>;
         }
@@ -86,6 +89,13 @@ export function AdminDashboard() {
                         label="Student View"
                         active={activeTab === "studentView"}
                         onClick={() => setActiveTab("studentView")}
+                        isOpen={isSidebarOpen}
+                    />
+                    <SidebarItem
+                        icon={<User size={20} />}
+                        label="Profile"
+                        active={activeTab === "profile"}
+                        onClick={() => setActiveTab("profile")}
                         isOpen={isSidebarOpen}
                     />
                 </nav>

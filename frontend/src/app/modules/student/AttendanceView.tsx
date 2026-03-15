@@ -40,7 +40,6 @@ export function AttendanceView() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-800">Attendance Overview</h2>
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card icon={<TrendingUp className="text-blue-500 mb-2" size={32} />} label="Overall Percentage" value={`${stats.percentage}%`} />

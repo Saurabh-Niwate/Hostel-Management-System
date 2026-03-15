@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Calendar, Save } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
 import { api } from "../../lib/api";
 import { WardenAttendanceRow, WardenRoom, WardenStudent } from "./wardenTypes";
 
@@ -108,11 +108,7 @@ export function AttendanceManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Attendance Management</h2>
-          <p className="text-gray-500 mt-1">Track and manage room-wise student attendance</p>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
         <Button onClick={handleSave} disabled={saving || rows.length === 0} className="bg-teal-600 hover:bg-teal-700">
           <Save className="h-4 w-4 mr-2" />
           {saving ? "Saving..." : "Save Attendance"}

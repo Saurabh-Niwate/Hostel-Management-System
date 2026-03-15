@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Search, Mail, Phone, User } from "lucide-react";
-import { Card, CardContent, CardHeader } from "../ui/card";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
+import { Card, CardContent, CardHeader } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
 import { api } from "../../lib/api";
 import { WardenStudent } from "./wardenTypes";
 
@@ -12,6 +12,7 @@ export function StudentsManagement() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<WardenStudent | null>(null);
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
   useEffect(() => {
     const id = setTimeout(async () => {
@@ -36,6 +37,7 @@ export function StudentsManagement() {
     try {
       const res = await api.get(`/warden/students/${studentId}/basic`);
       setSelectedStudent(res.data?.student || null);
+      setImageLoadFailed(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to fetch student details");
     }
@@ -43,11 +45,6 @@ export function StudentsManagement() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Student Management</h2>
-        <p className="text-gray-500 mt-1">View student information</p>
-      </div>
-
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -115,8 +112,17 @@ export function StudentsManagement() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-teal-100 flex items-center justify-center">
-                    <User className="h-6 w-6 text-teal-600" />
+                  <div className="h-14 w-14 rounded-full overflow-hidden bg-teal-100 border border-teal-200 flex items-center justify-center">
+                    {selectedStudent.PROFILE_IMAGE_URL && !imageLoadFailed ? (
+                      <img
+                        src={selectedStudent.PROFILE_IMAGE_URL}
+                        alt={selectedStudent.FULL_NAME || "Student profile"}
+                        className="h-full w-full object-cover"
+                        onError={() => setImageLoadFailed(true)}
+                      />
+                    ) : (
+                      <User className="h-7 w-7 text-teal-600" />
+                    )}
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{selectedStudent.FULL_NAME || "Student"}</h3>

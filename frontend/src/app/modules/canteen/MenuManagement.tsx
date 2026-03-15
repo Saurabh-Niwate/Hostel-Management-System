@@ -27,6 +27,7 @@ export function MenuManagement() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [selectedDate, setSelectedDate] = useState(today);
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingItem, setEditingItem] = useState<MenuRow | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState<MenuForm>({
@@ -55,7 +56,19 @@ export function MenuManagement() {
     loadMenu(selectedDate);
   }, [selectedDate]);
 
-  const groupedItems = useMemo(() => menuItems, [menuItems]);
+  const filteredItems = useMemo(
+    () =>
+      menuItems.filter((item) => {
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return true;
+        return (
+          String(item.ITEM_NAME || "").toLowerCase().includes(query) ||
+          String(item.MEAL_TYPE || "").toLowerCase().includes(query) ||
+          String(item.MENU_DATE || "").toLowerCase().includes(query)
+        );
+      }),
+    [menuItems, searchQuery]
+  );
 
   const handleCreate = async () => {
     setError("");
@@ -97,11 +110,7 @@ export function MenuManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Menu Management</h2>
-          <p className="text-gray-500 mt-1">Create and update daily menu items</p>
-        </div>
+      <div className="flex items-center justify-end">
         <Button
           onClick={() => {
             setForm({ menuDate: selectedDate, mealType: "Breakfast", itemName: "", isAvailable: "1" });
@@ -120,28 +129,26 @@ export function MenuManagement() {
 
       <Card>
         <CardContent className="p-4">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg"
-          />
+          <div className="flex flex-col md:flex-row gap-3">
+            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg" />
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by item, meal type, or date..." className="flex-1 px-4 py-2 border border-gray-300 rounded-lg" />
+          </div>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
           <p className="text-sm text-gray-500">Loading menu...</p>
-        ) : groupedItems.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <Card><CardContent className="p-6 text-sm text-gray-500">No menu items found for selected date.</CardContent></Card>
         ) : (
-          groupedItems.map((item) => (
+          filteredItems.map((item) => (
             <Card key={item.MENU_ID} className={Number(item.IS_AVAILABLE) === 0 ? "opacity-60" : ""}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-lg">{item.ITEM_NAME}</CardTitle>
-                    <p className="text-sm text-gray-500 mt-1">{item.MEAL_TYPE} • {item.MENU_DATE}</p>
+                    <p className="text-sm text-gray-500 mt-1">{item.MEAL_TYPE} | {item.MENU_DATE}</p>
                   </div>
                   <Button
                     variant="ghost"

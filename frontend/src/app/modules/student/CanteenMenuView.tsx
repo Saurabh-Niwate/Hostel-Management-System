@@ -10,6 +10,24 @@ type MenuRow = {
   IS_AVAILABLE: string | number | boolean | null;
 };
 
+type PollOption = {
+  OPTION_ID: number;
+  OPTION_NAME: string;
+  DESCRIPTION?: string;
+  VOTE_COUNT: number;
+};
+
+type DinnerPoll = {
+  POLL_ID: number;
+  TITLE: string;
+  DINNER_DATE: string;
+  CLOSES_AT: string;
+  POLL_STATUS: "Active" | "Scheduled" | "Closed";
+  MY_OPTION_ID?: number | null;
+  TOTAL_VOTES: number;
+  OPTIONS: PollOption[];
+};
+
 const iconByMeal: Record<string, JSX.Element> = {
   Breakfast: <Coffee size={24} className="text-amber-600" />,
   Lunch: <Utensils size={24} className="text-emerald-600" />,
@@ -28,16 +46,22 @@ export function CanteenMenuView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [menuRows, setMenuRows] = useState<MenuRow[]>([]);
+  const [polls, setPolls] = useState<DinnerPoll[]>([]);
+  const [votingPollId, setVotingPollId] = useState<number | null>(null);
   const [menuDate, setMenuDate] = useState("");
 
   const loadMenu = async (selectedDate?: string) => {
     setLoading(true);
     setError("");
     try {
-      const res = await api.get("/student/canteen-menu", {
-        params: selectedDate ? { date: selectedDate } : undefined,
-      });
-      setMenuRows(res.data?.menu || []);
+      const [menuRes, pollRes] = await Promise.all([
+        api.get("/student/canteen-menu", {
+          params: selectedDate ? { date: selectedDate } : undefined,
+        }),
+        api.get("/student/dinner-polls"),
+      ]);
+      setMenuRows(menuRes.data?.menu || []);
+      setPolls(pollRes.data?.polls || []);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load canteen menu");
     } finally {
@@ -69,6 +93,21 @@ export function CanteenMenuView() {
     return false;
   };
 
+  const activePoll = polls.find((poll) => poll.POLL_STATUS === "Active") || null;
+
+  const handleVote = async (pollId: number, optionId: number) => {
+    setVotingPollId(pollId);
+    setError("");
+    try {
+      await api.post(`/student/dinner-polls/${pollId}/vote`, { optionId });
+      await loadMenu(menuDate || undefined);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to submit vote");
+    } finally {
+      setVotingPollId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -87,13 +126,54 @@ export function CanteenMenuView() {
     <div className="space-y-6">
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Canteen Menu</h2>
-          <p className="text-slate-500 flex items-center mt-1">
-            <Clock size={16} className="mr-1" /> {today}
-          </p>
+      {activePoll && (
+        <div className="bg-white border border-indigo-100 rounded-2xl shadow-sm p-6">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600">Dinner Poll</p>
+              <h3 className="text-xl font-bold text-slate-900 mt-1">{activePoll.TITLE}</h3>
+              <p className="text-sm text-slate-500 mt-2">Dinner date: {activePoll.DINNER_DATE} | Closes: {activePoll.CLOSES_AT}</p>
+            </div>
+            <span className="text-sm px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 h-fit">
+              {activePoll.TOTAL_VOTES} vote(s)
+            </span>
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activePoll.OPTIONS.map((option) => {
+              const isSelected = activePoll.MY_OPTION_ID === option.OPTION_ID;
+              return (
+                <button
+                  key={option.OPTION_ID}
+                  onClick={() => handleVote(activePoll.POLL_ID, option.OPTION_ID)}
+                  disabled={votingPollId === activePoll.POLL_ID}
+                  className={`text-left rounded-xl border p-4 transition-all ${
+                    isSelected
+                      ? "border-indigo-500 bg-indigo-50"
+                      : "border-slate-200 bg-white hover:border-indigo-200"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-slate-900">{option.OPTION_NAME}</p>
+                      <p className="text-sm text-slate-500 mt-1">{option.DESCRIPTION || "No description"}</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600">
+                      {option.VOTE_COUNT}
+                    </span>
+                  </div>
+                  <p className="text-xs mt-3 text-indigo-700">{isSelected ? "Your current choice" : "Tap to vote"}</p>
+                </button>
+              );
+            })}
+          </div>
         </div>
+      )}
+
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
+        <p className="text-slate-500 flex items-center mt-1">
+          <Clock size={16} className="mr-1" /> {today}
+        </p>
         <div className="flex gap-2">
           <input
             type="date"
@@ -151,4 +231,3 @@ export function CanteenMenuView() {
     </div>
   );
 }
-

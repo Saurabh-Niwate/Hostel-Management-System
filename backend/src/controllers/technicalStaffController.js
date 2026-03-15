@@ -70,6 +70,24 @@ const insertSystemLog = async (
   );
 };
 
+const ensureRoomExists = async (conn, roomNo) => {
+  const normalizedRoomNo = roomNo ? String(roomNo).trim() : "";
+  if (!normalizedRoomNo) {
+    return false;
+  }
+
+  const roomResult = await conn.execute(
+    `
+    SELECT room_no
+    FROM rooms
+    WHERE TRIM(room_no) = :b_room_no
+    `,
+    { b_room_no: normalizedRoomNo }
+  );
+
+  return roomResult.rows.length > 0;
+};
+
 exports.createStudent = async (req, res) => {
   const {
     studentId,
@@ -128,6 +146,12 @@ exports.createStudent = async (req, res) => {
         deleteUploadedFile(req.file?.path);
         return res.status(400).json({ message: "Invalid email format" });
       }
+    }
+
+    const roomExists = await ensureRoomExists(conn, roomNo);
+    if (!roomExists) {
+      deleteUploadedFile(req.file?.path);
+      return res.status(400).json({ message: "Assigned room does not exist. Create the room first before allocating it." });
     }
 
     const roleResult = await conn.execute(
@@ -245,7 +269,7 @@ exports.createStudent = async (req, res) => {
 };
 
 exports.createStaff = async (req, res) => {
-  const { empId, email, password, roleName } = req.body;
+  const { empId, email, password, roleName, fullName, phone } = req.body;
 
   if (!empId || !password || !roleName) {
     return res.status(400).json({ message: "empId, password and roleName are required" });
@@ -316,6 +340,19 @@ exports.createStaff = async (req, res) => {
     );
 
     const createdUserId = createdUserResult.rows[0][0];
+
+    await conn.execute(
+      `
+      INSERT INTO staff_profiles (user_id, full_name, phone)
+      VALUES (:b_user_id, :b_full_name, :b_phone)
+      `,
+      {
+        b_user_id: createdUserId,
+        b_full_name: fullName ? fullName.trim() : null,
+        b_phone: phone ? phone.trim() : null
+      },
+      { autoCommit: false }
+    );
 
     await insertSystemLog(conn, {
       actorUserId: req.user.userId,
@@ -562,6 +599,19 @@ exports.getUserById = async (req, res) => {
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
 
+    const staffProfile = await conn.execute(
+      `
+      SELECT
+        full_name,
+        phone,
+        TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
+      FROM staff_profiles
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: Number(userId) },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
     return res.json({
       user: userResult.rows[0],
       studentProfile: (() => {
@@ -571,7 +621,8 @@ exports.getUserById = async (req, res) => {
           ...row,
           PROFILE_IMAGE_URL: toPublicUrl(req, row.PROFILE_IMAGE_URL)
         };
-      })()
+      })(),
+      staffProfile: (staffProfile.rows && staffProfile.rows[0]) || null
     });
   } catch (err) {
     console.error(err);
@@ -644,6 +695,13 @@ exports.updateStudentByStudentId = async (req, res) => {
       );
       if (duplicateEmailCheck.rows.length > 0) {
         return res.status(409).json({ message: "Email already in use" });
+      }
+    }
+
+    if (roomNo && roomNo.trim()) {
+      const roomExists = await ensureRoomExists(conn, roomNo);
+      if (!roomExists) {
+        return res.status(400).json({ message: "Assigned room does not exist. Create the room first before allocating it." });
       }
     }
 
@@ -915,6 +973,332 @@ exports.getStaff = async (_req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to fetch staff users" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.getRooms = async (_req, res) => {
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const result = await conn.execute(
+      `
+      SELECT
+        r.room_no,
+        r.block_name,
+        r.floor_no,
+        r.capacity,
+        r.room_type,
+        r.is_active,
+        TO_CHAR(r.created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+        (
+          SELECT COUNT(*)
+          FROM students s
+          WHERE TRIM(s.room_no) = TRIM(r.room_no)
+        ) AS occupied,
+        (
+          r.capacity - (
+            SELECT COUNT(*)
+            FROM students s
+            WHERE TRIM(s.room_no) = TRIM(r.room_no)
+          )
+        ) AS vacancy
+      FROM rooms
+      r
+      ORDER BY r.block_name, r.floor_no, r.room_no
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    return res.json({ rooms: result.rows || [] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch rooms" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.createRoom = async (req, res) => {
+  const { roomNo, blockName, floorNo, capacity, roomType, isActive } = req.body;
+
+  if (!roomNo || !String(roomNo).trim()) {
+    return res.status(400).json({ message: "roomNo is required" });
+  }
+
+  const normalizedRoomNo = String(roomNo).trim();
+  const normalizedBlockName = blockName ? String(blockName).trim() : null;
+  const normalizedRoomType = roomType ? String(roomType).trim() : "Regular";
+  const parsedFloorNo = floorNo === undefined || floorNo === null || floorNo === "" ? null : Number(floorNo);
+  const parsedCapacity = capacity === undefined || capacity === null || capacity === "" ? 1 : Number(capacity);
+  const normalizedIsActive =
+    isActive === undefined || isActive === null || isActive === ""
+      ? 1
+      : Number(isActive) === 0
+        ? 0
+        : 1;
+
+  if ((parsedFloorNo !== null && Number.isNaN(parsedFloorNo)) || Number.isNaN(parsedCapacity) || parsedCapacity <= 0) {
+    return res.status(400).json({ message: "floorNo must be numeric and capacity must be greater than 0" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const duplicateResult = await conn.execute(
+      `
+      SELECT room_no
+      FROM rooms
+      WHERE TRIM(room_no) = :b_room_no
+      `,
+      { b_room_no: normalizedRoomNo }
+    );
+
+    if (duplicateResult.rows.length > 0) {
+      return res.status(409).json({ message: "Room already exists" });
+    }
+
+    await conn.execute(
+      `
+      INSERT INTO rooms (room_no, block_name, floor_no, capacity, room_type, is_active)
+      VALUES (:b_room_no, :b_block_name, :b_floor_no, :b_capacity, :b_room_type, :b_is_active)
+      `,
+      {
+        b_room_no: normalizedRoomNo,
+        b_block_name: normalizedBlockName,
+        b_floor_no: parsedFloorNo,
+        b_capacity: parsedCapacity,
+        b_room_type: normalizedRoomType,
+        b_is_active: normalizedIsActive
+      },
+      { autoCommit: false }
+    );
+
+    await insertSystemLog(conn, {
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: "CREATE_ROOM",
+      entityType: "ROOM",
+      entityId: null,
+      details: `roomNo=${normalizedRoomNo}`
+    });
+
+    await conn.commit();
+    return res.status(201).json({ message: "Room created successfully", roomNo: normalizedRoomNo });
+  } catch (err) {
+    console.error(err);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Error rolling back transaction:", rollbackErr);
+      }
+    }
+    return res.status(500).json({ message: "Failed to create room" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.updateRoom = async (req, res) => {
+  const { roomNo } = req.params;
+  const { blockName, floorNo, capacity, roomType, isActive } = req.body;
+
+  if (!roomNo || !String(roomNo).trim()) {
+    return res.status(400).json({ message: "roomNo param is required" });
+  }
+
+  const normalizedRoomNo = String(roomNo).trim();
+  const parsedFloorNo = floorNo === undefined || floorNo === null || floorNo === "" ? undefined : Number(floorNo);
+  const parsedCapacity = capacity === undefined || capacity === null || capacity === "" ? undefined : Number(capacity);
+  const normalizedIsActive =
+    isActive === undefined || isActive === null || isActive === ""
+      ? undefined
+      : Number(isActive) === 0
+        ? 0
+        : 1;
+
+  if ((parsedFloorNo !== undefined && Number.isNaN(parsedFloorNo)) || (parsedCapacity !== undefined && (Number.isNaN(parsedCapacity) || parsedCapacity <= 0))) {
+    return res.status(400).json({ message: "floorNo must be numeric and capacity must be greater than 0" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const existingResult = await conn.execute(
+      `
+      SELECT room_no, block_name, floor_no, capacity, room_type, is_active
+      FROM rooms
+      WHERE TRIM(room_no) = :b_room_no
+      `,
+      { b_room_no: normalizedRoomNo },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    if (existingResult.rows.length === 0) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    const current = existingResult.rows[0];
+    await conn.execute(
+      `
+      UPDATE rooms
+      SET block_name = :b_block_name,
+          floor_no = :b_floor_no,
+          capacity = :b_capacity,
+          room_type = :b_room_type,
+          is_active = :b_is_active
+      WHERE TRIM(room_no) = :b_room_no
+      `,
+      {
+        b_block_name: blockName === undefined ? current.BLOCK_NAME : (blockName ? String(blockName).trim() : null),
+        b_floor_no: parsedFloorNo === undefined ? current.FLOOR_NO : parsedFloorNo,
+        b_capacity: parsedCapacity === undefined ? current.CAPACITY : parsedCapacity,
+        b_room_type: roomType === undefined ? current.ROOM_TYPE : (roomType ? String(roomType).trim() : "Regular"),
+        b_is_active: normalizedIsActive === undefined ? current.IS_ACTIVE : normalizedIsActive,
+        b_room_no: normalizedRoomNo
+      },
+      { autoCommit: false }
+    );
+
+    await insertSystemLog(conn, {
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: "UPDATE_ROOM",
+      entityType: "ROOM",
+      entityId: null,
+      details: `roomNo=${normalizedRoomNo}`
+    });
+
+    await conn.commit();
+    return res.json({ message: "Room updated successfully", roomNo: normalizedRoomNo });
+  } catch (err) {
+    console.error(err);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Error rolling back transaction:", rollbackErr);
+      }
+    }
+    return res.status(500).json({ message: "Failed to update room" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.deleteRoom = async (req, res) => {
+  const { roomNo } = req.params;
+  const force = String(req.query.force || "false").toLowerCase() === "true";
+
+  if (!roomNo || !String(roomNo).trim()) {
+    return res.status(400).json({ message: "roomNo param is required" });
+  }
+
+  const normalizedRoomNo = String(roomNo).trim();
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const roomResult = await conn.execute(
+      `
+      SELECT room_no
+      FROM rooms
+      WHERE TRIM(room_no) = :b_room_no
+      `,
+      { b_room_no: normalizedRoomNo }
+    );
+
+    if (roomResult.rows.length === 0) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    const assignedStudentsResult = await conn.execute(
+      `
+      SELECT COUNT(*) AS total
+      FROM students
+      WHERE TRIM(room_no) = :b_room_no
+      `,
+      { b_room_no: normalizedRoomNo },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const assignedStudents = Number(assignedStudentsResult.rows[0]?.TOTAL || 0);
+    if (assignedStudents > 0 && !force) {
+      return res.status(400).json({
+        message: "Room has assigned students. Use ?force=true to unassign students and delete anyway.",
+        assignedStudents
+      });
+    }
+
+    if (force && assignedStudents > 0) {
+      await conn.execute(
+        `
+        UPDATE students
+        SET room_no = NULL
+        WHERE TRIM(room_no) = :b_room_no
+        `,
+        { b_room_no: normalizedRoomNo },
+        { autoCommit: false }
+      );
+    }
+
+    await conn.execute(
+      `
+      DELETE FROM rooms
+      WHERE TRIM(room_no) = :b_room_no
+      `,
+      { b_room_no: normalizedRoomNo },
+      { autoCommit: false }
+    );
+
+    await insertSystemLog(conn, {
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: "DELETE_ROOM",
+      entityType: "ROOM",
+      entityId: null,
+      details: `roomNo=${normalizedRoomNo}, force=${force}`
+    });
+
+    await conn.commit();
+    return res.json({ message: "Room deleted successfully", forceUsed: force });
+  } catch (err) {
+    console.error(err);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Error rolling back transaction:", rollbackErr);
+      }
+    }
+    return res.status(500).json({ message: "Failed to delete room" });
   } finally {
     if (conn) {
       try {

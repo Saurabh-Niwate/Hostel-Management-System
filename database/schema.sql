@@ -61,6 +61,15 @@ CREATE TABLE students (
     REFERENCES users(user_id)
 );
 
+CREATE TABLE staff_profiles (
+  user_id NUMBER PRIMARY KEY,
+  full_name VARCHAR2(100),
+  phone VARCHAR2(20),
+  created_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT fk_staff_profiles_user FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+);
+
 CREATE TABLE rooms (
   room_no VARCHAR2(20) PRIMARY KEY,
   block_name VARCHAR2(50),
@@ -262,6 +271,93 @@ BEGIN
   IF :NEW.menu_id IS NULL THEN
     SELECT canteen_menu_seq.NEXTVAL
     INTO :NEW.menu_id
+    FROM dual;
+  END IF;
+END;
+/
+
+CREATE TABLE dinner_polls (
+  poll_id NUMBER PRIMARY KEY,
+  title VARCHAR2(200) NOT NULL,
+  dinner_date DATE NOT NULL,
+  closes_at DATE NOT NULL,
+  status VARCHAR2(20) DEFAULT 'Open' NOT NULL,
+  created_by NUMBER NOT NULL,
+  created_at DATE DEFAULT SYSDATE NOT NULL,
+  closed_at DATE,
+  CONSTRAINT fk_dinner_polls_creator FOREIGN KEY (created_by)
+    REFERENCES users(user_id),
+  CONSTRAINT chk_dinner_polls_status CHECK (status IN ('Open', 'Closed'))
+);
+
+CREATE SEQUENCE dinner_polls_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER dinner_polls_trigger
+BEFORE INSERT ON dinner_polls
+FOR EACH ROW
+BEGIN
+  IF :NEW.poll_id IS NULL THEN
+    SELECT dinner_polls_seq.NEXTVAL
+    INTO :NEW.poll_id
+    FROM dual;
+  END IF;
+END;
+/
+
+CREATE TABLE dinner_poll_options (
+  option_id NUMBER PRIMARY KEY,
+  poll_id NUMBER NOT NULL,
+  option_name VARCHAR2(200) NOT NULL,
+  description VARCHAR2(500),
+  display_order NUMBER(3) DEFAULT 1 NOT NULL,
+  CONSTRAINT fk_dinner_poll_options_poll FOREIGN KEY (poll_id)
+    REFERENCES dinner_polls(poll_id)
+);
+
+CREATE SEQUENCE dinner_poll_options_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER dinner_poll_options_trigger
+BEFORE INSERT ON dinner_poll_options
+FOR EACH ROW
+BEGIN
+  IF :NEW.option_id IS NULL THEN
+    SELECT dinner_poll_options_seq.NEXTVAL
+    INTO :NEW.option_id
+    FROM dual;
+  END IF;
+END;
+/
+
+CREATE TABLE dinner_poll_votes (
+  vote_id NUMBER PRIMARY KEY,
+  poll_id NUMBER NOT NULL,
+  option_id NUMBER NOT NULL,
+  user_id NUMBER NOT NULL,
+  voted_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT fk_dinner_poll_votes_poll FOREIGN KEY (poll_id)
+    REFERENCES dinner_polls(poll_id),
+  CONSTRAINT fk_dinner_poll_votes_option FOREIGN KEY (option_id)
+    REFERENCES dinner_poll_options(option_id),
+  CONSTRAINT fk_dinner_poll_votes_user FOREIGN KEY (user_id)
+    REFERENCES users(user_id),
+  CONSTRAINT uq_dinner_poll_votes_user UNIQUE (poll_id, user_id)
+);
+
+CREATE SEQUENCE dinner_poll_votes_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER dinner_poll_votes_trigger
+BEFORE INSERT ON dinner_poll_votes
+FOR EACH ROW
+BEGIN
+  IF :NEW.vote_id IS NULL THEN
+    SELECT dinner_poll_votes_seq.NEXTVAL
+    INTO :NEW.vote_id
     FROM dual;
   END IF;
 END;

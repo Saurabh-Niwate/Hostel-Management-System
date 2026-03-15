@@ -141,11 +141,7 @@ export function LeaveManagement({ onLeavesUpdated, initialTab = "list" }: Props)
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Leave Management</h2>
-          <p className="text-slate-500">Apply for leaves and track status</p>
-        </div>
+      <div className="flex items-center justify-end">
         {activeTab === "list" ? (
           <button
             onClick={() => setActiveTab("apply")}

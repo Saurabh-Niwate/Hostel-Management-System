@@ -11,6 +11,10 @@ const {
   uploadStudentProfileImageByStudentId,
   getStudents,
   getStaff,
+  getRooms,
+  createRoom,
+  updateRoom,
+  deleteRoom,
   resetUserPassword,
   deleteUser,
   getFeeRecords,
@@ -28,6 +32,10 @@ router.put("/students/:studentId", verifyToken, requireRole("Technical Staff"), 
 router.post("/students/:studentId/profile-image", verifyToken, requireRole("Technical Staff"), uploadProfileImage.single("image"), uploadStudentProfileImageByStudentId);
 router.get("/students", verifyToken, requireRole("Technical Staff"), getStudents);
 router.get("/staff", verifyToken, requireRole("Technical Staff"), getStaff);
+router.get("/rooms", verifyToken, requireRole("Technical Staff"), getRooms);
+router.post("/rooms", verifyToken, requireRole("Technical Staff"), createRoom);
+router.put("/rooms/:roomNo", verifyToken, requireRole("Technical Staff"), updateRoom);
+router.delete("/rooms/:roomNo", verifyToken, requireRole("Technical Staff"), deleteRoom);
 router.get("/fees", verifyToken, requireRole("Technical Staff"), getFeeRecords);
 router.post("/fees", verifyToken, requireRole("Technical Staff"), createFeeRecord);
 router.put("/fees/:feeId", verifyToken, requireRole("Technical Staff"), updateFeeRecord);

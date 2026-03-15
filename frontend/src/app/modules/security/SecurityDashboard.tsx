@@ -7,8 +7,9 @@ import { useNavigate } from "react-router-dom";
 import { GateEntryExit } from "./GateEntryExit";
 import { TodayLogs } from "./TodayLogs";
 import { StudentsOutside } from "./StudentsOutside";
+import { StaffProfileSettings } from "../../components/StaffProfileSettings";
 
-type Tab = "gate" | "logs" | "outside";
+type Tab = "gate" | "logs" | "outside" | "profile";
 
 export function SecurityDashboard() {
     const [activeTab, setActiveTab] = useState<Tab>("gate");
@@ -38,6 +39,8 @@ export function SecurityDashboard() {
                 return <TodayLogs />;
             case "outside":
                 return <StudentsOutside />;
+            case "profile":
+                return <StaffProfileSettings />;
             default:
                 return <div>Select a tab</div>;
         }
@@ -45,7 +48,6 @@ export function SecurityDashboard() {
 
     return (
         <div className="min-h-screen bg-slate-50 flex">
-            {/* Sidebar */}
             <motion.aside
                 initial={{ width: 280 }}
                 animate={{ width: isSidebarOpen ? 280 : 80 }}
@@ -55,7 +57,10 @@ export function SecurityDashboard() {
                     {isSidebarOpen ? (
                         <div className="flex items-center space-x-3">
                             <ShieldCheck className="text-teal-400" size={24} />
-                            <h1 className="text-xl font-bold tracking-wide truncate">Security Portal</h1>
+                            <div>
+                                <h1 className="text-xl font-bold tracking-wide truncate">Security Portal</h1>
+                                <p className="text-xs text-slate-300">{localStorage.getItem("userIdentifier") || "SECURITY"}</p>
+                            </div>
                         </div>
                     ) : (
                         <div className="w-8 h-8 bg-teal-600 rounded-lg mx-auto flex items-center justify-center">
@@ -89,6 +94,13 @@ export function SecurityDashboard() {
                         onClick={() => setActiveTab("outside")}
                         isOpen={isSidebarOpen}
                     />
+                    <SidebarItem
+                        icon={<Users size={20} />}
+                        label="Profile"
+                        active={activeTab === "profile"}
+                        onClick={() => setActiveTab("profile")}
+                        isOpen={isSidebarOpen}
+                    />
                 </nav>
 
                 <div className="p-4 border-t border-slate-800/50">
@@ -102,9 +114,16 @@ export function SecurityDashboard() {
                 </div>
             </motion.aside>
 
-            {/* Main Content */}
             <main className={`flex-1 p-8 transition-all duration-300 ${isSidebarOpen ? 'ml-[280px]' : 'ml-[80px]'}`}>
                 <div className="max-w-6xl mx-auto">
+                    <div className="mb-6">
+                        <h2 className="text-3xl font-bold text-slate-900">
+                            {activeTab === "gate" ? "Gate Entry / Exit" : activeTab === "logs" ? "Today's Logs" : activeTab === "outside" ? "Students Outside" : "Profile"}
+                        </h2>
+                        <p className="text-slate-500 mt-1">
+                            Verify student status at the gate and monitor hostel movement in real time.
+                        </p>
+                    </div>
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}

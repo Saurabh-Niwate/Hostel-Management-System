@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { User, Mail, Phone, MapPin, Building, Edit2, Check, X } from "lucide-react";
 import { api } from "../../lib/api";
+import { ChangePasswordSection } from "../../components/ChangePasswordSection";
 
 type StudentProfileData = {
   userId: number;
@@ -142,7 +143,6 @@ export function StudentProfile({ onProfileUpdated }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-800">My Profile</h2>
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
@@ -275,6 +275,8 @@ export function StudentProfile({ onProfileUpdated }: Props) {
           </div>
         </div>
       </div>
+
+      <ChangePasswordSection />
     </div>
   );
 }

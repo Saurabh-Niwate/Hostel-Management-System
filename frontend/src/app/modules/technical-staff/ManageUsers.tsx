@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Users, Trash2, Search } from "lucide-react";
+import { Trash2, Search } from "lucide-react";
 import { api } from "../../lib/api";
 
 interface ManageUsersProps {
@@ -30,11 +30,17 @@ type UserDetailsResponse = {
     ROOM_NO?: string;
     PROFILE_IMAGE_URL?: string;
   } | null;
+  staffProfile?: {
+    FULL_NAME?: string;
+    PHONE?: string;
+    CREATED_AT?: string;
+  } | null;
 };
 
 export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
@@ -89,6 +95,18 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
     };
     loadRoles();
   }, []);
+
+  useEffect(() => {
+    const loadRooms = async () => {
+      try {
+        const res = await api.get("/technical-staff/rooms");
+        setRooms(res.data?.rooms || []);
+      } catch {
+        setRooms([]);
+      }
+    };
+    loadRooms();
+  }, [refreshTrigger]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -239,16 +257,6 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-teal-100 rounded-lg">
-          <Users className="w-6 h-6 text-teal-700" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Manage Users</h2>
-          <p className="text-slate-600 text-sm">View and delete users in the system</p>
-        </div>
-      </div>
-
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
       {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{success}</div>}
 
@@ -351,6 +359,14 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
                 <p><span className="font-semibold">Room No:</span> {selectedDetails.studentProfile?.ROOM_NO || "-"}</p>
               </>
             )}
+            {selectedDetails.user.ROLE_NAME !== "Student" && (
+              <>
+                <p><span className="font-semibold">Full Name:</span> {selectedDetails.staffProfile?.FULL_NAME || "-"}</p>
+                <p><span className="font-semibold">Phone:</span> {selectedDetails.staffProfile?.PHONE || "-"}</p>
+                <p><span className="font-semibold">Employee ID:</span> {selectedDetails.user.EMP_ID || "-"}</p>
+                <p><span className="font-semibold">Profile Created:</span> {selectedDetails.staffProfile?.CREATED_AT || "-"}</p>
+              </>
+            )}
           </div>
         </ModalShell>
       )}
@@ -399,7 +415,20 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
             <input value={editStudentForm.phone} onChange={(e) => setEditStudentForm({ ...editStudentForm, phone: e.target.value })} placeholder="Phone" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <input value={editStudentForm.guardianName} onChange={(e) => setEditStudentForm({ ...editStudentForm, guardianName: e.target.value })} placeholder="Guardian Name" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <input value={editStudentForm.guardianPhone} onChange={(e) => setEditStudentForm({ ...editStudentForm, guardianPhone: e.target.value })} placeholder="Guardian Phone" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
-            <input value={editStudentForm.roomNo} onChange={(e) => setEditStudentForm({ ...editStudentForm, roomNo: e.target.value })} placeholder="Room No" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+            <select
+              value={editStudentForm.roomNo}
+              onChange={(e) => setEditStudentForm({ ...editStudentForm, roomNo: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+            >
+              <option value="">Select room</option>
+              {rooms
+                .filter((room) => Number(room.IS_ACTIVE) === 1 && (Number(room.VACANCY || 0) > 0 || room.ROOM_NO === editStudentForm.roomNo))
+                .map((room) => (
+                  <option key={room.ROOM_NO} value={room.ROOM_NO}>
+                    {room.ROOM_NO} | Block {room.BLOCK_NAME || "-"} | Vacant: {room.VACANCY}
+                  </option>
+                ))}
+            </select>
             <textarea value={editStudentForm.address} onChange={(e) => setEditStudentForm({ ...editStudentForm, address: e.target.value })} placeholder="Address" className="w-full px-3 py-2 border border-slate-300 rounded-lg" rows={3} />
             <div>
               <label className="block text-sm text-slate-600 mb-1">Profile Photo (optional)</label>

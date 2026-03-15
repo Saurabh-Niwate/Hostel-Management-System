@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { UserPlus, Users, Briefcase } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Users, Briefcase } from "lucide-react";
 import { api } from "../../lib/api";
 
 interface CreateUserProps {
@@ -11,6 +11,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [rooms, setRooms] = useState<any[]>([]);
 
   const [studentForm, setStudentForm] = useState({
     studentId: "",
@@ -27,10 +28,32 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
 
   const [staffForm, setStaffForm] = useState({
     employeeId: "",
+    fullName: "",
+    phone: "",
     email: "",
     password: "",
     roleName: "Warden",
   });
+
+  useEffect(() => {
+    const loadRooms = async () => {
+      try {
+        const res = await api.get("/technical-staff/rooms");
+        setRooms(res.data?.rooms || []);
+      } catch {
+        setRooms([]);
+      }
+    };
+    loadRooms();
+  }, []);
+
+  const availableRooms = useMemo(
+    () =>
+      rooms.filter(
+        (room) => Number(room.IS_ACTIVE) === 1 && Number(room.VACANCY || 0) > 0
+      ),
+    [rooms]
+  );
 
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,12 +130,14 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
     try {
       await api.post("/technical-staff/create-staff", {
         empId: staffForm.employeeId.trim(),
+        fullName: staffForm.fullName.trim() || null,
+        phone: staffForm.phone.trim() || null,
         email: staffForm.email.trim() || null,
         password: staffForm.password,
         roleName: staffForm.roleName.trim(),
       });
       setSuccess("Staff created successfully");
-      setStaffForm({ employeeId: "", email: "", password: "", roleName: "Warden" });
+      setStaffForm({ employeeId: "", fullName: "", phone: "", email: "", password: "", roleName: "Warden" });
       onUserCreated?.();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to create staff");
@@ -123,16 +148,6 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-teal-100 rounded-lg">
-          <UserPlus className="w-6 h-6 text-teal-700" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Create New User</h2>
-          <p className="text-slate-600 text-sm">Add students or staff members to the system</p>
-        </div>
-      </div>
-
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
         <div className="grid grid-cols-2 gap-4">
           <button
@@ -217,15 +232,20 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
               disabled={loading}
               required
             />
-            <input
-              type="text"
+            <select
               value={studentForm.roomNo}
               onChange={(e) => setStudentForm({ ...studentForm, roomNo: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
-              placeholder="Hostel Room Number (required)"
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
               disabled={loading}
               required
-            />
+            >
+              <option value="">Select hostel room (required)</option>
+              {availableRooms.map((room) => (
+                <option key={room.ROOM_NO} value={room.ROOM_NO}>
+                  {room.ROOM_NO} | Block {room.BLOCK_NAME || "-"} | Vacant: {room.VACANCY}
+                </option>
+              ))}
+            </select>
             <textarea
               value={studentForm.address}
               onChange={(e) => setStudentForm({ ...studentForm, address: e.target.value })}
@@ -278,6 +298,22 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
               onChange={(e) => setStaffForm({ ...staffForm, employeeId: e.target.value })}
               className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
               placeholder="Employee ID (required)"
+              disabled={loading}
+            />
+            <input
+              type="text"
+              value={staffForm.fullName}
+              onChange={(e) => setStaffForm({ ...staffForm, fullName: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Full Name (optional)"
+              disabled={loading}
+            />
+            <input
+              type="text"
+              value={staffForm.phone}
+              onChange={(e) => setStaffForm({ ...staffForm, phone: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Phone Number (optional)"
               disabled={loading}
             />
             <input

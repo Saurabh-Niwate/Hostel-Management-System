@@ -85,6 +85,29 @@ INSERT INTO canteen_menu (menu_date, meal_type, item_name, is_available, created
 VALUES (TRUNC(SYSDATE), 'Dinner', 'Chapati, Paneer Curry', 1, 6);
 SELECT * FROM canteen_menu;
 
+INSERT INTO dinner_polls (title, dinner_date, closes_at, status, created_by)
+VALUES (
+  'Tonight Dinner Poll',
+  TRUNC(SYSDATE),
+  TRUNC(SYSDATE) + (22/24),
+  'Open',
+  6
+);
+
+INSERT INTO dinner_poll_options (poll_id, option_name, description, display_order)
+VALUES (1, 'Paneer Butter Masala Combo', 'Paneer butter masala with chapati and jeera rice', 1);
+INSERT INTO dinner_poll_options (poll_id, option_name, description, display_order)
+VALUES (1, 'Veg Biryani Combo', 'Veg biryani with raita and salad', 2);
+INSERT INTO dinner_poll_options (poll_id, option_name, description, display_order)
+VALUES (1, 'South Indian Dinner', 'Masala dosa with chutney and sambar', 3);
+
+INSERT INTO dinner_poll_votes (poll_id, option_id, user_id)
+VALUES (1, 1, 2);
+
+SELECT * FROM dinner_polls;
+SELECT * FROM dinner_poll_options;
+SELECT * FROM dinner_poll_votes;
+
 INSERT INTO night_food_orders (user_id, order_date, item_name, quantity, notes, status, updated_by)
 VALUES (2, TRUNC(SYSDATE), 'Veg Sandwich', 1, 'Less spicy', 'Pending', 6);
 INSERT INTO night_food_orders (user_id, order_date, item_name, quantity, notes, status, updated_by)

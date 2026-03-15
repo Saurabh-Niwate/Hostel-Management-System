@@ -15,6 +15,13 @@ const isValidIsoDate = (value) => {
 
 const allowedLeaveStatuses = new Set(["Pending", "Approved", "Rejected"]);
 const allowedAttendanceStatuses = new Set(["Present", "Absent"]);
+const allowedFeedbackStatuses = new Set(["Open", "In Review", "Closed"]);
+
+const toPublicUrl = (req, value) => {
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${req.protocol}://${req.get("host")}${value}`;
+};
 
 exports.getRooms = async (req, res) => {
   let conn;
@@ -30,16 +37,12 @@ exports.getRooms = async (req, res) => {
         r.capacity,
         r.room_type,
         r.is_active,
-        COUNT(s.user_id) AS occupied
+        (
+          SELECT COUNT(*)
+          FROM students s
+          WHERE TRIM(s.room_no) = TRIM(r.room_no)
+        ) AS occupied
       FROM rooms r
-      LEFT JOIN students s ON TRIM(s.room_no) = TRIM(r.room_no)
-      GROUP BY
-        r.room_no,
-        r.block_name,
-        r.floor_no,
-        r.capacity,
-        r.room_type,
-        r.is_active
       ORDER BY r.block_name, r.floor_no, r.room_no
       `,
       {},
@@ -103,7 +106,12 @@ exports.getStudents = async (req, res) => {
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
 
-    return res.json({ students: result.rows || [] });
+    const students = (result.rows || []).map((row) => ({
+      ...row,
+      PROFILE_IMAGE_URL: toPublicUrl(req, row.PROFILE_IMAGE_URL)
+    }));
+
+    return res.json({ students });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to fetch students" });
@@ -428,7 +436,8 @@ exports.getStudentBasic = async (req, res) => {
         s.guardian_name,
         s.guardian_phone,
         s.address,
-        s.room_no
+        s.room_no,
+        s.profile_image_url
       FROM users u
       JOIN roles r ON r.role_id = u.role_id
       LEFT JOIN students s ON s.user_id = u.user_id
@@ -443,6 +452,7 @@ exports.getStudentBasic = async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
+    result.rows[0].PROFILE_IMAGE_URL = toPublicUrl(req, result.rows[0].PROFILE_IMAGE_URL);
     return res.json({ student: result.rows[0] });
   } catch (err) {
     console.error(err);
@@ -511,6 +521,133 @@ exports.getLeaveStatus = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to fetch leave status" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.getFeedbackList = async (req, res) => {
+  const { status, q } = req.query;
+
+  if (status && !allowedFeedbackStatuses.has(String(status).trim())) {
+    return res.status(400).json({
+      message: "status must be one of Open, In Review, Closed"
+    });
+  }
+
+  const normalizedStatus = status ? String(status).trim() : null;
+  const normalizedQuery = q ? String(q).trim() : null;
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const result = await conn.execute(
+      `
+      SELECT
+        sf.feedback_id,
+        u.student_id,
+        s.full_name,
+        s.room_no,
+        sf.facility_area,
+        sf.message,
+        sf.rating,
+        sf.status,
+        TO_CHAR(sf.created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
+      FROM student_feedback sf
+      JOIN users u ON u.user_id = sf.user_id
+      JOIN roles r ON r.role_id = u.role_id
+      LEFT JOIN students s ON s.user_id = u.user_id
+      WHERE r.role_name = 'Student'
+        AND (:b_status IS NULL OR sf.status = :b_status)
+        AND (
+          :b_query IS NULL
+          OR UPPER(NVL(u.student_id, '')) LIKE '%' || UPPER(:b_query) || '%'
+          OR UPPER(NVL(s.full_name, '')) LIKE '%' || UPPER(:b_query) || '%'
+          OR UPPER(NVL(s.room_no, '')) LIKE '%' || UPPER(:b_query) || '%'
+          OR UPPER(NVL(sf.facility_area, '')) LIKE '%' || UPPER(:b_query) || '%'
+          OR UPPER(NVL(sf.message, '')) LIKE '%' || UPPER(:b_query) || '%'
+        )
+      ORDER BY sf.created_at DESC, sf.feedback_id DESC
+      `,
+      {
+        b_status: normalizedStatus,
+        b_query: normalizedQuery
+      },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    return res.json({ feedback: result.rows || [] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch feedback" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.updateFeedbackStatus = async (req, res) => {
+  const { feedbackId } = req.params;
+  const { status } = req.body;
+
+  if (!feedbackId || Number.isNaN(Number(feedbackId))) {
+    return res.status(400).json({ message: "Valid feedbackId is required" });
+  }
+
+  if (!status || !allowedFeedbackStatuses.has(String(status).trim())) {
+    return res.status(400).json({
+      message: "status must be one of Open, In Review, Closed"
+    });
+  }
+
+  const normalizedStatus = String(status).trim();
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const existingResult = await conn.execute(
+      `
+      SELECT feedback_id
+      FROM student_feedback
+      WHERE feedback_id = :b_feedback_id
+      `,
+      { b_feedback_id: Number(feedbackId) }
+    );
+
+    if (existingResult.rows.length === 0) {
+      return res.status(404).json({ message: "Feedback not found" });
+    }
+
+    await conn.execute(
+      `
+      UPDATE student_feedback
+      SET status = :b_status
+      WHERE feedback_id = :b_feedback_id
+      `,
+      {
+        b_status: normalizedStatus,
+        b_feedback_id: Number(feedbackId)
+      },
+      { autoCommit: true }
+    );
+
+    return res.json({ message: "Feedback status updated successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to update feedback status" });
   } finally {
     if (conn) {
       try {

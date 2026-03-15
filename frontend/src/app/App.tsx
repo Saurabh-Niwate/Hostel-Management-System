@@ -10,7 +10,8 @@ import {
   CanteenLayout,
   CanteenDashboard,
   MenuManagement,
-  FoodAvailability,
+  DinnerPollManagement,
+  CanteenProfileSettings,
 } from "./modules/canteen";
 
 export default function App() {
@@ -25,7 +26,8 @@ export default function App() {
       <Route path="/canteen-owner-dashboard" element={<CanteenLayout />}>
         <Route index element={<CanteenDashboard />} />
         <Route path="menu" element={<MenuManagement />} />
-        <Route path="night-orders" element={<FoodAvailability />} />
+        <Route path="dinner-polls" element={<DinnerPollManagement />} />
+        <Route path="profile" element={<CanteenProfileSettings />} />
       </Route>
     </Routes>
   );

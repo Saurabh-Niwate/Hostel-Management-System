@@ -122,8 +122,6 @@ export function GateEntryExit() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold text-slate-800 text-center">Gate Entry / Exit</h2>
-
       <form onSubmit={handleSearch} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <label className="block text-sm font-medium text-slate-700 mb-2">Enter Student ID</label>
         <div className="flex flex-col md:flex-row gap-3">

@@ -41,7 +41,6 @@ export function FeesView() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-800">Fee Details</h2>
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <p className="text-slate-500">Pending Balance</p>

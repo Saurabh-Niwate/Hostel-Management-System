@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
 import { api } from "../../lib/api";
 import { WardenLeaveRow, WardenRoom } from "./wardenTypes";
 
@@ -67,11 +67,6 @@ export function LeaveRequests() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Leave Requests</h2>
-        <p className="text-gray-500 mt-1">View student leave applications</p>
-      </div>
-
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">

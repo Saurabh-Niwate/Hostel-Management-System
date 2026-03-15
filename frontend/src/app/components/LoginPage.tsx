@@ -104,6 +104,10 @@ export function LoginPage() {
     }
   };
 
+  const normalizeIdentifierInput = (value: string) => {
+    return selectedRoleData.inputType === "email" ? value.trim() : value.toUpperCase().trim();
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -324,7 +328,7 @@ export function LoginPage() {
                           : "text"
                       }
                       value={identifier}
-                      onChange={(e) => setIdentifier(e.target.value)}
+                      onChange={(e) => setIdentifier(normalizeIdentifierInput(e.target.value))}
                       placeholder={getInputPlaceholder()}
                       className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none transition-colors"
                       style={{

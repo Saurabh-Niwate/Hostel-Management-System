@@ -68,11 +68,6 @@ export function StudentsOutside() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Students Currently Outside</h2>
-          <p className="text-sm text-slate-500">Students with open exit records and no entry mark yet.</p>
-        </div>
-
         <div className="flex flex-col md:flex-row gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />

@@ -10,6 +10,9 @@ import {
   Coffee,
   ArrowRight,
   Clock3,
+  GraduationCap,
+  Menu,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
@@ -54,13 +57,12 @@ type SidebarItemProps = {
   label: string;
   active: boolean;
   onClick: () => void;
-  isOpen: boolean;
 };
 
 export function StudentDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [leaveInitialTab, setLeaveInitialTab] = useState<"list" | "apply">("list");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [leaves, setLeaves] = useState<LeaveItem[]>([]);
   const [profile, setProfile] = useState<ProfileSnapshot>({ roomNo: "" });
   const [attendance, setAttendance] = useState<AttendanceItem[]>([]);
@@ -145,6 +147,7 @@ export function StudentDashboard() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userRole");
+    localStorage.removeItem("userIdentifier");
     navigate("/");
   };
 
@@ -153,7 +156,6 @@ export function StudentDashboard() {
       case "dashboard":
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-slate-800">Dashboard Overview</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 className="text-slate-500 text-sm font-medium">Total Leaves</h3>
@@ -309,19 +311,23 @@ export function StudentDashboard() {
     <div className="min-h-screen bg-slate-50 flex">
       <motion.aside
         initial={{ width: 280 }}
-        animate={{ width: isSidebarOpen ? 280 : 80 }}
-        className="bg-white border-r border-slate-200 fixed h-full z-20 flex flex-col transition-all duration-300"
+        animate={{ width: 280 }}
+        className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 bg-sky-900 border-r border-sky-800 text-white fixed h-full z-30 flex flex-col transition-transform duration-300`}
       >
-        <div className="p-6 flex items-center justify-between">
-          {isSidebarOpen ? (
-            <h1 className="text-xl font-bold text-slate-800 truncate">Hostel Portal</h1>
-          ) : (
-            <div className="w-8 h-8 bg-blue-600 rounded-lg mx-auto" />
-          )}
+        <div className="p-6 flex items-center justify-between border-b border-sky-800/50">
+          <div className="flex items-center gap-3">
+            <GraduationCap className="h-5 w-5 text-sky-300" />
+            <div>
+              <h1 className="text-xl font-bold tracking-wide truncate">Student Portal</h1>
+              <p className="text-xs text-sky-200">{localStorage.getItem("userIdentifier") || "STUDENT"}</p>
+            </div>
+          </div>
           <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 hover:bg-slate-100 rounded-lg md:hidden"
-          />
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 hover:bg-sky-800 rounded-lg lg:hidden"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
 
         <nav className="flex-1 px-4 space-y-2 mt-4">
@@ -330,14 +336,12 @@ export function StudentDashboard() {
             label="Dashboard"
             active={activeTab === "dashboard"}
             onClick={() => setActiveTab("dashboard")}
-            isOpen={isSidebarOpen}
           />
           <SidebarItem
             icon={<User size={20} />}
             label="Profile"
             active={activeTab === "profile"}
             onClick={() => setActiveTab("profile")}
-            isOpen={isSidebarOpen}
           />
           <SidebarItem
             icon={<FileText size={20} />}
@@ -347,53 +351,74 @@ export function StudentDashboard() {
               setLeaveInitialTab("list");
               setActiveTab("leave");
             }}
-            isOpen={isSidebarOpen}
           />
           <SidebarItem
             icon={<CalendarCheck size={20} />}
             label="Attendance"
             active={activeTab === "attendance"}
             onClick={() => setActiveTab("attendance")}
-            isOpen={isSidebarOpen}
           />
           <SidebarItem
             icon={<CreditCard size={20} />}
             label="Fees"
             active={activeTab === "fees"}
             onClick={() => setActiveTab("fees")}
-            isOpen={isSidebarOpen}
           />
           <SidebarItem
             icon={<MessageSquare size={20} />}
             label="Feedback"
             active={activeTab === "feedback"}
             onClick={() => setActiveTab("feedback")}
-            isOpen={isSidebarOpen}
           />
           <SidebarItem
             icon={<Coffee size={20} />}
             label="Canteen Menu"
             active={activeTab === "canteen"}
             onClick={() => setActiveTab("canteen")}
-            isOpen={isSidebarOpen}
           />
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-sky-800/50">
           <button
             onClick={handleLogout}
-            className={`flex items-center w-full p-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors ${
-              !isSidebarOpen ? "justify-center" : ""
-            }`}
+            className="flex items-center w-full p-3 text-red-200 hover:bg-red-900/30 rounded-xl transition-colors"
           >
             <LogOut size={20} />
-            {isSidebarOpen && <span className="ml-3 font-medium">Logout</span>}
+            <span className="ml-3 font-medium">Logout</span>
           </button>
         </div>
       </motion.aside>
 
-      <main className={`flex-1 p-8 transition-all duration-300 ${isSidebarOpen ? "ml-[280px]" : "ml-[80px]"}`}>
+      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300">
         <div className="max-w-5xl mx-auto">
+          <div className="mb-6 flex items-start gap-4">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <div>
+            <h2 className="text-3xl font-bold text-slate-900">
+              {activeTab === "dashboard"
+                ? "Student Dashboard"
+                : activeTab === "profile"
+                  ? "My Profile"
+                  : activeTab === "leave"
+                    ? "Leave Management"
+                    : activeTab === "attendance"
+                      ? "Attendance"
+                      : activeTab === "fees"
+                        ? "Fee Status"
+                        : activeTab === "feedback"
+                          ? "Feedback"
+                          : "Canteen Menu"}
+            </h2>
+            <p className="text-slate-500 mt-1">
+              Track hostel records, manage requests, and keep your profile details up to date.
+            </p>
+            </div>
+          </div>
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -407,22 +432,24 @@ export function StudentDashboard() {
           </AnimatePresence>
         </div>
       </main>
+
+      {mobileMenuOpen && <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setMobileMenuOpen(false)} />}
     </div>
   );
 }
 
-function SidebarItem({ icon, label, active, onClick, isOpen }: SidebarItemProps) {
+function SidebarItem({ icon, label, active, onClick }: Omit<SidebarItemProps, "isOpen">) {
   return (
     <button
       onClick={onClick}
       className={`flex items-center w-full p-3 rounded-xl transition-all duration-200 ${
         active
-          ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
-          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-      } ${!isOpen ? "justify-center" : ""}`}
+          ? "bg-sky-600 text-white shadow-lg shadow-sky-950/40"
+          : "text-sky-100 hover:bg-sky-800 hover:text-white"
+      }`}
     >
       {icon}
-      {isOpen && <span className="ml-3 font-medium">{label}</span>}
+      <span className="ml-3 font-medium">{label}</span>
     </button>
   );
 }

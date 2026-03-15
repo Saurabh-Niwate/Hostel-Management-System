@@ -125,11 +125,7 @@ export function FeeManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Fee Management</h2>
-          <p className="text-sm text-slate-600">Filter records and manage fee entries</p>
-        </div>
+      <div className="flex items-center justify-end">
         <button
           onClick={() => {
             setCreateForm(defaultForm);

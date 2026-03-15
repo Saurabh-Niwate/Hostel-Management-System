@@ -8,6 +8,8 @@ const {
   submitFeedback,
   getMyFeedback,
   getCanteenMenu,
+  getDinnerPollsForStudents,
+  voteDinnerPoll,
   uploadMyProfileImage,
   deleteMyProfileImage
 } = require("../controllers/studentController");
@@ -21,6 +23,8 @@ router.get("/fees", verifyToken, requireRole("Student"), getMyFeeStatus);
 router.post("/feedback", verifyToken, requireRole("Student"), submitFeedback);
 router.get("/feedback", verifyToken, requireRole("Student"), getMyFeedback);
 router.get("/canteen-menu", verifyToken, requireRole("Student"), getCanteenMenu);
+router.get("/dinner-polls", verifyToken, requireRole("Student"), getDinnerPollsForStudents);
+router.post("/dinner-polls/:pollId/vote", verifyToken, requireRole("Student"), voteDinnerPoll);
 router.post("/profile-image", verifyToken, requireRole("Student"), uploadProfileImage.single("image"), uploadMyProfileImage);
 router.delete("/profile-image", verifyToken, requireRole("Student"), deleteMyProfileImage);
 
