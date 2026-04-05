@@ -33,7 +33,7 @@
 - D9 Profile Image Files
 - D10 Rooms
 - D11 Entry Exit Logs
-- D12 Night Food Orders
+- D12 Dinner Polls and Votes
 
 ## Implemented Role Security
 
@@ -51,10 +51,18 @@
 
 - Student: profile, attendance, fees, feedback, canteen menu, leave request.
 - Admin: leave approval/rejection, reports, student details.
-- Technical Staff: user creation, role management, fee management, system logs.
-- Warden: room-wise attendance, room students, student basic details, leave status.
+- Technical Staff: user creation, role management, room management, fee management, system logs.
+- Warden: room-wise attendance, room/students lookup, student basic details, leave status, feedback review.
 - Security: student exit/entry, today logs, outside-student tracking, gate status.
-- Canteen Owner: daily menu management and night food order tracking/status updates.
+- Canteen Owner: daily menu management and dinner poll management.
+
+## New Progress Reflected
+
+- Student flow now includes dinner poll viewing and voting.
+- Canteen Owner flow now includes dinner poll creation, update, close, and menu maintenance.
+- Warden flow now includes feedback review and status updates.
+- Technical Staff flow now includes room management.
+- Authentication flow in the backend now also supports profile fetch/update and change-password under `/api/auth`.
 
 ## Diagram Pack
 

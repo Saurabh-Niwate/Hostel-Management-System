@@ -13,6 +13,11 @@ import { StaffProfileSettings } from "../../components/StaffProfileSettings";
 type Tab = "dashboard" | "leaves" | "attendance" | "studentView" | "profile";
 
 export function AdminDashboard() {
+    const theme = {
+        color: "#1d4ed8",
+        activeColor: "#2563eb",
+        bg: "bg-blue-50"
+    };
     const [activeTab, setActiveTab] = useState<Tab>("dashboard");
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const navigate = useNavigate();
@@ -35,29 +40,37 @@ export function AdminDashboard() {
             case "studentView":
                 return <AdminStudentView />;
             case "profile":
-                return <StaffProfileSettings />;
+                return (
+                    <div className="space-y-6">
+                        <div>
+                            <h1 className="text-3xl font-bold text-slate-900">Profile</h1>
+                        </div>
+                        <StaffProfileSettings />
+                    </div>
+                );
             default:
                 return <div>Select a tab</div>;
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex">
+        <div className={`min-h-screen ${theme.bg} flex`}>
             {/* Sidebar */}
             <motion.aside
                 initial={{ width: 280 }}
                 animate={{ width: isSidebarOpen ? 280 : 80 }}
-                className="bg-indigo-900 border-r border-indigo-800 text-white fixed h-full z-20 flex flex-col transition-all duration-300"
+                className="text-white fixed h-full z-20 flex flex-col transition-all duration-300"
+                style={{ backgroundColor: theme.color, borderRight: "1px solid rgba(255,255,255,0.18)" }}
             >
-                <div className="p-6 flex items-center justify-between border-b border-indigo-800/50">
+                <div className="p-6 flex items-center justify-between border-b border-white/20">
                     {isSidebarOpen ? (
                         <h1 className="text-xl font-bold tracking-wide truncate">Admin Portal</h1>
                     ) : (
-                        <div className="w-8 h-8 bg-indigo-600 rounded-lg mx-auto flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg mx-auto flex items-center justify-center bg-white/15">
                             <span className="font-bold text-sm">A</span>
                         </div>
                     )}
-                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-indigo-800 rounded-lg md:hidden">
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg md:hidden">
                         {/* Mobile toggle icon if needed */}
                     </button>
                 </div>
@@ -69,6 +82,7 @@ export function AdminDashboard() {
                         active={activeTab === "dashboard"}
                         onClick={() => setActiveTab("dashboard")}
                         isOpen={isSidebarOpen}
+                        activeColor={theme.activeColor}
                     />
                     <SidebarItem
                         icon={<FileText size={20} />}
@@ -76,6 +90,7 @@ export function AdminDashboard() {
                         active={activeTab === "leaves"}
                         onClick={() => setActiveTab("leaves")}
                         isOpen={isSidebarOpen}
+                        activeColor={theme.activeColor}
                     />
                     <SidebarItem
                         icon={<CalendarCheck size={20} />}
@@ -83,6 +98,7 @@ export function AdminDashboard() {
                         active={activeTab === "attendance"}
                         onClick={() => setActiveTab("attendance")}
                         isOpen={isSidebarOpen}
+                        activeColor={theme.activeColor}
                     />
                     <SidebarItem
                         icon={<User size={20} />}
@@ -90,6 +106,7 @@ export function AdminDashboard() {
                         active={activeTab === "studentView"}
                         onClick={() => setActiveTab("studentView")}
                         isOpen={isSidebarOpen}
+                        activeColor={theme.activeColor}
                     />
                     <SidebarItem
                         icon={<User size={20} />}
@@ -97,13 +114,14 @@ export function AdminDashboard() {
                         active={activeTab === "profile"}
                         onClick={() => setActiveTab("profile")}
                         isOpen={isSidebarOpen}
+                        activeColor={theme.activeColor}
                     />
                 </nav>
 
-                <div className="p-4 border-t border-indigo-800/50">
+                <div className="p-4 border-t border-white/20">
                     <button
                         onClick={handleLogout}
-                        className={`flex items-center w-full p-3 text-red-300 hover:bg-red-900/30 rounded-xl transition-colors ${!isSidebarOpen && 'justify-center'}`}
+                        className={`flex items-center w-full p-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200 shadow-sm ${!isSidebarOpen && 'justify-center'}`}
                     >
                         <LogOut size={20} />
                         {isSidebarOpen && <span className="ml-3 font-medium">Logout</span>}
@@ -131,14 +149,15 @@ export function AdminDashboard() {
     );
 }
 
-function SidebarItem({ icon, label, active, onClick, isOpen }: any) {
+function SidebarItem({ icon, label, active, onClick, isOpen, activeColor }: any) {
     return (
         <button
             onClick={onClick}
             className={`flex items-center w-full p-3 rounded-xl transition-all duration-200 ${active
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50"
-                    : "text-indigo-200 hover:bg-indigo-800 hover:text-white"
+                    ? "text-white shadow-lg"
+                    : "text-white/90 hover:bg-white/10 hover:text-white"
                 } ${!isOpen && 'justify-center'}`}
+            style={active ? { backgroundColor: activeColor } : undefined}
         >
             {icon}
             {isOpen && <span className="ml-3 font-medium">{label}</span>}

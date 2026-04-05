@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" version="29.6.1" pages="9">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" pages="9">
   <diagram id="level0" name="Level 0 - Context">
-    <mxGraphModel dx="418" dy="173" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+    <mxGraphModel dx="1266" dy="574" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -16,7 +16,7 @@
         <mxCell id="system" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="Hostel Management System" vertex="1">
           <mxGeometry height="140" width="150" x="550" y="330" as="geometry" />
         </mxCell>
-        <mxCell id="e1" edge="1" parent="1" source="student" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.219;entryY=0.076;entryDx=0;entryDy=0;entryPerimeter=0;" target="system" value="login, profile update,&amp;nbsp;&lt;div&gt;leave request,&amp;nbsp;&lt;/div&gt;&lt;div&gt;feedback, data view&lt;/div&gt;">
+        <mxCell id="e1" edge="1" parent="1" source="student" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.219;entryY=0.076;entryDx=0;entryDy=0;entryPerimeter=0;" target="system" value="login, profile update,&amp;nbsp;&lt;div&gt;leave request,&amp;nbsp;&lt;/div&gt;&lt;div&gt;feedback, polls, data view&lt;/div&gt;">
           <mxGeometry relative="1" x="-0.2135" y="-11" as="geometry">
             <mxPoint x="-10" y="-6" as="offset" />
             <Array as="points">
@@ -28,7 +28,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e2" edge="1" parent="1" source="system" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0;exitDx=0;exitDy=0;" target="student" value="auth result, profile,&amp;nbsp;&lt;div&gt;leave status,&lt;div&gt;&amp;nbsp;attendance, fees, menu&lt;/div&gt;&lt;/div&gt;">
+        <mxCell id="e2" edge="1" parent="1" source="system" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0;exitDx=0;exitDy=0;" target="student" value="auth result, profile,&amp;nbsp;&lt;div&gt;leave status,&lt;div&gt;&amp;nbsp;attendance, fees, menu, polls&lt;/div&gt;&lt;/div&gt;">
           <mxGeometry relative="1" x="0.1808" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
@@ -69,7 +69,7 @@
         <mxCell id="security" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Security" vertex="1">
           <mxGeometry height="60" width="140" x="670" y="590" as="geometry" />
         </mxCell>
-        <mxCell id="e7" edge="1" parent="1" source="warden" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0;entryDx=0;entryDy=0;" target="system" value="login, room lookup,&amp;nbsp;&lt;div&gt;attendance marking,&amp;nbsp;&lt;/div&gt;&lt;div&gt;leave status check&lt;/div&gt;">
+        <mxCell id="e7" edge="1" parent="1" source="warden" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0;entryDx=0;entryDy=0;" target="system" value="login, room lookup,&amp;nbsp;&lt;div&gt;attendance marking,&amp;nbsp;&lt;/div&gt;&lt;div&gt;leave status, feedback review&lt;/div&gt;">
           <mxGeometry relative="1" x="-0.3595" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
@@ -78,11 +78,12 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e8" edge="1" parent="1" source="system" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="warden" value="auth result, room students,&lt;div&gt;&amp;nbsp;attendance data, leave status&lt;/div&gt;">
-          <mxGeometry relative="1" as="geometry">
+        <mxCell id="e8" edge="1" parent="1" source="system" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="warden" value="auth result, room students,&lt;div&gt;&amp;nbsp;attendance data, leave status,&lt;/div&gt;&lt;div&gt;&amp;nbsp;feedback&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.5402" y="10" as="geometry">
+            <mxPoint as="offset" />
             <Array as="points">
-              <mxPoint x="670" y="275" />
-              <mxPoint x="720" y="275" />
+              <mxPoint x="650" y="290" />
+              <mxPoint x="720" y="290" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -106,7 +107,7 @@
         <mxCell id="canteenowner" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Canteen Owner" vertex="1">
           <mxGeometry height="60" width="150" x="990" y="370" as="geometry" />
         </mxCell>
-        <mxCell id="e11" edge="1" parent="1" source="canteenowner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="system" value="login, manage menu,&lt;div&gt;&amp;nbsp;manage night food orders&lt;/div&gt;">
+        <mxCell id="e11" edge="1" parent="1" source="canteenowner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="system" value="login, manage menu,&lt;div&gt;&amp;nbsp;manage dinner polls&lt;/div&gt;">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="960" y="420" />
@@ -126,7 +127,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="level1" name="Level 1 - Main Processes">
-    <mxGraphModel dx="3264" dy="2407" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1800" math="0" shadow="0">
+    <mxGraphModel dx="3066" dy="2374" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1800" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -222,7 +223,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="l8" edge="1" parent="1" source="s1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p2" value="profile, attendance,&amp;nbsp;&lt;div&gt;fees, feedback, menu&lt;/div&gt;">
+        <mxCell id="l8" edge="1" parent="1" source="s1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p2" value="profile, attendance,&amp;nbsp;&lt;div&gt;fees, feedback,&amp;nbsp;&lt;/div&gt;&lt;div&gt;menu, polls&lt;/div&gt;">
           <mxGeometry relative="1" x="-0.2121" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
@@ -290,7 +291,7 @@
         <mxCell id="p8" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.0 Canteen&amp;nbsp;&lt;div&gt;Operations&lt;/div&gt;" vertex="1">
           <mxGeometry height="130" width="130" x="315" y="660" as="geometry" />
         </mxCell>
-        <mxCell id="l30" edge="1" parent="1" source="t1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p5" value="user, fee, role,&lt;div&gt;&amp;nbsp;log actions&lt;/div&gt;">
+        <mxCell id="l30" edge="1" parent="1" source="t1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p5" value="user, room, fee,&lt;div&gt;&amp;nbsp;role, log actions&lt;/div&gt;">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="180" y="145" />
@@ -298,7 +299,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="l31" edge="1" parent="1" source="p5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="t1" value="lists, status,&lt;div&gt;&amp;nbsp;roles, logs&lt;/div&gt;">
+        <mxCell id="l31" edge="1" parent="1" source="p5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="t1" value="rooms, lists,&lt;div&gt;&amp;nbsp;status, roles, logs&lt;/div&gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="l37" edge="1" parent="1" source="w1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p1" value="credentials">
@@ -338,7 +339,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="l42" edge="1" parent="1" source="p6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="w1" value="attendance results,&lt;div&gt;&amp;nbsp;room students,&amp;nbsp;&lt;/div&gt;&lt;div&gt;leave status&lt;/div&gt;">
+        <mxCell id="l42" edge="1" parent="1" source="p6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="w1" value="attendance results,&lt;div&gt;&amp;nbsp;room students,&amp;nbsp;&lt;/div&gt;&lt;div&gt;leave status, feedback&lt;/div&gt;">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="520" y="400" />
@@ -373,25 +374,27 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="l47" edge="1" parent="1" source="co1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p8" value="menu and&lt;div&gt;&amp;nbsp;order actions&lt;/div&gt;">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="675" y="710" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="l48" edge="1" parent="1" source="p8" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="co1" value="menu data, order list,&lt;div&gt;&amp;nbsp;update results&lt;/div&gt;">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="745" y="760" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="l49" edge="1" parent="1" source="p8" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p2" value="menu/order data&amp;nbsp;&lt;div&gt;for students&lt;/div&gt;">
-          <mxGeometry relative="1" x="-0.594" as="geometry">
+        <mxCell id="l47" edge="1" parent="1" source="co1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p8" value="menu and&lt;div&gt;&amp;nbsp;poll actions&lt;/div&gt;">
+          <mxGeometry relative="1" x="0.3068" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
-              <mxPoint x="860" y="780" />
+              <mxPoint x="630" y="710" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l48" edge="1" parent="1" source="p8" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="co1" value="menu data, poll list,&lt;div&gt;&amp;nbsp;poll update results&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.1386" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="720" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l49" edge="1" parent="1" source="p8" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="p2" value="menu/poll data&amp;nbsp;&lt;div&gt;for students&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.5677" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="860" y="760" />
               <mxPoint x="860" y="-130" />
             </Array>
           </mxGeometry>
@@ -418,7 +421,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="level2student" name="Level 2 - Student Self-Service">
-    <mxGraphModel dx="2278" dy="944" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
+    <mxGraphModel dx="2251" dy="1020" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -441,10 +444,10 @@
           <mxGeometry height="100" width="105" x="302.5" y="410" as="geometry" />
         </mxCell>
         <mxCell id="sp6" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="2.6 Submit/View Feedback" vertex="1">
-          <mxGeometry height="100" width="110" x="301.25" y="660" as="geometry" />
+          <mxGeometry height="100" width="101.25" x="306.25" y="660" as="geometry" />
         </mxCell>
         <mxCell id="sp7" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="2.7 View Canteen Menu" vertex="1">
-          <mxGeometry height="100" width="110" x="302.5" y="790" as="geometry" />
+          <mxGeometry height="100" width="107.5" x="308.75" y="790" as="geometry" />
         </mxCell>
         <mxCell id="sd1" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D1 Users and Roles" vertex="1">
           <mxGeometry height="60" width="180" x="580" y="10" as="geometry" />
@@ -615,7 +618,7 @@
           <mxGeometry relative="1" x="-0.4546" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
-              <mxPoint x="70" y="720" />
+              <mxPoint x="80" y="720" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -641,7 +644,7 @@
           <mxGeometry relative="1" x="-0.6073" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
-              <mxPoint x="50" y="840" />
+              <mxPoint x="70" y="840" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -661,6 +664,33 @@
             </Array>
             <mxPoint x="170" y="375" as="sourcePoint" />
             <mxPoint x="355" y="110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sp8" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="2.8 View/Vote Dinner Polls" vertex="1">
+          <mxGeometry height="100" width="103.75" x="312.5" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="sd12" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D12 Dinner Polls and Votes" vertex="1">
+          <mxGeometry height="60" width="180" x="580" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="se25" edge="1" parent="1" source="stu" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sp8" value="poll request / vote submission">
+          <mxGeometry relative="1" x="0.7055" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="50" y="970" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se26" edge="1" parent="1" source="sp8" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="stu" value="poll list / vote status">
+          <mxGeometry relative="1" x="-0.6935" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="60" y="950" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="se27" edge="1" parent="1" source="sp8" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sd12" value="read/write poll votes">
+          <mxGeometry relative="1" x="-0.2343" as="geometry">
+            <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
       </root>
@@ -1044,7 +1074,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="level2staff" name="Level 2 - Technical Staff Management">
-    <mxGraphModel dx="2563" dy="2163" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2026" dy="2018" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1118,7 +1148,7 @@
             <Array as="points">
               <mxPoint x="450" y="-20" />
               <mxPoint x="450" y="280" />
-              <mxPoint x="660" y="280" />
+              <mxPoint x="700" y="280" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -1219,7 +1249,7 @@
             <mxPoint as="offset" />
             <Array as="points">
               <mxPoint x="470" y="365" />
-              <mxPoint x="470" y="140" />
+              <mxPoint x="470" y="120" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -1448,12 +1478,18 @@
           <mxGeometry relative="1" x="-0.7522" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
-              <mxPoint x="50" y="1340" />
+              <mxPoint x="60" y="1340" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="te44" edge="1" parent="1" source="tp10" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td8" value="read logs">
-          <mxGeometry relative="1" as="geometry" />
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="560" y="1340" />
+              <mxPoint x="560" y="1050" />
+              <mxPoint x="660" y="1050" />
+            </Array>
+          </mxGeometry>
         </mxCell>
         <mxCell id="td2" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D2 Student Profiles" vertex="1">
           <mxGeometry height="60" width="180" x="640" y="300" as="geometry" />
@@ -1464,11 +1500,38 @@
         <mxCell id="td5" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D5 Fee Records" vertex="1">
           <mxGeometry height="60" width="180" x="640" y="670" as="geometry" />
         </mxCell>
+        <mxCell id="tp11" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="5.11 Manage Rooms" vertex="1">
+          <mxGeometry height="120" width="120" x="310" y="1430" as="geometry" />
+        </mxCell>
+        <mxCell id="td10" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D10 Rooms" vertex="1">
+          <mxGeometry height="60" width="180" x="640" y="1130" as="geometry" />
+        </mxCell>
+        <mxCell id="te45" edge="1" parent="1" source="ts" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="tp11" value="room create/update/delete">
+          <mxGeometry relative="1" x="0.7964" as="geometry">
+            <mxPoint x="1" as="offset" />
+            <Array as="points">
+              <mxPoint x="50" y="1460" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te46" edge="1" parent="1" source="tp11" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="ts" value="room list / status">
+          <mxGeometry relative="1" x="-0.783" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="40" y="1490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="te47" edge="1" parent="1" source="tp11" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="td10" value="create/update/delete rooms">
+          <mxGeometry relative="1" x="-0.3667" as="geometry">
+            <mxPoint x="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
   <diagram id="level2warden" name="Level 2 - Warden Operations">
-    <mxGraphModel dx="2050" dy="1850" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
+    <mxGraphModel dx="2533" dy="2148" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1642,7 +1705,7 @@
           <mxGeometry relative="1" x="-0.2211" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
-              <mxPoint x="60" y="600" />
+              <mxPoint x="80" y="600" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -1664,11 +1727,36 @@
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="wp6" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="6.6 Review/Update Feedback" vertex="1">
+          <mxGeometry height="120" width="130" x="290" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="wd6" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D6 Feedback Records" vertex="1">
+          <mxGeometry height="60" width="180" x="630" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="wle21" edge="1" parent="1" source="we1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wp6" value="feedback filter / status update">
+          <mxGeometry relative="1" x="0.6038" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="70" y="730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle22" edge="1" parent="1" source="wp6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="we1" value="feedback list / update result">
+          <mxGeometry relative="1" x="-0.6271" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="50" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wle23" edge="1" parent="1" source="wp6" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="wd6" value="read/update feedback">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
   <diagram id="level2security" name="Level 2 - Security Gate Control">
-    <mxGraphModel dx="2563" dy="2063" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
+    <mxGraphModel dx="1126" dy="1510" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1832,7 +1920,8 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="sle17" edge="1" parent="1" source="spg5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="sce1" value="inside/outside + leave status">
-          <mxGeometry relative="1" as="geometry">
+          <mxGeometry relative="1" x="-0.4361" as="geometry">
+            <mxPoint as="offset" />
             <Array as="points">
               <mxPoint x="50" y="555" />
             </Array>
@@ -1868,7 +1957,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="level2canteenowner" name="Level 2 - Canteen Operations">
-    <mxGraphModel dx="1708" dy="1708" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
+    <mxGraphModel dx="2533" dy="2148" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1884,10 +1973,10 @@
         <mxCell id="cop3" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.3 Update Menu Item" vertex="1">
           <mxGeometry height="120" width="120" x="310" y="230" as="geometry" />
         </mxCell>
-        <mxCell id="cop4" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.4 View Night Food Orders" vertex="1">
+        <mxCell id="cop4" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.4 View Dinner Polls" vertex="1">
           <mxGeometry height="120" width="120" x="310" y="360" as="geometry" />
         </mxCell>
-        <mxCell id="cop5" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.5 Update Night Order Status" vertex="1">
+        <mxCell id="cop5" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=variable;" value="8.5 Manage Dinner Polls" vertex="1">
           <mxGeometry height="120" width="120" x="310" y="500" as="geometry" />
         </mxCell>
         <mxCell id="cod7" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D7 Canteen Menu" vertex="1">
@@ -1896,7 +1985,7 @@
         <mxCell id="cod8" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D8 System Logs" vertex="1">
           <mxGeometry height="60" width="180" x="600" y="310" as="geometry" />
         </mxCell>
-        <mxCell id="cod12" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D12 Night Food Orders" vertex="1">
+        <mxCell id="cod12" parent="1" style="shape=partialRectangle;whiteSpace=wrap;html=1;left=0;right=0;fillColor=none;" value="D12 Dinner Polls and Votes" vertex="1">
           <mxGeometry height="60" width="180" x="600" y="440" as="geometry" />
         </mxCell>
         <mxCell id="coe2" edge="1" parent="1" source="coe1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cop1" value="menu request">
@@ -1976,38 +2065,40 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="coe13" edge="1" parent="1" source="coe1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cop4" value="night order filters">
+        <mxCell id="coe13" edge="1" parent="1" source="coe1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cop4" value="dinner poll request">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="140" y="400" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="coe14" edge="1" parent="1" source="cop4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="coe1" value="night order list">
+        <mxCell id="coe14" edge="1" parent="1" source="cop4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="coe1" value="dinner poll list">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="115" y="420" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="coe15" edge="1" parent="1" source="cop4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod12" value="read orders">
+        <mxCell id="coe15" edge="1" parent="1" source="cop4" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod12" value="read polls and votes">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="coe16" edge="1" parent="1" source="coe1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cop5" value="order status update">
-          <mxGeometry relative="1" as="geometry">
+        <mxCell id="coe16" edge="1" parent="1" source="coe1" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cop5" value="poll create/update/close">
+          <mxGeometry relative="1" x="0.3271" as="geometry">
+            <mxPoint as="offset" />
             <Array as="points">
               <mxPoint x="90" y="510" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="coe17" edge="1" parent="1" source="cop5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="coe1" value="update result">
-          <mxGeometry relative="1" as="geometry">
+        <mxCell id="coe17" edge="1" parent="1" source="cop5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="coe1" value="poll update result">
+          <mxGeometry relative="1" x="-0.4152" as="geometry">
+            <mxPoint as="offset" />
             <Array as="points">
               <mxPoint x="60" y="545" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="coe18" edge="1" parent="1" source="cop5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod12" value="update order status">
+        <mxCell id="coe18" edge="1" parent="1" source="cop5" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="cod12" value="write poll state">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="565" y="520" />

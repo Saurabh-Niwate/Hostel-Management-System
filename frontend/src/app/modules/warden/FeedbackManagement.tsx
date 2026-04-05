@@ -86,7 +86,7 @@ export function FeedbackManagement() {
   const getStatusBadge = (status: string) => {
     if (status === "Open") return <Badge className="bg-amber-100 text-amber-700">Open</Badge>;
     if (status === "In Review") return <Badge className="bg-blue-100 text-blue-700">In Review</Badge>;
-    if (status === "Closed") return <Badge className="bg-emerald-100 text-emerald-700">Closed</Badge>;
+    if (status === "Closed") return <Badge className="bg-violet-100 text-violet-700">Closed</Badge>;
     return <Badge>{status}</Badge>;
   };
 
@@ -96,10 +96,10 @@ export function FeedbackManagement() {
       {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{success}</div>}
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Total</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{counts.total}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Open</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-amber-600">{counts.open}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">In Review</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-blue-600">{counts.inReview}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Closed</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-emerald-600">{counts.closed}</div></CardContent></Card>
+        <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Total</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold">{counts.total}</div></CardContent></Card>
+        <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Open</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold text-amber-600">{counts.open}</div></CardContent></Card>
+        <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">In Review</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold text-blue-600">{counts.inReview}</div></CardContent></Card>
+        <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Closed</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold text-violet-600">{counts.closed}</div></CardContent></Card>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -116,7 +116,7 @@ export function FeedbackManagement() {
               variant={statusFilter === status ? "default" : "outline"}
               size="sm"
               onClick={() => setStatusFilter(status as typeof statusFilter)}
-              className={statusFilter === status ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+              className={statusFilter === status ? "bg-violet-600 hover:bg-violet-700" : ""}
             >
               {status}
             </Button>
@@ -145,7 +145,7 @@ export function FeedbackManagement() {
                       key={item.FEEDBACK_ID}
                       onClick={() => setSelectedFeedback(item)}
                       className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                        selectedFeedback?.FEEDBACK_ID === item.FEEDBACK_ID ? "border-emerald-500 bg-emerald-50" : "border-gray-200 hover:bg-gray-50"
+                        selectedFeedback?.FEEDBACK_ID === item.FEEDBACK_ID ? "border-violet-500 bg-violet-50" : "border-gray-200 hover:bg-gray-50"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -182,7 +182,7 @@ export function FeedbackManagement() {
                 <div className="grid grid-cols-1 gap-2">
                   <Button disabled={updatingId === selectedFeedback.FEEDBACK_ID} onClick={() => handleStatusChange(selectedFeedback.FEEDBACK_ID, "Open")} variant="outline">Mark Open</Button>
                   <Button disabled={updatingId === selectedFeedback.FEEDBACK_ID} onClick={() => handleStatusChange(selectedFeedback.FEEDBACK_ID, "In Review")} className="bg-blue-600 hover:bg-blue-700">Mark In Review</Button>
-                  <Button disabled={updatingId === selectedFeedback.FEEDBACK_ID} onClick={() => handleStatusChange(selectedFeedback.FEEDBACK_ID, "Closed")} className="bg-emerald-600 hover:bg-emerald-700">Mark Closed</Button>
+                  <Button disabled={updatingId === selectedFeedback.FEEDBACK_ID} onClick={() => handleStatusChange(selectedFeedback.FEEDBACK_ID, "Closed")} className="bg-violet-600 hover:bg-violet-700">Mark Closed</Button>
                 </div>
               </CardContent>
             </Card>

@@ -9,6 +9,7 @@ type StudentProfileData = {
   email: string;
   fullName: string;
   phone: string;
+  aadharNo: string;
   guardianName: string;
   guardianPhone: string;
   address: string;
@@ -26,6 +27,7 @@ const emptyProfile: StudentProfileData = {
   email: "",
   fullName: "",
   phone: "",
+  aadharNo: "",
   guardianName: "",
   guardianPhone: "",
   address: "",
@@ -39,6 +41,7 @@ const mapProfile = (raw: any): StudentProfileData => ({
   email: raw.EMAIL || "",
   fullName: raw.FULL_NAME || "",
   phone: raw.PHONE || "",
+  aadharNo: raw.AADHAR_NO || "",
   guardianName: raw.GUARDIAN_NAME || "",
   guardianPhone: raw.GUARDIAN_PHONE || "",
   address: raw.ADDRESS || "",
@@ -84,7 +87,6 @@ export function StudentProfile({ onProfileUpdated }: Props) {
         fullName: editForm.fullName,
         phone: editForm.phone,
         guardianName: editForm.guardianName,
-        roomNo: editForm.roomNo,
       });
       await loadProfile();
       setIsEditing(false);
@@ -146,7 +148,7 @@ export function StudentProfile({ onProfileUpdated }: Props) {
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+            className="flex items-center px-4 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-600 transition-colors"
           >
             <Edit2 size={16} className="mr-2" />
             Edit Profile
@@ -162,7 +164,7 @@ export function StudentProfile({ onProfileUpdated }: Props) {
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+              className="flex items-center px-4 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-600 transition-colors"
             >
               <Check size={16} className="mr-2" />
               Save Changes
@@ -179,7 +181,7 @@ export function StudentProfile({ onProfileUpdated }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center h-full">
             <div className="w-32 h-32 bg-slate-100 rounded-full mb-4 flex items-center justify-center text-slate-300 overflow-hidden">
               {profile.profileImageUrl ? (
                 <img src={profile.profileImageUrl} alt="Student profile" className="w-full h-full object-cover" />
@@ -240,6 +242,13 @@ export function StudentProfile({ onProfileUpdated }: Props) {
                 onChange={(val) => setEditForm({ ...editForm, phone: val })}
               />
               <InfoField
+                icon={<User size={18} />}
+                label="Aadhar Number"
+                value={editForm.aadharNo}
+                isEditing={isEditing}
+                readOnly
+              />
+              <InfoField
                 icon={<Building size={18} />}
                 label="Guardian Name"
                 value={editForm.guardianName}
@@ -259,7 +268,7 @@ export function StudentProfile({ onProfileUpdated }: Props) {
                 label="Room Number"
                 value={editForm.roomNo}
                 isEditing={isEditing}
-                onChange={(val) => setEditForm({ ...editForm, roomNo: val })}
+                readOnly
               />
               <div className="md:col-span-2">
                 <InfoField

@@ -24,6 +24,7 @@ type UserDetailsResponse = {
   studentProfile?: {
     FULL_NAME?: string;
     PHONE?: string;
+    AADHAR_NO?: string;
     GUARDIAN_NAME?: string;
     GUARDIAN_PHONE?: string;
     ADDRESS?: string;
@@ -55,6 +56,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
     email: "",
     fullName: "",
     phone: "",
+    aadharNo: "",
     guardianName: "",
     guardianPhone: "",
     address: "",
@@ -207,6 +209,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
       email: selectedDetails.user.EMAIL || "",
       fullName: selectedDetails.studentProfile?.FULL_NAME || "",
       phone: selectedDetails.studentProfile?.PHONE || "",
+      aadharNo: selectedDetails.studentProfile?.AADHAR_NO || "",
       guardianName: selectedDetails.studentProfile?.GUARDIAN_NAME || "",
       guardianPhone: selectedDetails.studentProfile?.GUARDIAN_PHONE || "",
       address: selectedDetails.studentProfile?.ADDRESS || "",
@@ -226,6 +229,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
         email: editStudentForm.email.trim() || null,
         fullName: editStudentForm.fullName.trim() || null,
         phone: editStudentForm.phone.trim() || null,
+        aadharNo: editStudentForm.aadharNo.trim() || null,
         guardianName: editStudentForm.guardianName.trim() || null,
         guardianPhone: editStudentForm.guardianPhone.trim() || null,
         address: editStudentForm.address.trim() || null,
@@ -268,7 +272,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
             placeholder="Search by student ID / emp ID / email / role..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
           />
         </div>
       </div>
@@ -353,6 +357,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
               <>
                 <p><span className="font-semibold">Full Name:</span> {selectedDetails.studentProfile?.FULL_NAME || "-"}</p>
                 <p><span className="font-semibold">Phone:</span> {selectedDetails.studentProfile?.PHONE || "-"}</p>
+                <p><span className="font-semibold">Aadhar Number:</span> {selectedDetails.studentProfile?.AADHAR_NO || "-"}</p>
                 <p><span className="font-semibold">Guardian Name:</span> {selectedDetails.studentProfile?.GUARDIAN_NAME || "-"}</p>
                 <p><span className="font-semibold">Guardian Phone:</span> {selectedDetails.studentProfile?.GUARDIAN_PHONE || "-"}</p>
                 <p className="md:col-span-2"><span className="font-semibold">Address:</span> {selectedDetails.studentProfile?.ADDRESS || "-"}</p>
@@ -413,6 +418,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
             <input value={editStudentForm.email} onChange={(e) => setEditStudentForm({ ...editStudentForm, email: e.target.value })} placeholder="Email" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <input value={editStudentForm.fullName} onChange={(e) => setEditStudentForm({ ...editStudentForm, fullName: e.target.value })} placeholder="Full Name" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <input value={editStudentForm.phone} onChange={(e) => setEditStudentForm({ ...editStudentForm, phone: e.target.value })} placeholder="Phone" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+            <input value={editStudentForm.aadharNo} onChange={(e) => setEditStudentForm({ ...editStudentForm, aadharNo: e.target.value })} placeholder="Aadhar Number" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <input value={editStudentForm.guardianName} onChange={(e) => setEditStudentForm({ ...editStudentForm, guardianName: e.target.value })} placeholder="Guardian Name" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <input value={editStudentForm.guardianPhone} onChange={(e) => setEditStudentForm({ ...editStudentForm, guardianPhone: e.target.value })} placeholder="Guardian Phone" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <select

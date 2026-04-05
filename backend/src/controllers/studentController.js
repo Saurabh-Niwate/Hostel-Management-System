@@ -44,6 +44,7 @@ exports.getMyProfile = async (req, res) => {
         r.role_name,
         s.full_name,
         s.phone,
+        s.aadhar_no,
         s.guardian_name,
         s.guardian_phone,
         s.address,
@@ -213,7 +214,7 @@ exports.deleteMyProfileImage = async (req, res) => {
 exports.updateMyProfile = async (req, res) => {
   const userId = req.user.userId;
   const role = req.user.role;
-  const { email, fullName, phone, guardianName, roomNo } = req.body;
+  const { email, fullName, phone, guardianName } = req.body;
 
   if (role !== "Student") {
     return res.status(403).json({ message: "Only students can update this profile" });
@@ -270,30 +271,26 @@ exports.updateMyProfile = async (req, res) => {
         UPDATE SET
           full_name = :b_full_name,
           phone = :b_phone,
-          guardian_name = :b_guardian_name,
-          room_no = :b_room_no
+          guardian_name = :b_guardian_name
       WHEN NOT MATCHED THEN
         INSERT (
           user_id,
           full_name,
           phone,
-          guardian_name,
-          room_no
+          guardian_name
         )
         VALUES (
           :b_user_id,
           :b_full_name,
           :b_phone,
-          :b_guardian_name,
-          :b_room_no
+          :b_guardian_name
         )
       `,
       {
         b_user_id: userId,
         b_full_name: fullName ? fullName.trim() : null,
         b_phone: phone ? phone.trim() : null,
-        b_guardian_name: guardianName ? guardianName.trim() : null,
-        b_room_no: roomNo ? roomNo.trim() : null
+        b_guardian_name: guardianName ? guardianName.trim() : null
       },
       { autoCommit: false }
     );
@@ -510,13 +507,10 @@ exports.getMyFeedback = async (req, res) => {
 
 exports.getCanteenMenu = async (req, res) => {
   const role = req.user.role;
-  const { date } = req.query;
 
   if (role !== "Student") {
     return res.status(403).json({ message: "Only students can view canteen menu" });
   }
-
-  const menuDate = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null;
 
   let conn;
   try {
@@ -526,14 +520,13 @@ exports.getCanteenMenu = async (req, res) => {
       `
       SELECT
         menu_id,
-        TO_CHAR(menu_date, 'YYYY-MM-DD') AS menu_date,
         meal_type,
         item_name,
         is_available,
         TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
       FROM canteen_menu
-      WHERE (:b_menu_date IS NULL AND menu_date = TRUNC(SYSDATE))
-         OR (:b_menu_date IS NOT NULL AND menu_date = TO_DATE(:b_menu_date, 'YYYY-MM-DD'))
+      WHERE is_available = 1
+        AND TRUNC(menu_date) = TRUNC(SYSDATE)
       ORDER BY
         CASE meal_type
           WHEN 'Breakfast' THEN 1
@@ -544,7 +537,7 @@ exports.getCanteenMenu = async (req, res) => {
         END,
         menu_id
       `,
-      { b_menu_date: menuDate },
+      {},
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
 

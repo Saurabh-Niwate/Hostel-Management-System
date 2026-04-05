@@ -23,16 +23,18 @@ INSERT INTO rooms (room_no, block_name, floor_no, capacity, room_type, is_active
 VALUES ('B-201', 'Block B', 2, 2, 'Regular', 1);
 SELECT * FROM rooms;
 
-INSERT INTO students (user_id, full_name, phone, guardian_name, guardian_phone, address, room_no)
+INSERT INTO students (user_id, full_name, phone, aadhar_no, guardian_name, guardian_phone, address, room_no)
 VALUES (
   2,
   'Sample Student',
   '9876543210',
+  '123456789012',
   'Sample Guardian',
   '9123456780',
   'Hostel Block A',
   'A-101'
 );
+
 
 
 SELECT * FROM students;
@@ -63,10 +65,9 @@ SELECT * FROM leave_requests;
 INSERT INTO attendance_records (user_id, attendance_date, status, remarks)
 VALUES (2, TO_DATE('2026-02-17', 'YYYY-MM-DD'), 'Present', 'On time');
 INSERT INTO attendance_records (user_id, attendance_date, status, remarks)
-VALUES (2, TO_DATE('2026-02-18', 'YYYY-MM-DD'), 'Late', 'Reached after bell');
-INSERT INTO attendance_records (user_id, attendance_date, status, remarks)
 VALUES (2, TO_DATE('2026-02-19', 'YYYY-MM-DD'), 'Present', 'On time');
 SELECT * FROM attendance_records;
+
 
 INSERT INTO student_fees (user_id, term_name, amount_total, amount_paid, due_date, status)
 VALUES (2, '2025-26 Term 2', 25000, 12000, TO_DATE('2026-03-10', 'YYYY-MM-DD'), 'Partially Paid');
@@ -84,6 +85,7 @@ VALUES (TRUNC(SYSDATE), 'Lunch', 'Rice, Dal, Vegetable Curry', 1, 6);
 INSERT INTO canteen_menu (menu_date, meal_type, item_name, is_available, created_by)
 VALUES (TRUNC(SYSDATE), 'Dinner', 'Chapati, Paneer Curry', 1, 6);
 SELECT * FROM canteen_menu;
+
 
 INSERT INTO dinner_polls (title, dinner_date, closes_at, status, created_by)
 VALUES (
@@ -107,12 +109,6 @@ VALUES (1, 1, 2);
 SELECT * FROM dinner_polls;
 SELECT * FROM dinner_poll_options;
 SELECT * FROM dinner_poll_votes;
-
-INSERT INTO night_food_orders (user_id, order_date, item_name, quantity, notes, status, updated_by)
-VALUES (2, TRUNC(SYSDATE), 'Veg Sandwich', 1, 'Less spicy', 'Pending', 6);
-INSERT INTO night_food_orders (user_id, order_date, item_name, quantity, notes, status, updated_by)
-VALUES (2, TRUNC(SYSDATE), 'Cold Coffee', 2, 'No ice', 'Preparing', 6);
-SELECT * FROM night_food_orders;
 
 INSERT INTO system_logs (actor_user_id, actor_role, action, entity_type, entity_id, details)
 VALUES (3, 'Technical Staff', 'SEED_INIT', 'SYSTEM', NULL, 'Initial seed data loaded');

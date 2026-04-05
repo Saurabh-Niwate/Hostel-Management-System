@@ -60,7 +60,7 @@ export function StudentsOutside() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600" />
       </div>
     );
   }
@@ -76,7 +76,7 @@ export function StudentsOutside() {
               placeholder="Search name, ID, or room..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent w-full md:w-80 transition-all"
+              className="pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent w-full md:w-80 transition-all"
             />
           </div>
           <button
@@ -105,7 +105,7 @@ export function StudentsOutside() {
             </div>
 
             <div className="flex items-start space-x-4 mb-4">
-              <div className="w-12 h-12 rounded-full border-2 border-white shadow-sm flex items-center justify-center font-bold text-teal-600 bg-teal-50">
+              <div className="w-12 h-12 rounded-full border-2 border-white shadow-sm flex items-center justify-center font-bold text-slate-600 bg-slate-50">
                 {(student.FULL_NAME || "S").charAt(0)}
               </div>
               <div className="mt-1">

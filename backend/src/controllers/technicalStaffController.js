@@ -88,6 +88,14 @@ const ensureRoomExists = async (conn, roomNo) => {
   return roomResult.rows.length > 0;
 };
 
+const normalizeAadharNo = (value) => {
+  if (value === undefined || value === null) return null;
+  const normalized = String(value).replace(/\s+/g, "").trim();
+  return normalized || null;
+};
+
+const isValidAadharNo = (value) => /^\d{12}$/.test(value);
+
 exports.createStudent = async (req, res) => {
   const {
     studentId,
@@ -95,18 +103,21 @@ exports.createStudent = async (req, res) => {
     password,
     fullName,
     phone,
+    aadharNo,
     guardianName,
     guardianPhone,
     address,
     roomNo
   } = req.body;
   const profileImageUrl = req.file ? `/uploads/profile-images/${req.file.filename}` : null;
+  const normalizedAadharNo = normalizeAadharNo(aadharNo);
 
   if (
     !studentId || !studentId.trim() ||
     !password || !password.trim() ||
     !fullName || !fullName.trim() ||
     !phone || !phone.trim() ||
+    !normalizedAadharNo ||
     !guardianName || !guardianName.trim() ||
     !guardianPhone || !guardianPhone.trim() ||
     !address || !address.trim() ||
@@ -114,8 +125,13 @@ exports.createStudent = async (req, res) => {
   ) {
     deleteUploadedFile(req.file?.path);
     return res.status(400).json({
-      message: "studentId, password, fullName, phone, guardianName, guardianPhone, address and roomNo are required (email is optional)"
+      message: "studentId, password, fullName, phone, aadharNo, guardianName, guardianPhone, address and roomNo are required (email is optional)"
     });
+  }
+
+  if (!isValidAadharNo(normalizedAadharNo)) {
+    deleteUploadedFile(req.file?.path);
+    return res.status(400).json({ message: "aadharNo must be exactly 12 digits" });
   }
 
   let conn;
@@ -202,6 +218,7 @@ exports.createStudent = async (req, res) => {
         user_id,
         full_name,
         phone,
+        aadhar_no,
         guardian_name,
         guardian_phone,
         address,
@@ -212,6 +229,7 @@ exports.createStudent = async (req, res) => {
         :b_user_id,
         :b_full_name,
         :b_phone,
+        :b_aadhar_no,
         :b_guardian_name,
         :b_guardian_phone,
         :b_address,
@@ -223,6 +241,7 @@ exports.createStudent = async (req, res) => {
         b_user_id: createdUserId,
         b_full_name: fullName ? fullName.trim() : null,
         b_phone: phone ? phone.trim() : null,
+        b_aadhar_no: normalizedAadharNo,
         b_guardian_name: guardianName ? guardianName.trim() : null,
         b_guardian_phone: guardianPhone ? guardianPhone.trim() : null,
         b_address: address ? address.trim() : null,
@@ -586,6 +605,7 @@ exports.getUserById = async (req, res) => {
       SELECT
         full_name,
         phone,
+        aadhar_no,
         guardian_name,
         guardian_phone,
         address,
@@ -644,6 +664,7 @@ exports.updateStudentByStudentId = async (req, res) => {
     email,
     fullName,
     phone,
+    aadharNo,
     guardianName,
     guardianPhone,
     address,
@@ -652,6 +673,11 @@ exports.updateStudentByStudentId = async (req, res) => {
 
   if (!studentId || !studentId.trim()) {
     return res.status(400).json({ message: "studentId param is required" });
+  }
+
+  const normalizedAadharNo = normalizeAadharNo(aadharNo);
+  if (normalizedAadharNo && !isValidAadharNo(normalizedAadharNo)) {
+    return res.status(400).json({ message: "aadharNo must be exactly 12 digits" });
   }
 
   let conn;
@@ -727,6 +753,7 @@ exports.updateStudentByStudentId = async (req, res) => {
         UPDATE SET
           full_name = :b_full_name,
           phone = :b_phone,
+          aadhar_no = :b_aadhar_no,
           guardian_name = :b_guardian_name,
           guardian_phone = :b_guardian_phone,
           address = :b_address,
@@ -736,6 +763,7 @@ exports.updateStudentByStudentId = async (req, res) => {
           user_id,
           full_name,
           phone,
+          aadhar_no,
           guardian_name,
           guardian_phone,
           address,
@@ -745,6 +773,7 @@ exports.updateStudentByStudentId = async (req, res) => {
           :b_user_id,
           :b_full_name,
           :b_phone,
+          :b_aadhar_no,
           :b_guardian_name,
           :b_guardian_phone,
           :b_address,
@@ -755,6 +784,7 @@ exports.updateStudentByStudentId = async (req, res) => {
         b_user_id: targetUserId,
         b_full_name: fullName ? fullName.trim() : null,
         b_phone: phone ? phone.trim() : null,
+        b_aadhar_no: normalizedAadharNo,
         b_guardian_name: guardianName ? guardianName.trim() : null,
         b_guardian_phone: guardianPhone ? guardianPhone.trim() : null,
         b_address: address ? address.trim() : null,

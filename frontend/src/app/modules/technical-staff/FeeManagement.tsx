@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
 import { api } from "../../lib/api";
 
 type FeeRow = {
@@ -68,6 +67,18 @@ export function FeeManagement() {
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const openCreateModal = () => {
+      setCreateForm(defaultForm);
+      setIsCreateModalOpen(true);
+      setError("");
+      setSuccess("");
+    };
+
+    window.addEventListener("technical-staff:create-fee-record", openCreateModal);
+    return () => window.removeEventListener("technical-staff:create-fee-record", openCreateModal);
+  }, []);
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -125,21 +136,6 @@ export function FeeManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end">
-        <button
-          onClick={() => {
-            setCreateForm(defaultForm);
-            setIsCreateModalOpen(true);
-            setError("");
-            setSuccess("");
-          }}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium"
-        >
-          <Plus size={18} className="mr-2" />
-          Create New Fee Record
-        </button>
-      </div>
-
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
       {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{success}</div>}
 
@@ -163,7 +159,7 @@ export function FeeManagement() {
             <option value="Paid">Paid</option>
             <option value="Overdue">Overdue</option>
           </select>
-          <button onClick={loadFees} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+          <button onClick={loadFees} className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">
             Apply Filters
           </button>
         </div>
@@ -230,7 +226,7 @@ export function FeeManagement() {
               <option value="Paid">Paid</option>
               <option value="Overdue">Overdue</option>
             </select>
-            <button type="submit" className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Create</button>
+            <button type="submit" className="w-full px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">Create</button>
           </form>
         </ModalShell>
       )}

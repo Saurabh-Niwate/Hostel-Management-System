@@ -70,10 +70,10 @@ export function LeaveRequests() {
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Total Requests</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{leaveRequests.length}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Pending</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-amber-600">{pendingCount}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Approved</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-green-600">{approvedCount}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Rejected</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-red-600">{rejectedCount}</div></CardContent></Card>
+        <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Total Requests</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold">{leaveRequests.length}</div></CardContent></Card>
+        <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Pending</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold text-amber-600">{pendingCount}</div></CardContent></Card>
+        <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Approved</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold text-green-600">{approvedCount}</div></CardContent></Card>
+        <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Rejected</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold text-red-600">{rejectedCount}</div></CardContent></Card>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -84,7 +84,7 @@ export function LeaveRequests() {
               variant={filter === status ? "default" : "outline"}
               size="sm"
               onClick={() => setFilter(status as typeof filter)}
-              className={filter === status ? "bg-teal-600 hover:bg-teal-700" : ""}
+              className={filter === status ? "bg-violet-600 hover:bg-violet-700" : ""}
             >
               {status}
             </Button>
@@ -114,7 +114,7 @@ export function LeaveRequests() {
                       key={request.LEAVE_ID}
                       onClick={() => setSelectedRequest(request)}
                       className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                        selectedRequest?.LEAVE_ID === request.LEAVE_ID ? "border-teal-500 bg-teal-50" : "border-gray-200 hover:bg-gray-50"
+                        selectedRequest?.LEAVE_ID === request.LEAVE_ID ? "border-violet-500 bg-violet-50" : "border-gray-200 hover:bg-gray-50"
                       }`}
                     >
                       <div className="flex items-start justify-between mb-2">

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Vote, Calendar, Clock, CheckCircle2 } from "lucide-react";
+import { Vote, Calendar, Clock, CheckCircle2, Edit2, Trash2, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { api } from "../../lib/api";
@@ -19,6 +19,8 @@ type DinnerPoll = {
   POLL_STATUS: "Active" | "Scheduled" | "Closed";
   TOTAL_VOTES: number;
   OPTIONS: PollOption[];
+  WINNING_OPTIONS?: string[];
+  WINNING_VOTE_COUNT?: number;
 };
 
 type PollFormOption = {
@@ -34,6 +36,7 @@ export function DinnerPollManagement() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingPollId, setEditingPollId] = useState<number | null>(null);
   const [form, setForm] = useState({
     title: "",
     dinnerDate: getTodayDate(),
@@ -61,12 +64,32 @@ export function DinnerPollManagement() {
     loadPolls();
   }, []);
 
+  useEffect(() => {
+    const openCreatePoll = () => {
+      resetForm();
+      setEditingPollId(null);
+      setShowCreateForm(true);
+    };
+
+    window.addEventListener("canteen:create-poll", openCreatePoll);
+    return () => window.removeEventListener("canteen:create-poll", openCreatePoll);
+  }, []);
+
   const stats = useMemo(
     () => ({
       total: polls.length,
       active: polls.filter((poll) => poll.POLL_STATUS === "Active").length,
       scheduled: polls.filter((poll) => poll.POLL_STATUS === "Scheduled").length,
       closed: polls.filter((poll) => poll.POLL_STATUS === "Closed").length,
+    }),
+    [polls]
+  );
+
+  const groupedPolls = useMemo(
+    () => ({
+      active: polls.filter((poll) => poll.POLL_STATUS === "Active"),
+      scheduled: polls.filter((poll) => poll.POLL_STATUS === "Scheduled"),
+      closed: polls.filter((poll) => poll.POLL_STATUS === "Closed"),
     }),
     [polls]
   );
@@ -81,6 +104,23 @@ export function DinnerPollManagement() {
         { optionName: "", description: "" },
       ],
     });
+  };
+
+  const openEditPoll = (poll: DinnerPoll) => {
+    const closesValue = poll.CLOSES_AT ? poll.CLOSES_AT.replace(" ", "T").slice(0, 16) : "";
+    setEditingPollId(poll.POLL_ID);
+    setForm({
+      title: poll.TITLE || "",
+      dinnerDate: poll.DINNER_DATE || getTodayDate(),
+      closesAt: closesValue,
+      options: (poll.OPTIONS || []).map((option) => ({
+        optionName: option.OPTION_NAME || "",
+        description: option.DESCRIPTION || "",
+      })),
+    });
+    setShowCreateForm(true);
+    setError("");
+    setSuccess("");
   };
 
   const handleCreate = async () => {
@@ -102,6 +142,27 @@ export function DinnerPollManagement() {
     }
   };
 
+  const handleUpdate = async () => {
+    if (!editingPollId) return;
+    setError("");
+    setSuccess("");
+    try {
+      await api.put(`/canteen-owner/dinner-polls/${editingPollId}`, {
+        title: form.title.trim(),
+        dinnerDate: form.dinnerDate,
+        closesAt: form.closesAt.replace("T", " "),
+        options: form.options,
+      });
+      setSuccess("Dinner poll updated successfully");
+      setShowCreateForm(false);
+      setEditingPollId(null);
+      resetForm();
+      await loadPolls();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to update dinner poll");
+    }
+  };
+
   const handleClosePoll = async (pollId: number) => {
     setError("");
     setSuccess("");
@@ -111,6 +172,21 @@ export function DinnerPollManagement() {
       await loadPolls();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to close dinner poll");
+    }
+  };
+
+  const handleDeletePoll = async (pollId: number) => {
+    const confirmed = window.confirm("Delete this dinner poll?");
+    if (!confirmed) return;
+
+    setError("");
+    setSuccess("");
+    try {
+      await api.delete(`/canteen-owner/dinner-polls/${pollId}`);
+      setSuccess("Dinner poll deleted successfully");
+      await loadPolls();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to delete dinner poll");
     }
   };
 
@@ -130,38 +206,14 @@ export function DinnerPollManagement() {
     }));
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-end">
-        <Button
-          onClick={() => {
-            resetForm();
-            setShowCreateForm(true);
-          }}
-          className="bg-teal-600 hover:bg-teal-700"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Poll
-        </Button>
-      </div>
+  const renderPollSection = (title: string, sectionPolls: DinnerPoll[]) => {
+    if (sectionPolls.length === 0) return null;
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
-      {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{success}</div>}
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Total Polls</p><p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p></CardContent></Card>
-        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Active</p><p className="text-2xl font-bold text-emerald-600 mt-1">{stats.active}</p></CardContent></Card>
-        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Scheduled</p><p className="text-2xl font-bold text-blue-600 mt-1">{stats.scheduled}</p></CardContent></Card>
-        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Closed</p><p className="text-2xl font-bold text-slate-700 mt-1">{stats.closed}</p></CardContent></Card>
-      </div>
-
-      {loading ? (
-        <div className="text-sm text-slate-500">Loading dinner polls...</div>
-      ) : polls.length === 0 ? (
-        <Card><CardContent className="p-6 text-sm text-slate-500">No dinner polls created yet.</CardContent></Card>
-      ) : (
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold text-slate-900">{title}</h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {polls.map((poll) => (
+          {sectionPolls.map((poll) => (
             <Card key={poll.POLL_ID} className={poll.POLL_STATUS === "Active" ? "border-l-4 border-l-emerald-500" : ""}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
@@ -173,19 +225,54 @@ export function DinnerPollManagement() {
                       <p className="flex items-center gap-2"><Vote className="h-4 w-4" /> Votes: {poll.TOTAL_VOTES}</p>
                     </div>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    poll.POLL_STATUS === "Active"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : poll.POLL_STATUS === "Scheduled"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-slate-100 text-slate-700"
-                  }`}>
-                    {poll.POLL_STATUS}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    {poll.POLL_STATUS !== "Closed" && (
+                      <button
+                        type="button"
+                        onClick={() => openEditPoll(poll)}
+                        disabled={Number(poll.TOTAL_VOTES || 0) > 0}
+                        className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={Number(poll.TOTAL_VOTES || 0) > 0 ? "Polls with votes cannot be edited" : "Edit poll"}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePoll(poll.POLL_ID)}
+                      className="rounded-lg p-2 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+                      title="Delete poll"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {poll.OPTIONS.map((option) => (
+                {poll.POLL_STATUS === "Closed" && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                    <div className="flex items-center gap-2 text-amber-800 font-medium">
+                      <Trophy className="h-4 w-4" />
+                      Winner
+                    </div>
+                    {poll.WINNING_OPTIONS && poll.WINNING_OPTIONS.length > 0 ? (
+                      <div className="mt-3 flex items-center justify-between rounded-lg border border-amber-200 bg-white/70 px-4 py-3">
+                        <div>
+                          <p className="font-semibold text-amber-900">{poll.WINNING_OPTIONS.join(", ")}</p>
+                          <p className="text-xs text-amber-700">Winning option</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-amber-900">{poll.WINNING_VOTE_COUNT || 0}</p>
+                          <p className="text-xs text-amber-700">total votes</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-amber-900">No votes were cast in this poll.</p>
+                    )}
+                  </div>
+                )}
+
+                {poll.POLL_STATUS !== "Closed" && poll.OPTIONS.map((option) => (
                   <div key={option.OPTION_ID} className="rounded-xl border border-slate-200 p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div>
@@ -210,15 +297,41 @@ export function DinnerPollManagement() {
             </Card>
           ))}
         </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
+      {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{success}</div>}
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Total Polls</p><p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p></CardContent></Card>
+        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Active</p><p className="text-2xl font-bold text-emerald-600 mt-1">{stats.active}</p></CardContent></Card>
+        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Scheduled</p><p className="text-2xl font-bold text-blue-600 mt-1">{stats.scheduled}</p></CardContent></Card>
+        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Closed</p><p className="text-2xl font-bold text-slate-700 mt-1">{stats.closed}</p></CardContent></Card>
+      </div>
+
+      {loading ? (
+        <div className="text-sm text-slate-500">Loading dinner polls...</div>
+      ) : polls.length === 0 ? (
+        <Card><CardContent className="p-6 text-sm text-slate-500">No dinner polls created yet.</CardContent></Card>
+      ) : (
+        <div className="space-y-8">
+          {renderPollSection("Active Polls", groupedPolls.active)}
+          {renderPollSection("Scheduled Polls", groupedPolls.scheduled)}
+          {renderPollSection("Closed Polls", groupedPolls.closed)}
+        </div>
       )}
 
       {showCreateForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowCreateForm(false)}>
-          <Card className="w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => { setShowCreateForm(false); setEditingPollId(null); }}>
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <CardHeader>
-              <CardTitle>Create Dinner Poll</CardTitle>
+              <CardTitle>{editingPollId ? "Edit Dinner Poll" : "Create Dinner Poll"}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 overflow-y-auto max-h-[calc(90vh-88px)] pr-2">
               <input type="text" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} placeholder="Poll title" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="date" value={form.dinnerDate} onChange={(e) => setForm((prev) => ({ ...prev, dinnerDate: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
@@ -273,11 +386,11 @@ export function DinnerPollManagement() {
                   Add Option
                 </Button>
                 <div className="flex gap-3">
-                  <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
+                  <Button type="button" variant="outline" onClick={() => { setShowCreateForm(false); setEditingPollId(null); }}>
                     Cancel
                   </Button>
-                  <Button type="button" className="bg-teal-600 hover:bg-teal-700" onClick={handleCreate}>
-                    Create Poll
+                  <Button type="button" className="bg-amber-600 hover:bg-amber-700" onClick={editingPollId ? handleUpdate : handleCreate}>
+                    {editingPollId ? "Update Poll" : "Create Poll"}
                   </Button>
                 </div>
               </div>

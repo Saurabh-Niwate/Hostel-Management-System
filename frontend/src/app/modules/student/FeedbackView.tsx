@@ -61,7 +61,7 @@ export function FeedbackView() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
       </div>
     );
   }
@@ -74,7 +74,7 @@ export function FeedbackView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-            <MessageSquare className="mr-2 text-blue-600" size={20} /> New Feedback
+            <MessageSquare className="mr-2 text-emerald-600" size={20} /> New Feedback
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -116,7 +116,7 @@ export function FeedbackView() {
             <button
               disabled={isSubmitting}
               type="submit"
-              className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-70"
+              className="w-full flex items-center justify-center px-4 py-3 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-70"
             >
               {isSubmitting ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>

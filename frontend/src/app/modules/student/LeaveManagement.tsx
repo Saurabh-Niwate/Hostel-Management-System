@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Calendar, Clock, AlertCircle, X, CheckCircle, Trash2, FileText } from "lucide-react";
+import { Calendar, Clock, AlertCircle, X, CheckCircle, Trash2, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { format } from "date-fns";
 import { api } from "../../lib/api";
@@ -19,6 +19,7 @@ interface Leave {
 type Props = {
   onLeavesUpdated?: (leaves: Leave[]) => void;
   initialTab?: "list" | "apply";
+  onTabChange?: (tab: "list" | "apply") => void;
 };
 
 const mapLeave = (row: any): Leave => ({
@@ -31,7 +32,7 @@ const mapLeave = (row: any): Leave => ({
   appliedOn: row.CREATED_AT ? row.CREATED_AT.split(" ")[0] : "",
 });
 
-export function LeaveManagement({ onLeavesUpdated, initialTab = "list" }: Props) {
+export function LeaveManagement({ onLeavesUpdated, initialTab = "list", onTabChange }: Props) {
   const [activeTab, setActiveTab] = useState<"list" | "apply">(initialTab);
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
@@ -76,6 +77,10 @@ export function LeaveManagement({ onLeavesUpdated, initialTab = "list" }: Props)
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
+
+  useEffect(() => {
+    onTabChange?.(activeTab);
+  }, [activeTab, onTabChange]);
 
   useEffect(() => {
     const loadLeaveDetail = async () => {
@@ -141,25 +146,6 @@ export function LeaveManagement({ onLeavesUpdated, initialTab = "list" }: Props)
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end">
-        {activeTab === "list" ? (
-          <button
-            onClick={() => setActiveTab("apply")}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium"
-          >
-            <Plus size={18} className="mr-2" />
-            Apply New Leave
-          </button>
-        ) : (
-          <button
-            onClick={() => setActiveTab("list")}
-            className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors font-medium"
-          >
-            Cancel
-          </button>
-        )}
-      </div>
-
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
           {error}
@@ -183,7 +169,7 @@ export function LeaveManagement({ onLeavesUpdated, initialTab = "list" }: Props)
                   onClick={() => setSelectedLeaveId(leave.id)}
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
                     selectedLeaveId === leave.id
-                      ? "bg-blue-50 border-blue-200 shadow-md ring-1 ring-blue-500"
+                      ? "bg-emerald-50 border-emerald-200 shadow-md ring-1 ring-emerald-700"
                       : "bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm"
                   }`}
                 >

@@ -51,6 +51,27 @@ export function RoomsManagement() {
     <div className="space-y-6">
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-6">
+            <CardDescription>Total Rooms</CardDescription>
+            <CardTitle className="text-2xl">{rooms.length}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-6">
+            <CardDescription>Total Capacity</CardDescription>
+            <CardTitle className="text-2xl">{totalCapacity}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-6">
+            <CardDescription>Vacancies Available</CardDescription>
+            <CardTitle className="text-2xl">{Math.max(totalCapacity - totalOccupied, 0)}</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-4">
@@ -61,7 +82,7 @@ export function RoomsManagement() {
                 placeholder="Search rooms..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
               />
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -71,7 +92,7 @@ export function RoomsManagement() {
                   variant={filterBlock === block ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFilterBlock(block)}
-                  className={filterBlock === block ? "bg-teal-600 hover:bg-teal-700" : ""}
+                  className={filterBlock === block ? "bg-violet-600 hover:bg-violet-700" : ""}
                 >
                   {block === "all" ? "All Blocks" : block}
                 </Button>
@@ -119,27 +140,6 @@ export function RoomsManagement() {
           )}
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Rooms</CardDescription>
-            <CardTitle className="text-2xl">{rooms.length}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Capacity</CardDescription>
-            <CardTitle className="text-2xl">{totalCapacity}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Vacancies Available</CardDescription>
-            <CardTitle className="text-2xl">{Math.max(totalCapacity - totalOccupied, 0)}</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
     </div>
   );
 }

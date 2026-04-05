@@ -51,6 +51,7 @@ CREATE TABLE students (
   user_id NUMBER PRIMARY KEY,
   full_name VARCHAR2(100),
   phone VARCHAR2(20),
+  aadhar_no VARCHAR2(20),
   guardian_name VARCHAR2(100),
   guardian_phone VARCHAR2(20),
   address VARCHAR2(300),
@@ -60,6 +61,8 @@ CREATE TABLE students (
   CONSTRAINT fk_students_user FOREIGN KEY (user_id)
     REFERENCES users(user_id)
 );
+
+
 
 CREATE TABLE staff_profiles (
   user_id NUMBER PRIMARY KEY,
@@ -363,41 +366,6 @@ BEGIN
 END;
 /
 
-CREATE TABLE night_food_orders (
-  order_id NUMBER PRIMARY KEY,
-  user_id NUMBER NOT NULL,
-  order_date DATE DEFAULT TRUNC(SYSDATE) NOT NULL,
-  item_name VARCHAR2(200) NOT NULL,
-  quantity NUMBER(4) DEFAULT 1 NOT NULL,
-  notes VARCHAR2(300),
-  status VARCHAR2(20) DEFAULT 'Pending' NOT NULL,
-  updated_at DATE DEFAULT SYSDATE NOT NULL,
-  updated_by NUMBER,
-  created_at DATE DEFAULT SYSDATE NOT NULL,
-  CONSTRAINT fk_night_food_user FOREIGN KEY (user_id)
-    REFERENCES users(user_id),
-  CONSTRAINT fk_night_food_updated_by FOREIGN KEY (updated_by)
-    REFERENCES users(user_id),
-  CONSTRAINT chk_night_food_quantity CHECK (quantity > 0),
-  CONSTRAINT chk_night_food_status CHECK (status IN ('Pending', 'Preparing', 'Ready', 'Delivered', 'Cancelled'))
-);
-
-CREATE SEQUENCE night_food_orders_seq
-START WITH 1
-INCREMENT BY 1;
-
-CREATE OR REPLACE TRIGGER night_food_orders_trigger
-BEFORE INSERT ON night_food_orders
-FOR EACH ROW
-BEGIN
-  IF :NEW.order_id IS NULL THEN
-    SELECT night_food_orders_seq.NEXTVAL
-    INTO :NEW.order_id
-    FROM dual;
-  END IF;
-END;
-/
-
 CREATE TABLE system_logs (
   log_id NUMBER PRIMARY KEY,
   actor_user_id NUMBER NOT NULL,
@@ -429,7 +397,6 @@ END;
 
 
 COMMIT;
-
 
 
 

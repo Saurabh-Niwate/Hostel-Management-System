@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { LogIn, LogOut, Clock, RefreshCw } from "lucide-react";
+import { LogIn, LogOut, Clock } from "lucide-react";
 import { motion } from "motion/react";
 import { api } from "../../lib/api";
 
@@ -23,7 +23,11 @@ const formatDateTime = (value: string | null) => {
   return date.toLocaleString();
 };
 
-export function TodayLogs() {
+type TodayLogsProps = {
+  refreshKey?: number;
+};
+
+export function TodayLogs({ refreshKey = 0 }: TodayLogsProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [logs, setLogs] = useState<SecurityLog[]>([]);
@@ -43,28 +47,18 @@ export function TodayLogs() {
 
   useEffect(() => {
     loadLogs();
-  }, []);
+  }, [refreshKey]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4">
-        <button
-          onClick={loadLogs}
-          className="flex items-center px-4 py-2 border border-slate-200 bg-white rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-        >
-          <RefreshCw size={16} className="mr-2" />
-          Refresh
-        </button>
-      </div>
-
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -95,7 +89,7 @@ export function TodayLogs() {
                     className="hover:bg-slate-50/50 transition-colors"
                   >
                     <td className="p-4">
-                      <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${log.STATUS === "IN" ? "bg-teal-100 text-teal-800" : "bg-orange-100 text-orange-800"}`}>
+                      <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${log.STATUS === "IN" ? "bg-slate-100 text-slate-800" : "bg-orange-100 text-orange-800"}`}>
                         {log.STATUS === "IN" ? <LogIn size={12} className="mr-1" /> : <LogOut size={12} className="mr-1" />}
                         {log.STATUS}
                       </div>

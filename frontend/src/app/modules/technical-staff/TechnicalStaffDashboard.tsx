@@ -1,6 +1,6 @@
 import { useState,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, Users as UsersIcon, LogOut, Menu, X, ShieldCheck, Wallet, BedDouble } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Users as UsersIcon, LogOut, Menu, X, ShieldCheck, Wallet, BedDouble, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from "motion/react";
 import { CreateUser } from './CreateUser';
 import { ManageUsers } from './ManageUsers';
@@ -22,6 +22,13 @@ type LogRow = {
 };
 
 export function TechnicalStaffDashboard() {
+  const theme = {
+    color: "#0e7490",
+    activeColor: "#0891b2",
+    bg: "bg-cyan-50",
+    text: "text-white",
+    muted: "text-white/80",
+  };
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -106,41 +113,48 @@ export function TechnicalStaffDashboard() {
             ? 'Profile'
           : 'Fee Management';
 
-  const viewDescription =
-    currentView === 'dashboard'
-      ? 'User operations, fee handling, and system activity from one control panel.'
-      : currentView === 'create-users'
-        ? 'Add new students or staff members with the required hostel details.'
-        : currentView === 'manage-users'
-          ? 'Search, view, edit, and remove users from the system.'
-          : currentView === 'room-management'
-            ? 'Create, edit, activate, or remove hostel rooms.'
-          : currentView === 'profile'
-            ? 'View your account details and update your password.'
-          : 'Create and update student fee records with current status.';
+  const headerAction =
+    currentView === 'fee-management' ? (
+      <button
+        onClick={() => window.dispatchEvent(new Event('technical-staff:create-fee-record'))}
+        className="flex items-center px-4 py-2 bg-cyan-600 text-white rounded-xl hover:bg-cyan-700 transition-all font-medium"
+      >
+        <Plus size={18} className="mr-2" />
+        Create New Fee Record
+      </button>
+    ) : currentView === 'room-management' ? (
+      <button
+        onClick={() => window.dispatchEvent(new Event('technical-staff:create-room'))}
+        className="flex items-center px-4 py-2 bg-cyan-600 text-white rounded-xl hover:bg-cyan-700 transition-all font-medium"
+      >
+        <Plus size={18} className="mr-2" />
+        Create Room
+      </button>
+    ) : null;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className={`min-h-screen ${theme.bg} flex`}>
       <motion.aside
         initial={{ width: 280 }}
         animate={{ width: 280 }}
-        className={`fixed top-0 left-0 h-full w-[280px] bg-cyan-900 border-r border-cyan-800 z-30 text-white flex flex-col transition-transform duration-300 ${
+        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 text-white ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
+        style={{ backgroundColor: theme.color, borderRight: "1px solid rgba(255,255,255,0.18)" }}
       >
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-cyan-800/50">
+          <div className="p-6 border-b border-white/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <ShieldCheck className="w-5 h-5 text-cyan-300" />
+                <ShieldCheck className={`w-5 h-5 ${theme.text}`} />
                 <div>
-                  <h1 className="text-xl font-bold tracking-wide">Technical Portal</h1>
-                  <p className="text-xs text-cyan-200">{localStorage.getItem('userIdentifier') || 'TECHNICAL'}</p>
+                  <h1 className={`text-xl font-bold tracking-wide ${theme.text}`}>Technical Portal</h1>
+                  <p className={`text-xs ${theme.muted}`}>{localStorage.getItem('userIdentifier') || 'TECHNICAL'}</p>
                 </div>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 hover:bg-cyan-800 rounded-lg transition-colors"
+                className={`lg:hidden p-2 rounded-lg transition-colors ${theme.text} hover:bg-white/10`}
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -160,9 +174,10 @@ export function TechnicalStaffDashboard() {
                     setMobileMenuOpen(false);
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${isActive
-                      ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-950/40'
-                      : 'text-cyan-100 hover:bg-cyan-800 hover:text-white'
+                      ? 'text-white shadow-lg'
+                      : `${theme.text} hover:bg-white/10`
                     }`}
+                  style={isActive ? { backgroundColor: theme.activeColor } : undefined}
                 >
                   <Icon className="w-5 h-5" />
                   <span>{item.label}</span>
@@ -171,10 +186,10 @@ export function TechnicalStaffDashboard() {
             })}
           </nav>
 
-          <div className="p-4 border-t border-cyan-800/50">
+          <div className="p-4 border-t border-white/20">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-200 hover:bg-red-900/30 rounded-xl font-medium transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl font-medium transition-colors border border-slate-200 shadow-sm"
             >
               <LogOut className="w-5 h-5" />
               <span>Logout</span>
@@ -192,17 +207,19 @@ export function TechnicalStaffDashboard() {
 
       <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-6 flex items-start gap-4">
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <div>
-              <h2 className="text-3xl font-bold text-slate-900">{viewTitle}</h2>
-              <p className="text-slate-500 mt-1">{viewDescription}</p>
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div>
+                <h2 className="text-3xl font-bold text-slate-900">{viewTitle}</h2>
+              </div>
             </div>
+            {headerAction && <div className="shrink-0">{headerAction}</div>}
           </div>
 
           <AnimatePresence mode="wait">
@@ -222,8 +239,8 @@ export function TechnicalStaffDashboard() {
                       <p className="text-sm text-slate-600 mb-1">Total Users</p>
                       <p className="text-3xl font-bold text-slate-900">{stats.total}</p>
                     </div>
-                    <div className="p-3 bg-teal-100 rounded-lg">
-                      <UsersIcon className="w-6 h-6 text-teal-700" />
+                    <div className="p-3 bg-cyan-100 rounded-lg">
+                      <UsersIcon className="w-6 h-6 text-cyan-700" />
                     </div>
                   </div>
                 </div>
@@ -234,8 +251,8 @@ export function TechnicalStaffDashboard() {
                       <p className="text-sm text-slate-600 mb-1">Students</p>
                       <p className="text-3xl font-bold text-slate-900">{stats.students}</p>
                     </div>
-                    <div className="p-3 bg-blue-100 rounded-lg">
-                      <UsersIcon className="w-6 h-6 text-blue-700" />
+                    <div className="p-3 bg-cyan-100 rounded-lg">
+                      <UsersIcon className="w-6 h-6 text-cyan-700" />
                     </div>
                   </div>
                 </div>
@@ -246,8 +263,8 @@ export function TechnicalStaffDashboard() {
                       <p className="text-sm text-slate-600 mb-1">Staff Members</p>
                       <p className="text-3xl font-bold text-slate-900">{stats.staff}</p>
                     </div>
-                    <div className="p-3 bg-purple-100 rounded-lg">
-                      <UsersIcon className="w-6 h-6 text-purple-700" />
+                    <div className="p-3 bg-cyan-100 rounded-lg">
+                      <UsersIcon className="w-6 h-6 text-cyan-700" />
                     </div>
                   </div>
                 </div>
@@ -272,8 +289,8 @@ export function TechnicalStaffDashboard() {
                     onClick={() => setCurrentView('create-users')}
                     className="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-left"
                   >
-                    <div className="p-2 bg-teal-100 rounded-lg">
-                      <UserPlus className="w-5 h-5 text-teal-700" />
+                    <div className="p-2 bg-cyan-100 rounded-lg">
+                      <UserPlus className="w-5 h-5 text-cyan-700" />
                     </div>
                     <div>
                       <p className="font-medium text-slate-900">Create New User</p>
@@ -285,8 +302,8 @@ export function TechnicalStaffDashboard() {
                     onClick={() => setCurrentView('manage-users')}
                     className="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-left"
                   >
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <UsersIcon className="w-5 h-5 text-blue-700" />
+                    <div className="p-2 bg-cyan-100 rounded-lg">
+                      <UsersIcon className="w-5 h-5 text-cyan-700" />
                     </div>
                     <div>
                       <p className="font-medium text-slate-900">Manage Users</p>

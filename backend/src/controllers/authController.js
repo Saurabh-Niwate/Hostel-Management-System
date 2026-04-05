@@ -1,11 +1,16 @@
 const { oracledb } = require("../config/db");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const { clearAuthAttempts } = require("../middlewares/authSecurityMiddleware");
 
 const staffRoles = new Set(["Admin", "Technical Staff", "Warden", "Security", "Canteen Owner"]);
 
 exports.login = async (req, res) => {
   const { identifier, password } = req.body;
+
+  if (typeof identifier !== "string" || typeof password !== "string") {
+    return res.status(400).json({ message: "identifier and password are required" });
+  }
 
   let conn;
 
@@ -21,7 +26,7 @@ exports.login = async (req, res) => {
      OR TRIM(u.emp_id) = :id
      OR TRIM(u.email) = :id
   `,
-  { id: identifier }   
+  { id: identifier }
 );
 
 
@@ -48,6 +53,8 @@ exports.login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+    clearAuthAttempts(req);
 
     res.json({ token, role });
 

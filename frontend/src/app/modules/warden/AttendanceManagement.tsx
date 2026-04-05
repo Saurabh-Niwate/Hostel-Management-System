@@ -109,7 +109,7 @@ export function AttendanceManagement() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
-        <Button onClick={handleSave} disabled={saving || rows.length === 0} className="bg-teal-600 hover:bg-teal-700">
+        <Button onClick={handleSave} disabled={saving || rows.length === 0} className="bg-violet-700 hover:bg-violet-600">
           <Save className="h-4 w-4 mr-2" />
           {saving ? "Saving..." : "Save Attendance"}
         </Button>

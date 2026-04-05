@@ -41,6 +41,8 @@ export function GateEntryExit() {
   const [success, setSuccess] = useState("");
   const [studentStatus, setStudentStatus] = useState<StudentStatusResponse | null>(null);
 
+  const normalizeStudentIdInput = (value: string) => value.toUpperCase().trim();
+
   const loadStudentStatus = async (studentId: string) => {
     const response = await api.get(`/security/student-status/${encodeURIComponent(studentId.trim())}`);
     setStudentStatus(response.data);
@@ -132,14 +134,14 @@ export function GateEntryExit() {
               type="text"
               placeholder="e.g. STU101"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent w-full transition-all text-lg font-medium"
+              onChange={(e) => setSearchQuery(normalizeStudentIdInput(e.target.value))}
+              className="pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent w-full transition-all text-lg font-medium"
             />
           </div>
           <button
             type="submit"
             disabled={loading || !searchQuery.trim()}
-            className="px-6 py-3 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-colors disabled:opacity-70 flex items-center justify-center shadow-md shadow-teal-200"
+            className="px-6 py-3 bg-slate-600 text-white font-medium rounded-xl hover:bg-slate-700 transition-colors disabled:opacity-70 flex items-center justify-center shadow-md shadow-slate-200"
           >
             {loading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" /> : "Verify"}
           </button>
@@ -147,7 +149,7 @@ export function GateEntryExit() {
       </form>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
-      {success && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm">{success}</div>}
+      {success && <div className="bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 rounded-xl text-sm">{success}</div>}
 
       <AnimatePresence>
         {studentStatus && student && !loading && (
@@ -158,7 +160,7 @@ export function GateEntryExit() {
             className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden"
           >
             <div className={`p-6 border-b flex flex-col md:flex-row gap-5 ${isOutside ? "bg-amber-50 border-amber-100" : "bg-slate-50 border-slate-100"}`}>
-              <div className="w-20 h-20 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-2xl font-bold shadow-sm">
+              <div className="w-20 h-20 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-2xl font-bold shadow-sm">
                 {student.fullName?.charAt(0) || "S"}
               </div>
               <div className="flex-1">
@@ -167,7 +169,7 @@ export function GateEntryExit() {
                     <h3 className="text-2xl font-bold text-slate-800">{student.fullName || "Student"}</h3>
                     <p className="text-slate-600 font-medium mt-1">{student.studentId}</p>
                   </div>
-                  <span className={`px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${isOutside ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
+                  <span className={`px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${isOutside ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-800"}`}>
                     Currently: {isOutside ? "Outside" : "Inside"}
                   </span>
                 </div>
@@ -191,8 +193,8 @@ export function GateEntryExit() {
 
             <div className="p-6 space-y-5">
               {isOutside ? (
-                <div className="flex items-center p-4 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100">
-                  <div className="bg-emerald-100 p-2 rounded-lg mr-4">
+                <div className="flex items-center p-4 bg-slate-50 text-slate-700 rounded-xl border border-slate-100">
+                  <div className="bg-slate-100 p-2 rounded-lg mr-4">
                     <UserCheck size={24} />
                   </div>
                   <div>
@@ -203,8 +205,8 @@ export function GateEntryExit() {
                   </div>
                 </div>
               ) : studentStatus.activeLeave ? (
-                <div className="flex items-center p-4 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100">
-                  <div className="bg-emerald-100 p-2 rounded-lg mr-4">
+                <div className="flex items-center p-4 bg-slate-50 text-slate-700 rounded-xl border border-slate-100">
+                  <div className="bg-slate-100 p-2 rounded-lg mr-4">
                     <FileText size={24} />
                   </div>
                   <div>
@@ -234,7 +236,7 @@ export function GateEntryExit() {
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
                   placeholder={isOutside ? "Optional entry remarks" : "Optional exit remarks"}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
                 />
               </div>
 
@@ -243,7 +245,7 @@ export function GateEntryExit() {
                   <button
                     onClick={handleMarkEntry}
                     disabled={submitting !== null}
-                    className="flex-1 flex items-center justify-center gap-2 py-4 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition-colors disabled:opacity-60 shadow-lg shadow-teal-200 text-lg"
+                    className="flex-1 flex items-center justify-center gap-2 py-4 bg-slate-600 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors disabled:opacity-60 shadow-lg shadow-slate-200 text-lg"
                   >
                     <LogIn size={24} />
                     <span>{submitting === "entry" ? "Marking Entry..." : "Mark Entry"}</span>

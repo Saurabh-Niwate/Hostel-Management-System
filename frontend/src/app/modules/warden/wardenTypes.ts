@@ -14,6 +14,7 @@ export type WardenStudent = {
   EMAIL?: string;
   FULL_NAME?: string;
   PHONE?: string;
+  AADHAR_NO?: string;
   GUARDIAN_NAME?: string;
   GUARDIAN_PHONE?: string;
   ADDRESS?: string;

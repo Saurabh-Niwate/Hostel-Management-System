@@ -58,7 +58,7 @@ export function StudentsManagement() {
                   placeholder="Search students by name, ID, or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                 />
               </div>
             </CardHeader>
@@ -73,7 +73,7 @@ export function StudentsManagement() {
                       onClick={() => loadStudentBasic(student.STUDENT_ID)}
                       className={`p-4 rounded-lg border cursor-pointer transition-colors ${
                         selectedStudent?.STUDENT_ID === student.STUDENT_ID
-                          ? "border-teal-500 bg-teal-50"
+                          ? "border-violet-500 bg-violet-50"
                           : "border-gray-200 hover:bg-gray-50"
                       }`}
                     >
@@ -112,7 +112,7 @@ export function StudentsManagement() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="h-14 w-14 rounded-full overflow-hidden bg-teal-100 border border-teal-200 flex items-center justify-center">
+                  <div className="h-14 w-14 rounded-full overflow-hidden bg-violet-100 border border-violet-200 flex items-center justify-center">
                     {selectedStudent.PROFILE_IMAGE_URL && !imageLoadFailed ? (
                       <img
                         src={selectedStudent.PROFILE_IMAGE_URL}
@@ -121,7 +121,7 @@ export function StudentsManagement() {
                         onError={() => setImageLoadFailed(true)}
                       />
                     ) : (
-                      <User className="h-7 w-7 text-teal-600" />
+                      <User className="h-7 w-7 text-violet-600" />
                     )}
                   </div>
                   <div>
@@ -141,6 +141,10 @@ export function StudentsManagement() {
                     <Phone className="h-4 w-4 text-gray-400" />
                     {selectedStudent.PHONE || "-"}
                   </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Aadhar Number</label>
+                  <p className="text-gray-900 mt-1">{selectedStudent.AADHAR_NO || "-"}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Email</label>

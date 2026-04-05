@@ -17,6 +17,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
     studentId: "",
     fullName: "",
     phone: "",
+    aadharNo: "",
     guardianName: "",
     guardianPhone: "",
     address: "",
@@ -65,6 +66,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
       !studentForm.password.trim() ||
       !studentForm.fullName.trim() ||
       !studentForm.phone.trim() ||
+      !studentForm.aadharNo.trim() ||
       !studentForm.guardianName.trim() ||
       !studentForm.guardianPhone.trim() ||
       !studentForm.address.trim() ||
@@ -80,6 +82,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
       formData.append("studentId", studentForm.studentId.trim());
       formData.append("fullName", studentForm.fullName.trim());
       formData.append("phone", studentForm.phone.trim());
+      formData.append("aadharNo", studentForm.aadharNo.trim());
       formData.append("guardianName", studentForm.guardianName.trim());
       formData.append("guardianPhone", studentForm.guardianPhone.trim());
       formData.append("address", studentForm.address.trim());
@@ -100,6 +103,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
         studentId: "",
         fullName: "",
         phone: "",
+        aadharNo: "",
         guardianName: "",
         guardianPhone: "",
         address: "",
@@ -158,7 +162,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
               setSuccess("");
             }}
             className={`flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium transition-all ${
-              userType === "student" ? "bg-teal-600 text-white shadow-md" : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+              userType === "student" ? "bg-cyan-600 text-white shadow-md" : "bg-slate-50 text-slate-600 hover:bg-slate-100"
             }`}
           >
             <Users className="w-5 h-5" />
@@ -172,7 +176,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
               setSuccess("");
             }}
             className={`flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium transition-all ${
-              userType === "staff" ? "bg-teal-600 text-white shadow-md" : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+              userType === "staff" ? "bg-cyan-600 text-white shadow-md" : "bg-slate-50 text-slate-600 hover:bg-slate-100"
             }`}
           >
             <Briefcase className="w-5 h-5" />
@@ -211,6 +215,15 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
               onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value })}
               className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
               placeholder="Student Phone (required)"
+              disabled={loading}
+              required
+            />
+            <input
+              type="text"
+              value={studentForm.aadharNo}
+              onChange={(e) => setStudentForm({ ...studentForm, aadharNo: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Aadhar Number (required)"
               disabled={loading}
               required
             />
@@ -285,7 +298,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
+              className="w-full px-4 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50"
             >
               {loading ? "Creating Student..." : "Create Student"}
             </button>
@@ -347,7 +360,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
+              className="w-full px-4 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50"
             >
               {loading ? "Creating Staff..." : "Create Staff"}
             </button>

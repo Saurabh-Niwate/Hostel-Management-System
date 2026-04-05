@@ -8,6 +8,7 @@ type Profile = {
   EMAIL?: string;
   FULL_NAME?: string;
   PHONE?: string;
+  AADHAR_NO?: string;
   GUARDIAN_NAME?: string;
   GUARDIAN_PHONE?: string;
   ADDRESS?: string;
@@ -213,6 +214,7 @@ export function AdminStudentView() {
                 <p><span className="font-semibold">Full Name:</span> {modalData.profile.FULL_NAME || "-"}</p>
                 <p><span className="font-semibold">Email:</span> {modalData.profile.EMAIL || "-"}</p>
                 <p><span className="font-semibold">Phone:</span> {modalData.profile.PHONE || "-"}</p>
+                <p><span className="font-semibold">Aadhar Number:</span> {modalData.profile.AADHAR_NO || "-"}</p>
                 <p><span className="font-semibold">Guardian Name:</span> {modalData.profile.GUARDIAN_NAME || "-"}</p>
                 <p><span className="font-semibold">Guardian Phone:</span> {modalData.profile.GUARDIAN_PHONE || "-"}</p>
                 <p><span className="font-semibold">Room No:</span> {modalData.profile.ROOM_NO || "-"}</p>

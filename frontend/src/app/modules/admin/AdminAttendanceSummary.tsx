@@ -107,7 +107,7 @@ export function AdminAttendanceSummary() {
           <label className="block text-xs text-slate-500 mb-1">To Date</label>
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
         </div>
-        <button onClick={load} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Apply Date Filter</button>
+        <button onClick={load} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-600">Apply Date Filter</button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

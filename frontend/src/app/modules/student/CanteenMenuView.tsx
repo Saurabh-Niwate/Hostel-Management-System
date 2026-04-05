@@ -4,7 +4,6 @@ import { api } from "../../lib/api";
 
 type MenuRow = {
   MENU_ID: number;
-  MENU_DATE: string;
   MEAL_TYPE: "Breakfast" | "Lunch" | "Snacks" | "Dinner" | string;
   ITEM_NAME: string;
   IS_AVAILABLE: string | number | boolean | null;
@@ -48,16 +47,13 @@ export function CanteenMenuView() {
   const [menuRows, setMenuRows] = useState<MenuRow[]>([]);
   const [polls, setPolls] = useState<DinnerPoll[]>([]);
   const [votingPollId, setVotingPollId] = useState<number | null>(null);
-  const [menuDate, setMenuDate] = useState("");
 
-  const loadMenu = async (selectedDate?: string) => {
+  const loadMenu = async () => {
     setLoading(true);
     setError("");
     try {
       const [menuRes, pollRes] = await Promise.all([
-        api.get("/student/canteen-menu", {
-          params: selectedDate ? { date: selectedDate } : undefined,
-        }),
+        api.get("/student/canteen-menu"),
         api.get("/student/dinner-polls"),
       ]);
       setMenuRows(menuRes.data?.menu || []);
@@ -100,7 +96,7 @@ export function CanteenMenuView() {
     setError("");
     try {
       await api.post(`/student/dinner-polls/${pollId}/vote`, { optionId });
-      await loadMenu(menuDate || undefined);
+      await loadMenu();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to submit vote");
     } finally {
@@ -170,28 +166,12 @@ export function CanteenMenuView() {
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-        <p className="text-slate-500 flex items-center mt-1">
-          <Clock size={16} className="mr-1" /> {today}
-        </p>
-        <div className="flex gap-2">
-          <input
-            type="date"
-            value={menuDate}
-            onChange={(e) => setMenuDate(e.target.value)}
-            className="px-3 py-2 border border-slate-200 rounded-lg"
-          />
-          <button
-            onClick={() => loadMenu(menuDate || undefined)}
-            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-          >
-            Load
-          </button>
-        </div>
-      </div>
+      <p className="text-slate-500 flex items-center mt-1">
+        <Clock size={16} className="mr-1" /> {today}
+      </p>
 
       {grouped.length === 0 ? (
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 text-slate-500">No menu available for selected date.</div>
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 text-slate-500">No items are marked available for today.</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {grouped.map(({ mealType, items }) => {

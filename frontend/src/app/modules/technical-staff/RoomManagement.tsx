@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 
 type RoomRow = {
@@ -56,6 +56,18 @@ export function RoomManagement() {
 
   useEffect(() => {
     loadRooms();
+  }, []);
+
+  useEffect(() => {
+    const openCreateModal = () => {
+      setCreateForm(defaultForm);
+      setIsCreateModalOpen(true);
+      setError("");
+      setSuccess("");
+    };
+
+    window.addEventListener("technical-staff:create-room", openCreateModal);
+    return () => window.removeEventListener("technical-staff:create-room", openCreateModal);
   }, []);
 
   const filteredRooms = rooms.filter((room) => {
@@ -147,21 +159,6 @@ export function RoomManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end">
-        <button
-          onClick={() => {
-            setCreateForm(defaultForm);
-            setIsCreateModalOpen(true);
-            setError("");
-            setSuccess("");
-          }}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium"
-        >
-          <Plus size={18} className="mr-2" />
-          Create Room
-        </button>
-      </div>
-
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
       {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{success}</div>}
 
@@ -270,7 +267,7 @@ export function RoomManagement() {
               <option value="1">Active</option>
               <option value="0">Inactive</option>
             </select>
-            <button type="submit" className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Create Room</button>
+            <button type="submit" className="w-full px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">Create Room</button>
           </form>
         </ModalShell>
       )}
