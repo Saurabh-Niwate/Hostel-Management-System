@@ -19,6 +19,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
     phone: "",
     aadharNo: "",
     guardianName: "",
+    guardianEmail: "",
     guardianPhone: "",
     address: "",
     roomNo: "",
@@ -84,6 +85,9 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
       formData.append("phone", studentForm.phone.trim());
       formData.append("aadharNo", studentForm.aadharNo.trim());
       formData.append("guardianName", studentForm.guardianName.trim());
+      if (studentForm.guardianEmail.trim()) {
+        formData.append("guardianEmail", studentForm.guardianEmail.trim());
+      }
       formData.append("guardianPhone", studentForm.guardianPhone.trim());
       formData.append("address", studentForm.address.trim());
       formData.append("roomNo", studentForm.roomNo.trim());
@@ -105,6 +109,7 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
         phone: "",
         aadharNo: "",
         guardianName: "",
+        guardianEmail: "",
         guardianPhone: "",
         address: "",
         roomNo: "",
@@ -235,6 +240,14 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
               placeholder="Guardian Name (required)"
               disabled={loading}
               required
+            />
+            <input
+              type="email"
+              value={studentForm.guardianEmail}
+              onChange={(e) => setStudentForm({ ...studentForm, guardianEmail: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+              placeholder="Guardian Email (optional)"
+              disabled={loading}
             />
             <input
               type="text"

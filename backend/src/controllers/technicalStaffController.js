@@ -105,6 +105,7 @@ exports.createStudent = async (req, res) => {
     phone,
     aadharNo,
     guardianName,
+    guardianEmail,
     guardianPhone,
     address,
     roomNo
@@ -125,7 +126,7 @@ exports.createStudent = async (req, res) => {
   ) {
     deleteUploadedFile(req.file?.path);
     return res.status(400).json({
-      message: "studentId, password, fullName, phone, aadharNo, guardianName, guardianPhone, address and roomNo are required (email is optional)"
+      message: "studentId, password, fullName, phone, aadharNo, guardianName, guardianPhone, address and roomNo are required (email and guardianEmail are optional)"
     });
   }
 
@@ -161,6 +162,14 @@ exports.createStudent = async (req, res) => {
       if (!emailRegex.test(email.trim().toLowerCase())) {
         deleteUploadedFile(req.file?.path);
         return res.status(400).json({ message: "Invalid email format" });
+      }
+    }
+
+    if (guardianEmail && guardianEmail.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(guardianEmail.trim().toLowerCase())) {
+        deleteUploadedFile(req.file?.path);
+        return res.status(400).json({ message: "Invalid guardian email format" });
       }
     }
 
@@ -220,6 +229,7 @@ exports.createStudent = async (req, res) => {
         phone,
         aadhar_no,
         guardian_name,
+        guardian_email,
         guardian_phone,
         address,
         room_no,
@@ -231,6 +241,7 @@ exports.createStudent = async (req, res) => {
         :b_phone,
         :b_aadhar_no,
         :b_guardian_name,
+        :b_guardian_email,
         :b_guardian_phone,
         :b_address,
         :b_room_no,
@@ -243,6 +254,7 @@ exports.createStudent = async (req, res) => {
         b_phone: phone ? phone.trim() : null,
         b_aadhar_no: normalizedAadharNo,
         b_guardian_name: guardianName ? guardianName.trim() : null,
+        b_guardian_email: guardianEmail ? guardianEmail.trim().toLowerCase() : null,
         b_guardian_phone: guardianPhone ? guardianPhone.trim() : null,
         b_address: address ? address.trim() : null,
         b_room_no: roomNo ? roomNo.trim() : null,
@@ -607,6 +619,7 @@ exports.getUserById = async (req, res) => {
         phone,
         aadhar_no,
         guardian_name,
+        guardian_email,
         guardian_phone,
         address,
         room_no,
@@ -666,6 +679,7 @@ exports.updateStudentByStudentId = async (req, res) => {
     phone,
     aadharNo,
     guardianName,
+    guardianEmail,
     guardianPhone,
     address,
     roomNo
@@ -724,6 +738,14 @@ exports.updateStudentByStudentId = async (req, res) => {
       }
     }
 
+    const trimmedGuardianEmail = guardianEmail ? guardianEmail.trim().toLowerCase() : null;
+    if (trimmedGuardianEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedGuardianEmail)) {
+        return res.status(400).json({ message: "Invalid guardian email format" });
+      }
+    }
+
     if (roomNo && roomNo.trim()) {
       const roomExists = await ensureRoomExists(conn, roomNo);
       if (!roomExists) {
@@ -755,6 +777,7 @@ exports.updateStudentByStudentId = async (req, res) => {
           phone = :b_phone,
           aadhar_no = :b_aadhar_no,
           guardian_name = :b_guardian_name,
+          guardian_email = :b_guardian_email,
           guardian_phone = :b_guardian_phone,
           address = :b_address,
           room_no = :b_room_no
@@ -765,6 +788,7 @@ exports.updateStudentByStudentId = async (req, res) => {
           phone,
           aadhar_no,
           guardian_name,
+          guardian_email,
           guardian_phone,
           address,
           room_no
@@ -775,6 +799,7 @@ exports.updateStudentByStudentId = async (req, res) => {
           :b_phone,
           :b_aadhar_no,
           :b_guardian_name,
+          :b_guardian_email,
           :b_guardian_phone,
           :b_address,
           :b_room_no
@@ -786,6 +811,7 @@ exports.updateStudentByStudentId = async (req, res) => {
         b_phone: phone ? phone.trim() : null,
         b_aadhar_no: normalizedAadharNo,
         b_guardian_name: guardianName ? guardianName.trim() : null,
+        b_guardian_email: trimmedGuardianEmail,
         b_guardian_phone: guardianPhone ? guardianPhone.trim() : null,
         b_address: address ? address.trim() : null,
         b_room_no: roomNo ? roomNo.trim() : null

@@ -504,6 +504,7 @@ exports.getStudentDetails = async (req, res) => {
         s.phone,
         s.aadhar_no,
         s.guardian_name,
+        s.guardian_email,
         s.guardian_phone,
         s.address,
         s.room_no,

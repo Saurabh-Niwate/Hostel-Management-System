@@ -11,6 +11,7 @@ type StudentProfileData = {
   phone: string;
   aadharNo: string;
   guardianName: string;
+  guardianEmail: string;
   guardianPhone: string;
   address: string;
   roomNo: string;
@@ -29,6 +30,7 @@ const emptyProfile: StudentProfileData = {
   phone: "",
   aadharNo: "",
   guardianName: "",
+  guardianEmail: "",
   guardianPhone: "",
   address: "",
   roomNo: "",
@@ -43,6 +45,7 @@ const mapProfile = (raw: any): StudentProfileData => ({
   phone: raw.PHONE || "",
   aadharNo: raw.AADHAR_NO || "",
   guardianName: raw.GUARDIAN_NAME || "",
+  guardianEmail: raw.GUARDIAN_EMAIL || "",
   guardianPhone: raw.GUARDIAN_PHONE || "",
   address: raw.ADDRESS || "",
   roomNo: raw.ROOM_NO || "",
@@ -87,6 +90,7 @@ export function StudentProfile({ onProfileUpdated }: Props) {
         fullName: editForm.fullName,
         phone: editForm.phone,
         guardianName: editForm.guardianName,
+        guardianEmail: editForm.guardianEmail,
       });
       await loadProfile();
       setIsEditing(false);
@@ -254,6 +258,13 @@ export function StudentProfile({ onProfileUpdated }: Props) {
                 value={editForm.guardianName}
                 isEditing={isEditing}
                 onChange={(val) => setEditForm({ ...editForm, guardianName: val })}
+              />
+              <InfoField
+                icon={<Mail size={18} />}
+                label="Guardian Email"
+                value={editForm.guardianEmail}
+                isEditing={isEditing}
+                onChange={(val) => setEditForm({ ...editForm, guardianEmail: val })}
               />
               <InfoField
                 icon={<Phone size={18} />}

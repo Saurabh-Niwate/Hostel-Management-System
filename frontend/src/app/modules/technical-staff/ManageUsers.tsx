@@ -26,6 +26,7 @@ type UserDetailsResponse = {
     PHONE?: string;
     AADHAR_NO?: string;
     GUARDIAN_NAME?: string;
+    GUARDIAN_EMAIL?: string;
     GUARDIAN_PHONE?: string;
     ADDRESS?: string;
     ROOM_NO?: string;
@@ -58,6 +59,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
     phone: "",
     aadharNo: "",
     guardianName: "",
+    guardianEmail: "",
     guardianPhone: "",
     address: "",
     roomNo: "",
@@ -211,6 +213,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
       phone: selectedDetails.studentProfile?.PHONE || "",
       aadharNo: selectedDetails.studentProfile?.AADHAR_NO || "",
       guardianName: selectedDetails.studentProfile?.GUARDIAN_NAME || "",
+      guardianEmail: selectedDetails.studentProfile?.GUARDIAN_EMAIL || "",
       guardianPhone: selectedDetails.studentProfile?.GUARDIAN_PHONE || "",
       address: selectedDetails.studentProfile?.ADDRESS || "",
       roomNo: selectedDetails.studentProfile?.ROOM_NO || "",
@@ -231,6 +234,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
         phone: editStudentForm.phone.trim() || null,
         aadharNo: editStudentForm.aadharNo.trim() || null,
         guardianName: editStudentForm.guardianName.trim() || null,
+        guardianEmail: editStudentForm.guardianEmail.trim() || null,
         guardianPhone: editStudentForm.guardianPhone.trim() || null,
         address: editStudentForm.address.trim() || null,
         roomNo: editStudentForm.roomNo.trim() || null,
@@ -359,6 +363,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
                 <p><span className="font-semibold">Phone:</span> {selectedDetails.studentProfile?.PHONE || "-"}</p>
                 <p><span className="font-semibold">Aadhar Number:</span> {selectedDetails.studentProfile?.AADHAR_NO || "-"}</p>
                 <p><span className="font-semibold">Guardian Name:</span> {selectedDetails.studentProfile?.GUARDIAN_NAME || "-"}</p>
+                <p><span className="font-semibold">Guardian Email:</span> {selectedDetails.studentProfile?.GUARDIAN_EMAIL || "-"}</p>
                 <p><span className="font-semibold">Guardian Phone:</span> {selectedDetails.studentProfile?.GUARDIAN_PHONE || "-"}</p>
                 <p className="md:col-span-2"><span className="font-semibold">Address:</span> {selectedDetails.studentProfile?.ADDRESS || "-"}</p>
                 <p><span className="font-semibold">Room No:</span> {selectedDetails.studentProfile?.ROOM_NO || "-"}</p>
@@ -420,6 +425,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
             <input value={editStudentForm.phone} onChange={(e) => setEditStudentForm({ ...editStudentForm, phone: e.target.value })} placeholder="Phone" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <input value={editStudentForm.aadharNo} onChange={(e) => setEditStudentForm({ ...editStudentForm, aadharNo: e.target.value })} placeholder="Aadhar Number" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <input value={editStudentForm.guardianName} onChange={(e) => setEditStudentForm({ ...editStudentForm, guardianName: e.target.value })} placeholder="Guardian Name" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+            <input value={editStudentForm.guardianEmail} onChange={(e) => setEditStudentForm({ ...editStudentForm, guardianEmail: e.target.value })} placeholder="Guardian Email" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <input value={editStudentForm.guardianPhone} onChange={(e) => setEditStudentForm({ ...editStudentForm, guardianPhone: e.target.value })} placeholder="Guardian Phone" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
             <select
               value={editStudentForm.roomNo}

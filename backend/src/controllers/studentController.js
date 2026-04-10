@@ -46,6 +46,7 @@ exports.getMyProfile = async (req, res) => {
         s.phone,
         s.aadhar_no,
         s.guardian_name,
+        s.guardian_email,
         s.guardian_phone,
         s.address,
         s.room_no,
@@ -214,7 +215,7 @@ exports.deleteMyProfileImage = async (req, res) => {
 exports.updateMyProfile = async (req, res) => {
   const userId = req.user.userId;
   const role = req.user.role;
-  const { email, fullName, phone, guardianName } = req.body;
+  const { email, fullName, phone, guardianName, guardianEmail } = req.body;
 
   if (role !== "Student") {
     return res.status(403).json({ message: "Only students can update this profile" });
@@ -249,6 +250,14 @@ exports.updateMyProfile = async (req, res) => {
       }
     }
 
+    const trimmedGuardianEmail = guardianEmail ? guardianEmail.trim().toLowerCase() : null;
+    if (trimmedGuardianEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedGuardianEmail)) {
+        return res.status(400).json({ message: "Invalid guardian email format" });
+      }
+    }
+
     await conn.execute(
       `
       UPDATE users
@@ -271,26 +280,30 @@ exports.updateMyProfile = async (req, res) => {
         UPDATE SET
           full_name = :b_full_name,
           phone = :b_phone,
-          guardian_name = :b_guardian_name
+          guardian_name = :b_guardian_name,
+          guardian_email = :b_guardian_email
       WHEN NOT MATCHED THEN
         INSERT (
           user_id,
           full_name,
           phone,
-          guardian_name
+          guardian_name,
+          guardian_email
         )
         VALUES (
           :b_user_id,
           :b_full_name,
           :b_phone,
-          :b_guardian_name
+          :b_guardian_name,
+          :b_guardian_email
         )
       `,
       {
         b_user_id: userId,
         b_full_name: fullName ? fullName.trim() : null,
         b_phone: phone ? phone.trim() : null,
-        b_guardian_name: guardianName ? guardianName.trim() : null
+        b_guardian_name: guardianName ? guardianName.trim() : null,
+        b_guardian_email: trimmedGuardianEmail
       },
       { autoCommit: false }
     );

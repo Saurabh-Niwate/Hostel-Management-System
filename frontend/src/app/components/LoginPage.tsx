@@ -4,6 +4,14 @@ import { Building2, Eye, EyeOff, Lock, Mail, IdCard } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 
 
 type Role =
@@ -67,6 +75,13 @@ const roles: RoleOption[] = [
   },
 ];
 
+const hostelRules = [
+  "Use only your own hostel portal account and keep your password private.",
+  "Follow hostel in-time, attendance, and gate-entry rules set by the warden.",
+  "Leave requests, complaints, and profile details must be submitted with accurate information.",
+  "Any misuse of hostel property, portal access, or disciplinary violation may lead to restricted access.",
+];
+
 export function LoginPage() {
   const [selectedRole, setSelectedRole] = useState<Role>("student");
   const [showPassword, setShowPassword] = useState(false);
@@ -74,6 +89,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showTermsDialog, setShowTermsDialog] = useState(false);
   const navigate = useNavigate();
 
   const selectedRoleData = roles.find((r) => r.id === selectedRole) || roles[1];
@@ -433,6 +449,53 @@ export function LoginPage() {
                 >
                   Login as {selectedRoleData.label}
                 </motion.button>
+
+                <p className="text-center text-sm text-slate-500">
+                  By logging in, you agree to the hostel{" "}
+                  <Dialog open={showTermsDialog} onOpenChange={setShowTermsDialog}>
+                    <DialogTrigger asChild>
+                      <button
+                        type="button"
+                        className="font-semibold underline underline-offset-4 transition-colors"
+                        style={{ color: selectedRoleData.color }}
+                      >
+                        Terms & Conditions
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-xl rounded-3xl border-slate-200 p-0 overflow-hidden [&>button]:text-white [&>button]:opacity-100 [&>button]:hover:opacity-90 [&>button]:focus:ring-white/70 [&>button[data-state=open]]:bg-white/10">
+                      <div className="bg-gradient-to-r from-slate-900 to-slate-700 px-6 py-5 text-white">
+                        <DialogHeader>
+                          <DialogTitle className="text-xl">
+                            Hostel Terms & Conditions
+                          </DialogTitle>
+                          <DialogDescription className="text-slate-200">
+                            Please read and follow these hostel rules while
+                            using the portal.
+                          </DialogDescription>
+                        </DialogHeader>
+                      </div>
+                      <div className="px-6 py-5">
+                        <ul className="space-y-3 text-sm text-slate-600">
+                          {hostelRules.map((rule, index) => (
+                            <li
+                              key={rule}
+                              className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 leading-6"
+                            >
+                              <span
+                                className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+                                style={{ backgroundColor: selectedRoleData.color }}
+                              >
+                                {index + 1}
+                              </span>
+                              <span>{rule}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  .
+                </p>
               </form>
 
               {/* Footer */}

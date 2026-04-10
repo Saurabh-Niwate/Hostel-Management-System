@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Mail, Phone, Search, TriangleAlert } from "lucide-react";
 import { api } from "../../lib/api";
 
 type Profile = {
@@ -10,6 +10,7 @@ type Profile = {
   PHONE?: string;
   AADHAR_NO?: string;
   GUARDIAN_NAME?: string;
+  GUARDIAN_EMAIL?: string;
   GUARDIAN_PHONE?: string;
   ADDRESS?: string;
   ROOM_NO?: string;
@@ -69,6 +70,10 @@ export function AdminStudentView() {
 
   const [modalLoading, setModalLoading] = useState(false);
   const [modalData, setModalData] = useState<StudentDetails | null>(null);
+  const [complaintLoading, setComplaintLoading] = useState(false);
+  const [complaintData, setComplaintData] = useState<StudentDetails | null>(null);
+  const [complaintSubject, setComplaintSubject] = useState("Hostel disciplinary complaint");
+  const [complaintMessage, setComplaintMessage] = useState("");
 
   const loadStudents = async (query?: string, opts?: { background?: boolean }) => {
     if (opts?.background) setIsFetching(true);
@@ -113,6 +118,37 @@ export function AdminStudentView() {
       setModalLoading(false);
     }
   };
+
+  const openComplaintModal = async (studentId: string) => {
+    setComplaintLoading(true);
+    setError("");
+    setComplaintSubject("Hostel disciplinary complaint");
+    setComplaintMessage("");
+    try {
+      const res = await api.get(`/admin/students/${studentId}/details`);
+      setComplaintData(res.data);
+      const profile = res.data?.profile || {};
+      setComplaintMessage(
+        `Dear ${profile.GUARDIAN_NAME || "Parent"},\n\nThis is to inform you about a hostel decorum complaint involving ${profile.FULL_NAME || "the student"} (${profile.STUDENT_ID || ""}). Please contact the hostel administration at the earliest for further discussion.\n\nRegards,\nHostel Admin`
+      );
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch student details");
+    } finally {
+      setComplaintLoading(false);
+    }
+  };
+
+  const complaintMailtoHref = useMemo(() => {
+    if (!complaintData?.profile.GUARDIAN_EMAIL) return null;
+    const subject = encodeURIComponent(complaintSubject.trim() || "Hostel disciplinary complaint");
+    const body = encodeURIComponent(complaintMessage.trim());
+    return `mailto:${complaintData.profile.GUARDIAN_EMAIL}?subject=${subject}&body=${body}`;
+  }, [complaintMessage, complaintSubject, complaintData]);
+
+  const complaintSmsHref = useMemo(() => {
+    if (!complaintData?.profile.GUARDIAN_PHONE) return null;
+    return `tel:${complaintData.profile.GUARDIAN_PHONE}`;
+  }, [complaintData]);
 
   if (initialLoading) {
     return (
@@ -168,12 +204,20 @@ export function AdminStudentView() {
                     <td className="px-4 py-3 text-sm text-slate-700">{s.EMAIL || "-"}</td>
                     <td className="px-4 py-3 text-sm text-slate-700">{s.ROOM_NO || "-"}</td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => openStudentModal(s.STUDENT_ID)}
-                        className="px-3 py-1.5 text-sm bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200"
-                      >
-                        View
-                      </button>
+                      <div className="inline-flex items-center gap-2">
+                        <button
+                          onClick={() => openStudentModal(s.STUDENT_ID)}
+                          className="px-3 py-1.5 text-sm bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => openComplaintModal(s.STUDENT_ID)}
+                          className="px-3 py-1.5 text-sm bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200"
+                        >
+                          Raise Complaint
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -216,6 +260,7 @@ export function AdminStudentView() {
                 <p><span className="font-semibold">Phone:</span> {modalData.profile.PHONE || "-"}</p>
                 <p><span className="font-semibold">Aadhar Number:</span> {modalData.profile.AADHAR_NO || "-"}</p>
                 <p><span className="font-semibold">Guardian Name:</span> {modalData.profile.GUARDIAN_NAME || "-"}</p>
+                <p><span className="font-semibold">Guardian Email:</span> {modalData.profile.GUARDIAN_EMAIL || "-"}</p>
                 <p><span className="font-semibold">Guardian Phone:</span> {modalData.profile.GUARDIAN_PHONE || "-"}</p>
                 <p><span className="font-semibold">Room No:</span> {modalData.profile.ROOM_NO || "-"}</p>
                 <p className="md:col-span-2"><span className="font-semibold">Address:</span> {modalData.profile.ADDRESS || "-"}</p>
@@ -294,6 +339,86 @@ export function AdminStudentView() {
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </ModalShell>
+      )}
+
+      {(complaintLoading || complaintData) && (
+        <ModalShell title="Raise Complaint" onClose={() => setComplaintData(null)}>
+          {complaintLoading ? (
+            <div className="flex items-center justify-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+            </div>
+          ) : complaintData ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-amber-100 p-2 text-amber-700">
+                    <TriangleAlert className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900">Complaint to Parent / Guardian</h4>
+                    <p className="text-sm text-slate-600">
+                      {complaintData.profile.FULL_NAME || "-"} ({complaintData.profile.STUDENT_ID || "-"})
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      Guardian: {complaintData.profile.GUARDIAN_NAME || "-"}
+                    </p>
+                  </div>
+                </div>
+
+                <input
+                  type="text"
+                  value={complaintSubject}
+                  onChange={(e) => setComplaintSubject(e.target.value)}
+                  placeholder="Complaint subject"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                />
+                <textarea
+                  value={complaintMessage}
+                  onChange={(e) => setComplaintMessage(e.target.value)}
+                  placeholder="Write the complaint details for the parent or guardian"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm min-h-32"
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <p><span className="font-semibold">Guardian Email:</span> {complaintData.profile.GUARDIAN_EMAIL || "-"}</p>
+                  <p><span className="font-semibold">Guardian Phone:</span> {complaintData.profile.GUARDIAN_PHONE || "-"}</p>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  {complaintMailtoHref ? (
+                    <a
+                      href={complaintMailtoHref}
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                      <Mail className="w-4 h-4" />
+                      Email Guardian
+                    </a>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 rounded-lg bg-slate-200 px-4 py-2 text-sm text-slate-500">
+                      <Mail className="w-4 h-4" />
+                      No guardian email available
+                    </span>
+                  )}
+
+                  {complaintSmsHref ? (
+                    <a
+                      href={complaintSmsHref}
+                      className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                    >
+                      <Phone className="w-4 h-4" />
+                      Call Guardian
+                    </a>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 rounded-lg bg-slate-200 px-4 py-2 text-sm text-slate-500">
+                      <Phone className="w-4 h-4" />
+                      No guardian phone available
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

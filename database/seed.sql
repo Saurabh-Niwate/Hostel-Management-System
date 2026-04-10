@@ -23,21 +23,20 @@ INSERT INTO rooms (room_no, block_name, floor_no, capacity, room_type, is_active
 VALUES ('B-201', 'Block B', 2, 2, 'Regular', 1);
 SELECT * FROM rooms;
 
-INSERT INTO students (user_id, full_name, phone, aadhar_no, guardian_name, guardian_phone, address, room_no)
+INSERT INTO students (user_id, full_name, phone, aadhar_no, guardian_name, guardian_email, guardian_phone, address, room_no)
 VALUES (
   2,
   'Sample Student',
   '9876543210',
   '123456789012',
   'Sample Guardian',
+  'guardian@example.com',
   '9123456780',
   'Hostel Block A',
   'A-101'
 );
 
 
-
-SELECT * FROM students;
 
 INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason)
 VALUES (

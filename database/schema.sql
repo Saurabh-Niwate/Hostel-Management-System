@@ -53,6 +53,7 @@ CREATE TABLE students (
   phone VARCHAR2(20),
   aadhar_no VARCHAR2(20),
   guardian_name VARCHAR2(100),
+  guardian_email VARCHAR2(100),
   guardian_phone VARCHAR2(20),
   address VARCHAR2(300),
   room_no VARCHAR2(20),
