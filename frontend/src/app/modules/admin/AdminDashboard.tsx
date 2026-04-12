@@ -130,7 +130,7 @@ export function AdminDashboard() {
             </motion.aside>
 
             {/* Main Content */}
-            <main className={`flex-1 p-8 transition-all duration-300 ${isSidebarOpen ? 'ml-[280px]' : 'ml-[80px]'}`}>
+            <main className={`flex-1 p-8 transition-all duration-300 min-h-[101vh] ${isSidebarOpen ? 'ml-[280px]' : 'ml-[80px]'}`}>
                 <div className="max-w-6xl mx-auto">
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -139,6 +139,7 @@ export function AdminDashboard() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
+                            className="min-h-[60vh]"
                         >
                             {renderContent()}
                         </motion.div>

@@ -46,18 +46,7 @@ VALUES (
   TO_DATE('2026-02-22', 'YYYY-MM-DD'),
   'Family function'
 );
-INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status, reviewed_by, reviewed_at, remarks)
-VALUES (
-  2,
-  'Medical Visit',
-  TO_DATE('2026-03-10', 'YYYY-MM-DD'),
-  TO_DATE('2026-03-12', 'YYYY-MM-DD'),
-  'Doctor appointment outside hostel',
-  'Approved',
-  1,
-  SYSDATE,
-  'Approved for medical purpose'
-);
+
 
 SELECT * FROM leave_requests;
 

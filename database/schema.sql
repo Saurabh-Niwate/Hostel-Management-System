@@ -63,7 +63,7 @@ CREATE TABLE students (
     REFERENCES users(user_id)
 );
 
-
+select * from students;
 
 CREATE TABLE staff_profiles (
   user_id NUMBER PRIMARY KEY,
@@ -85,6 +85,45 @@ CREATE TABLE rooms (
   CONSTRAINT chk_rooms_capacity CHECK (capacity > 0),
   CONSTRAINT chk_rooms_active CHECK (is_active IN (0, 1))
 );
+
+CREATE TABLE external_accommodations (
+  accommodation_id NUMBER PRIMARY KEY,
+  name VARCHAR2(150) NOT NULL,
+  accommodation_type VARCHAR2(30) NOT NULL,
+  address VARCHAR2(300) NOT NULL,
+  distance_km NUMBER(6,2),
+  contact_phone VARCHAR2(20),
+  contact_email VARCHAR2(100),
+  rent_min NUMBER(10,2),
+  rent_max NUMBER(10,2),
+  gender_allowed VARCHAR2(20) DEFAULT 'Any' NOT NULL,
+  availability_status VARCHAR2(20) DEFAULT 'Available' NOT NULL,
+  notes VARCHAR2(500),
+  created_by NUMBER,
+  created_at DATE DEFAULT SYSDATE NOT NULL,
+  updated_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT fk_ext_acc_creator FOREIGN KEY (created_by)
+    REFERENCES users(user_id),
+  CONSTRAINT chk_ext_acc_type CHECK (accommodation_type IN ('PG', 'Dormitory', 'Apartment')),
+  CONSTRAINT chk_ext_acc_gender CHECK (gender_allowed IN ('Male', 'Female', 'Any')),
+  CONSTRAINT chk_ext_acc_status CHECK (availability_status IN ('Available', 'Limited', 'Full'))
+);
+
+CREATE SEQUENCE external_accommodations_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER ext_acc_trigger
+BEFORE INSERT ON external_accommodations
+FOR EACH ROW
+BEGIN
+  IF :NEW.accommodation_id IS NULL THEN
+    SELECT external_accommodations_seq.NEXTVAL
+    INTO :NEW.accommodation_id
+    FROM dual;
+  END IF;
+END;
+/
 
 CREATE TABLE leave_requests (
   leave_id NUMBER PRIMARY KEY,

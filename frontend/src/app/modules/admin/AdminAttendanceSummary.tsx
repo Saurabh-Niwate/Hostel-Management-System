@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Users, AlertTriangle, UserCheck, TrendingUp } from "lucide-react";
 import { api } from "../../lib/api";
+import { jsonToCsv, downloadCsv } from "../../lib/csv";
 
 type SummaryRow = {
   STUDENT_ID: string;
@@ -46,6 +47,22 @@ export function AdminAttendanceSummary() {
   useEffect(() => {
     load();
   }, []);
+
+  const handleDownload = async () => {
+    try {
+      const res = await api.get("/admin/attendance/summary", {
+        params: { groupBy: "student", dateFrom: dateFrom || undefined, dateTo: dateTo || undefined },
+      });
+      const payload = res.data || {};
+      // payload.summary is array of { STUDENT_ID, STATUS, TOTAL }
+      const csv = jsonToCsv(payload.summary || [], ["STUDENT_ID", "STATUS", "TOTAL"]);
+      const from = dateFrom || "all";
+      const to = dateTo || "all";
+      downloadCsv(`attendance-summary_${from}_to_${to}.csv`, csv);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to download attendance report");
+    }
+  };
 
   const summary = useMemo(() => {
     const byStudent = new Map<string, StudentAgg>();
@@ -107,7 +124,10 @@ export function AdminAttendanceSummary() {
           <label className="block text-xs text-slate-500 mb-1">To Date</label>
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
         </div>
-        <button onClick={load} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-600">Apply Date Filter</button>
+        <div className="flex items-center gap-3">
+          <button onClick={load} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-600">Apply Date Filter</button>
+          <button onClick={() => handleDownload()} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500">Download CSV</button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

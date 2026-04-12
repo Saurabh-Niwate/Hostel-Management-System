@@ -1,218 +1,222 @@
-import { useEffect, useMemo, useState } from "react";
-import { UtensilsCrossed, Vote, Clock, CheckCircle } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
-import { api } from "../../lib/api";
+import React, { useEffect, useState } from "react";
+import { UtensilsCrossed, Vote, ChefHat, LogOut, Menu as MenuIcon, X, LayoutDashboard, User, Plus } from "lucide-react";
+import { CanteenOverview } from "./CanteenOverview";
+import { MenuManagement } from "./MenuManagement";
+import { DinnerPollManagement } from "./DinnerPollManagement";
+import { StaffProfileSettings } from "../../components/StaffProfileSettings";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
 
-type MenuRow = {
-  MENU_ID: number;
-  MEAL_TYPE: string;
-  ITEM_NAME: string;
-  IS_AVAILABLE: number;
-};
-
-type PollRow = {
-  POLL_ID: number;
-  TITLE: string;
-  DINNER_DATE: string;
-  CLOSES_AT: string;
-  POLL_STATUS: string;
-  TOTAL_VOTES: number;
-  OPTIONS?: Array<{
-    OPTION_ID: number;
-    OPTION_NAME: string;
-    DESCRIPTION?: string;
-    VOTE_COUNT: number;
-  }>;
+type SidebarItemProps = {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  theme: {
+    color: string;
+    activeColor: string;
+    bg: string;
+    text: string;
+    muted: string;
+  };
 };
 
 export function CanteenDashboard() {
   const navigate = useNavigate();
-  const [menu, setMenu] = useState<MenuRow[]>([]);
-  const [polls, setPolls] = useState<PollRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const theme = {
+    color: "#b45309",
+    activeColor: "#d97706",
+    bg: "bg-amber-50",
+    text: "text-white",
+    muted: "text-white/80",
+  };
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "menu" | "dinnerPolls" | "profile">("overview");
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const [menuRes, pollsRes] = await Promise.all([
-          api.get("/canteen-owner/menu"),
-          api.get("/canteen-owner/dinner-polls")
-        ]);
-        setMenu(menuRes.data?.menu || []);
-        setPolls(pollsRes.data?.polls || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load canteen dashboard");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("userRole");
+    if (!token || role !== "Canteen Owner") {
+      navigate("/");
+    }
+  }, [navigate]);
 
-  const stats = useMemo(() => {
-    const availableItems = menu.filter((item) => Number(item.IS_AVAILABLE) === 1).length;
-    const activePolls = polls.filter((poll) => poll.POLL_STATUS === "Active").length;
-    const scheduledPolls = polls.filter((poll) => poll.POLL_STATUS === "Scheduled").length;
-    return {
-      totalMenuItems: menu.length,
-      availableItems,
-      totalPolls: polls.length,
-      activePolls,
-      scheduledPolls
-    };
-  }, [menu, polls]);
+  function renderHeaderAction() {
+    if (activeTab === "menu") {
+      return (
+        <button onClick={() => window.dispatchEvent(new Event("canteen:create-menu-item"))} className="flex items-center px-4 py-2 bg-amber-700 text-white rounded-xl hover:bg-amber-800 transition-all font-medium">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Menu Item
+        </button>
+      );
+    }
+    if (activeTab === "dinnerPolls") {
+      return (
+        <button onClick={() => window.dispatchEvent(new Event("canteen:create-poll"))} className="flex items-center px-4 py-2 bg-amber-700 text-white rounded-xl hover:bg-amber-800 transition-all font-medium">
+          <Plus className="h-4 w-4 mr-2" />
+          Create Poll
+        </button>
+      );
+    }
+    return null;
+  }
 
-  const activePoll = useMemo(
-    () => polls.find((poll) => poll.POLL_STATUS === "Active") || null,
-    [polls]
-  );
+  function renderContent() {
+    switch (activeTab) {
+      case "overview":
+        return <CanteenOverview onNavigate={setActiveTab} />;
 
-  const todaysMenu = useMemo(
-    () => menu.filter((item) => Number(item.IS_AVAILABLE) === 1),
-    [menu]
-  );
+      case "menu":
+        return <MenuManagement />;
 
-  const winningOption = useMemo(() => {
-    if (!activePoll?.OPTIONS?.length) return null;
-    return [...activePoll.OPTIONS].sort((a, b) => Number(b.VOTE_COUNT || 0) - Number(a.VOTE_COUNT || 0))[0];
-  }, [activePoll]);
+      case "dinnerPolls":
+        return <DinnerPollManagement />;
+
+      case "profile":
+        return (
+          <div className="space-y-6">
+            <StaffProfileSettings />
+          </div>
+        );
+
+      default:
+        return <div>Select a tab</div>;
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">Menu Items</p><p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalMenuItems}</p></div><div className="bg-teal-100 p-3 rounded-lg"><UtensilsCrossed className="h-6 w-6 text-teal-600" /></div></div></CardContent></Card>
-        <Card><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">Available Today</p><p className="text-2xl font-bold text-gray-900 mt-1">{stats.availableItems}</p></div><div className="bg-green-100 p-3 rounded-lg"><CheckCircle className="h-6 w-6 text-green-600" /></div></div></CardContent></Card>
-        <Card><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">Dinner Polls</p><p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalPolls}</p></div><div className="bg-blue-100 p-3 rounded-lg"><Vote className="h-6 w-6 text-blue-600" /></div></div></CardContent></Card>
-        <Card><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">Active Polls</p><p className="text-2xl font-bold text-gray-900 mt-1">{stats.activePolls}</p><p className="text-sm text-amber-600 mt-1">Scheduled: {stats.scheduledPolls}</p></div><div className="bg-amber-100 p-3 rounded-lg"><Clock className="h-6 w-6 text-amber-600" /></div></div></CardContent></Card>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button
-            onClick={() => navigate("/canteen-owner-dashboard/menu")}
-            className="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-left"
-          >
-            <div className="p-2 bg-amber-100 rounded-lg">
-              <UtensilsCrossed className="h-5 w-5 text-amber-700" />
-            </div>
-            <div>
-              <p className="font-medium text-slate-900">Manage Menu</p>
-              <p className="text-sm text-slate-600">Add, edit, and review daily menu items</p>
-            </div>
-          </button>
-
-          <button
-            onClick={() => navigate("/canteen-owner-dashboard/dinner-polls")}
-            className="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-left"
-          >
-            <div className="p-2 bg-amber-100 rounded-lg">
-              <Vote className="h-5 w-5 text-amber-700" />
-            </div>
-            <div>
-              <p className="font-medium text-slate-900">Dinner Polls</p>
-              <p className="text-sm text-slate-600">Create and close student dinner voting polls</p>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Today&apos;s Menu</CardTitle>
-            <CardDescription>Current menu items from backend</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {loading ? (
-              <p className="text-sm text-gray-500">Loading menu...</p>
-            ) : todaysMenu.length === 0 ? (
-              <p className="text-sm text-gray-500">No items are marked available for today.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                {todaysMenu.slice(0, 6).map((item) => (
-                  <div key={item.MENU_ID} className="border border-gray-200 rounded-lg p-3 bg-white">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium text-gray-900">{item.ITEM_NAME}</p>
-                        <p className="text-sm text-gray-500 mt-1">{item.MEAL_TYPE}</p>
-                      </div>
-                      <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${Number(item.IS_AVAILABLE) === 1 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                        {Number(item.IS_AVAILABLE) === 1 ? "Available" : "Unavailable"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+    <div className={`min-h-screen ${theme.bg} flex`}>
+      <motion.aside
+        initial={{ width: 280 }}
+        animate={{ width: 280 }}
+        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 text-white z-30 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        style={{ backgroundColor: theme.color, borderRight: "1px solid rgba(255,255,255,0.18)" }}
+      >
+        <div className="flex flex-col h-full">
+          <div className="p-6 flex items-center justify-between border-b border-white/20">
+            <div className="flex items-center gap-3">
+              <ChefHat className={`h-5 w-5 ${theme.text}`} />
+              <div>
+                <h1 className={`text-xl font-bold tracking-wide truncate ${theme.text}`}>Canteen Portal</h1>
+                <p className={`text-xs ${theme.muted}`}>{localStorage.getItem("userIdentifier") || "CANTEEN OWNER"}</p>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className={`p-2 rounded-lg lg:hidden ${theme.text} hover:bg-white/10`}
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
+            </button>
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Dinner Poll</CardTitle>
-            <CardDescription>Live voting summary for the current poll</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {loading ? (
-              <p className="text-sm text-gray-500">Loading polls...</p>
-            ) : !activePoll ? (
-              <p className="text-sm text-gray-500">No active dinner poll right now.</p>
-            ) : (
-              <>
-                <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+          <nav className="flex-1 p-4 space-y-1">
+            <SidebarItem
+              icon={<LayoutDashboard className="w-5 h-5" />}
+              label="Overview"
+              active={activeTab === "overview"}
+              onClick={() => { setActiveTab("overview"); setIsMobileMenuOpen(false); }}
+              theme={theme}
+            />
+            <SidebarItem
+              icon={<UtensilsCrossed className="w-5 h-5" />}
+              label="Menu Management"
+              active={activeTab === "menu"}
+              onClick={() => { setActiveTab("menu"); setIsMobileMenuOpen(false); }}
+              theme={theme}
+            />
+            <SidebarItem
+              icon={<Vote className="w-5 h-5" />}
+              label="Dinner Polls"
+              active={activeTab === "dinnerPolls"}
+              onClick={() => { setActiveTab("dinnerPolls"); setIsMobileMenuOpen(false); }}
+              theme={theme}
+            />
+            <SidebarItem
+              icon={<User className="w-5 h-5" />}
+              label="Profile"
+              active={activeTab === "profile"}
+              onClick={() => { setActiveTab("profile"); setIsMobileMenuOpen(false); }}
+              theme={theme}
+            />
+          </nav>
+
+          <div className="p-4 border-t border-white/20">
+            <button
+              onClick={() => { localStorage.removeItem("token"); navigate("/"); }}
+              className="flex items-center w-full gap-3 px-4 py-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl font-medium transition-colors border border-slate-200 shadow-sm"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </motion.aside>
+
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300 min-h-[101vh]">
+        <div className="max-w-5xl mx-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="min-h-[60vh]"
+            >
+              <div className="mb-6 flex items-center justify-between gap-4 min-h-[44px]">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
+                  >
+                    <MenuIcon className="h-5 w-5" />
+                  </button>
                   <div>
-                    <p className="font-medium text-slate-900">{activePoll.TITLE}</p>
-                    <p className="text-sm text-slate-500 mt-1">
-                      Dinner Date: {activePoll.DINNER_DATE} | Total Votes: {activePoll.TOTAL_VOTES || 0}
-                    </p>
-                    <p className="text-sm text-amber-700 mt-2">
-                      Leading Option: {winningOption ? `${winningOption.OPTION_NAME} (${winningOption.VOTE_COUNT} votes)` : "No votes yet"}
-                    </p>
+                    <h2 className="text-3xl font-bold text-slate-900 leading-none">
+                      {activeTab === "overview"
+                        ? "Canteen Dashboard"
+                        : activeTab === "menu"
+                          ? "Menu Management"
+                          : activeTab === "dinnerPolls"
+                            ? "Dinner Polls"
+                            : "My Profile"}
+                    </h2>
                   </div>
                 </div>
+                {renderHeaderAction() && <div className="shrink-0 flex items-center">{renderHeaderAction()}</div>}
+              </div>
 
-                <div className="space-y-3">
-                  {(activePoll.OPTIONS || []).length === 0 ? (
-                    <p className="text-sm text-gray-500">No poll options found.</p>
-                  ) : (
-                    (activePoll.OPTIONS || []).map((option) => {
-                      const isWinning =
-                        winningOption && option.OPTION_ID === winningOption.OPTION_ID && Number(option.VOTE_COUNT || 0) > 0;
-                      return (
-                        <div
-                          key={option.OPTION_ID}
-                          className={`flex items-center justify-between border rounded-lg p-3 ${
-                            isWinning ? "border-amber-200 bg-amber-50" : "border-gray-200"
-                          }`}
-                        >
-                          <div>
-                            <p className="font-medium text-gray-900">{option.OPTION_NAME}</p>
-                            <p className="text-sm text-gray-500">{option.DESCRIPTION || "No description"}</p>
-                          </div>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full ${
-                              isWinning ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-700"
-                            }`}
-                          >
-                            {option.VOTE_COUNT || 0} vote(s)
-                          </span>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </main>
     </div>
   );
 }
+
+function SidebarItem({ icon, label, active, onClick, theme }: SidebarItemProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
+        active
+          ? "text-white shadow-lg"
+          : `${theme.text} hover:bg-white/10`
+      }`}
+      style={active ? { backgroundColor: theme.activeColor } : undefined}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+                         
+      

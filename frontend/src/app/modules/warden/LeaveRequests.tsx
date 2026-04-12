@@ -108,7 +108,7 @@ export function LeaveRequests() {
               {loading ? (
                 <p className="text-sm text-gray-500">Loading leave requests...</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
                   {leaveRequests.map((request) => (
                     <div
                       key={request.LEAVE_ID}

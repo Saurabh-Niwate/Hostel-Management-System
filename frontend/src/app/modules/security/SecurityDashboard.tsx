@@ -138,22 +138,23 @@ export function SecurityDashboard() {
                 </div>
             </motion.aside>
 
-            <main className={`flex-1 p-8 transition-all duration-300 ${isSidebarOpen ? 'ml-[280px]' : 'ml-[80px]'}`}>
+        <main className={`flex-1 p-8 transition-all duration-300 min-h-[101vh] ${isSidebarOpen ? 'ml-[280px]' : 'ml-[80px]'}`}>
                 <div className="max-w-6xl mx-auto">
-                      <div className="mb-6 flex items-start justify-between gap-4">
-                          <h2 className="text-3xl font-bold text-slate-900">
-                              {activeTab === "gate" ? "Gate Entry / Exit" : activeTab === "logs" ? "Today's Logs" : activeTab === "outside" ? "Students Outside" : "Profile"}
-                          </h2>
-                          {headerAction && <div className="shrink-0">{headerAction}</div>}
-                      </div>
-                      <AnimatePresence mode="wait">
+                <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
+                        className="min-h-[60vh]"
                         >
+                        <div className="mb-6 flex items-center justify-between gap-4 min-h-[44px]">
+                            <h2 className="text-3xl font-bold text-slate-900 leading-none">
+                                {activeTab === "gate" ? "Gate Entry / Exit" : activeTab === "logs" ? "Today's Logs" : activeTab === "outside" ? "Students Outside" : "Profile"}
+                            </h2>
+                            {headerAction && <div className="shrink-0 flex items-center">{headerAction}</div>}
+                        </div>
                             {renderContent()}
                         </motion.div>
                     </AnimatePresence>

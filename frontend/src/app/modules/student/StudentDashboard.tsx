@@ -53,6 +53,19 @@ type MenuItem = {
   IS_AVAILABLE: number | string | boolean;
 };
 
+type NearbyStay = {
+  ACCOMMODATION_ID: number;
+  NAME: string;
+  ACCOMMODATION_TYPE: string;
+  ADDRESS: string;
+  DISTANCE_KM?: number | null;
+  CONTACT_PHONE?: string | null;
+  RENT_MIN?: number | null;
+  RENT_MAX?: number | null;
+  GENDER_ALLOWED?: string;
+  AVAILABILITY_STATUS: string;
+};
+
 type SidebarItemProps = {
   icon: React.ReactNode;
   label: string;
@@ -84,6 +97,7 @@ export function StudentDashboard() {
   const [attendance, setAttendance] = useState<AttendanceItem[]>([]);
   const [fees, setFees] = useState<FeeItem[]>([]);
   const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [nearbyStays, setNearbyStays] = useState<NearbyStay[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -97,15 +111,17 @@ export function StudentDashboard() {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        const [leavesRes, profileRes, attendanceRes, feesRes, menuRes] = await Promise.all([
+        const [leavesRes, profileRes, attendanceRes, feesRes, menuRes, staysRes] = await Promise.allSettled([
           api.get("/leave/my-leaves"),
           api.get("/student/profile"),
           api.get("/student/attendance"),
           api.get("/student/fees"),
           api.get("/student/canteen-menu"),
+          api.get("/student/nearby-stays"),
         ]);
 
-        const mappedLeaves = (leavesRes.data?.leaves || []).map((row: any) => ({
+        const leaveRows = leavesRes.status === "fulfilled" ? leavesRes.value.data?.leaves || [] : [];
+        const mappedLeaves = leaveRows.map((row: any) => ({
           id: String(row.LEAVE_ID),
           type: row.LEAVE_TYPE || "General",
           fromDate: row.FROM_DATE || "",
@@ -114,11 +130,12 @@ export function StudentDashboard() {
         }));
         setLeaves(mappedLeaves);
 
-        const roomNo = profileRes.data?.profile?.ROOM_NO || "";
+        const roomNo = profileRes.status === "fulfilled" ? profileRes.value.data?.profile?.ROOM_NO || "" : "";
         setProfile({ roomNo });
-        setAttendance(attendanceRes.data?.attendance || []);
-        setFees(feesRes.data?.fees || []);
-        setMenu(menuRes.data?.menu || []);
+        setAttendance(attendanceRes.status === "fulfilled" ? attendanceRes.value.data?.attendance || [] : []);
+        setFees(feesRes.status === "fulfilled" ? feesRes.value.data?.fees || [] : []);
+        setMenu(menuRes.status === "fulfilled" ? menuRes.value.data?.menu || [] : []);
+        setNearbyStays(staysRes.status === "fulfilled" ? staysRes.value.data?.accommodations || [] : []);
       } catch {
         // Keep dashboard lightweight; dedicated pages handle detailed errors.
       }
@@ -192,6 +209,47 @@ export function StudentDashboard() {
                 <p className="text-3xl font-bold text-emerald-600 mt-2">{profile.roomNo || "N/A"}</p>
               </div>
             </div>
+
+            {!profile.roomNo && (
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-amber-200">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">Nearby Stay Suggestions</h3>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Hostel room is not assigned yet. These nearby manual suggestions can help for temporary stay.
+                    </p>
+                  </div>
+                  <span className="text-xs px-3 py-1 rounded-full bg-amber-100 text-amber-800">
+                    Room Not Assigned
+                  </span>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  No hostel room is assigned to your account yet. Until a room is allotted, you can check these nearby stay options shared by technical staff.
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {nearbyStays.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                      No nearby stay suggestions are available right now.
+                    </div>
+                  ) : (
+                    nearbyStays.slice(0, 3).map((stay) => (
+                      <div key={stay.ACCOMMODATION_ID} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="font-semibold text-slate-900">{stay.NAME}</p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {stay.ACCOMMODATION_TYPE} | {stay.GENDER_ALLOWED || "Any"} | {stay.AVAILABILITY_STATUS}
+                        </p>
+                        <p className="mt-3 text-sm text-slate-700"><span className="font-medium">Address:</span> {stay.ADDRESS}</p>
+                        <p className="text-sm text-slate-700"><span className="font-medium">Distance:</span> {stay.DISTANCE_KM ?? "-"} km</p>
+                        <p className="text-sm text-slate-700"><span className="font-medium">Phone:</span> {stay.CONTACT_PHONE || "-"}</p>
+                        <p className="text-sm text-slate-700"><span className="font-medium">Rent:</span> {stay.RENT_MIN ?? "-"} - {stay.RENT_MAX ?? "-"}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <button
@@ -363,121 +421,102 @@ export function StudentDashboard() {
       <motion.aside
         initial={{ width: 280 }}
         animate={{ width: 280 }}
-        className={`${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 fixed h-full z-30 flex flex-col transition-transform duration-300 text-white`}
+        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 text-white z-30 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
         style={{ backgroundColor: theme.color, borderRight: "1px solid rgba(255,255,255,0.18)" }}
       >
-        <div className="p-6 flex items-center justify-between border-b border-white/20">
-          <div className="flex items-center gap-3">
-            <GraduationCap className={`h-5 w-5 ${theme.text}`} />
-            <div>
-              <h1 className={`text-xl font-bold tracking-wide truncate ${theme.text}`}>Student Portal</h1>
-              <p className={`text-xs ${theme.muted}`}>{localStorage.getItem("userIdentifier") || "STUDENT"}</p>
+        <div className="flex flex-col h-full">
+          <div className="p-6 flex items-center justify-between border-b border-white/20">
+            <div className="flex items-center gap-3">
+              <GraduationCap className={`h-5 w-5 ${theme.text}`} />
+              <div>
+                <h1 className={`text-xl font-bold tracking-wide truncate ${theme.text}`}>Student Portal</h1>
+                <p className={`text-xs ${theme.muted}`}>{localStorage.getItem("userIdentifier") || "STUDENT"}</p>
+              </div>
             </div>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`p-2 rounded-lg lg:hidden ${theme.text} hover:bg-white/10`}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={`p-2 rounded-lg lg:hidden ${theme.text} hover:bg-white/10`}
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
 
-        <nav className="flex-1 px-4 space-y-2 mt-4">
-          <SidebarItem
-            icon={<LayoutDashboard size={20} />}
-            label="Dashboard"
-            active={activeTab === "dashboard"}
-            onClick={() => setActiveTab("dashboard")}
-            theme={theme}
-          />
-          <SidebarItem
-            icon={<FileText size={20} />}
-            label="Leave Management"
-            active={activeTab === "leave"}
-            onClick={() => {
-              setLeaveInitialTab("list");
-              setActiveTab("leave");
-            }}
-            theme={theme}
-          />
-          <SidebarItem
-            icon={<CalendarCheck size={20} />}
-            label="Attendance"
-            active={activeTab === "attendance"}
-            onClick={() => setActiveTab("attendance")}
-            theme={theme}
-          />
-          <SidebarItem
-            icon={<CreditCard size={20} />}
-            label="Fees"
-            active={activeTab === "fees"}
-            onClick={() => setActiveTab("fees")}
-            theme={theme}
-          />
-          <SidebarItem
-            icon={<MessageSquare size={20} />}
-            label="Feedback"
-            active={activeTab === "feedback"}
-            onClick={() => setActiveTab("feedback")}
-            theme={theme}
-          />
-          <SidebarItem
-            icon={<Coffee size={20} />}
-            label="Canteen Menu"
-            active={activeTab === "canteen"}
-            onClick={() => setActiveTab("canteen")}
-            theme={theme}
-          />
-          <SidebarItem
-            icon={<User size={20} />}
-            label="Profile"
-            active={activeTab === "profile"}
-            onClick={() => setActiveTab("profile")}
-            theme={theme}
-          />
-        </nav>
+          <nav className="flex-1 p-4 space-y-1">
+            <SidebarItem
+              icon={<LayoutDashboard className="w-5 h-5" />}
+              label="Dashboard"
+              active={activeTab === "dashboard"}
+              onClick={() => setActiveTab("dashboard")}
+              theme={theme}
+            />
+            <SidebarItem
+              icon={<FileText className="w-5 h-5" />}
+              label="Leave Management"
+              active={activeTab === "leave"}
+              onClick={() => {
+                setLeaveInitialTab("list");
+                setActiveTab("leave");
+              }}
+              theme={theme}
+            />
+            <SidebarItem
+              icon={<CalendarCheck className="w-5 h-5" />}
+              label="Attendance"
+              active={activeTab === "attendance"}
+              onClick={() => setActiveTab("attendance")}
+              theme={theme}
+            />
+            <SidebarItem
+              icon={<CreditCard className="w-5 h-5" />}
+              label="Fees"
+              active={activeTab === "fees"}
+              onClick={() => setActiveTab("fees")}
+              theme={theme}
+            />
+            <SidebarItem
+              icon={<MessageSquare className="w-5 h-5" />}
+              label="Feedback"
+              active={activeTab === "feedback"}
+              onClick={() => setActiveTab("feedback")}
+              theme={theme}
+            />
+            <SidebarItem
+              icon={<Coffee className="w-5 h-5" />}
+              label="Canteen Menu"
+              active={activeTab === "canteen"}
+              onClick={() => setActiveTab("canteen")}
+              theme={theme}
+            />
+            <SidebarItem
+              icon={<User className="w-5 h-5" />}
+              label="Profile"
+              active={activeTab === "profile"}
+              onClick={() => setActiveTab("profile")}
+              theme={theme}
+            />
+          </nav>
 
-        <div className="p-4 border-t border-white/20 space-y-2">
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full p-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200 shadow-sm"
-          >
-            <LogOut size={20} />
-            <span className="ml-3 font-medium">Logout</span>
-          </button>
+          <div className="p-4 border-t border-white/20">
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full gap-3 px-4 py-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl font-medium transition-colors border border-slate-200 shadow-sm"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </motion.aside>
 
-      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300">
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300 min-h-[101vh]">
         <div className="max-w-5xl mx-auto">
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <button
-                onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              <div>
-              <h2 className="text-3xl font-bold text-slate-900">
-                {activeTab === "dashboard"
-                  ? "Student Dashboard"
-                  : activeTab === "profile"
-                    ? "My Profile"
-                    : activeTab === "leave"
-                      ? "Leave Management"
-                      : activeTab === "attendance"
-                        ? "Attendance"
-                        : activeTab === "fees"
-                          ? "Fee Status"
-                          : activeTab === "feedback"
-                            ? "Feedback"
-                            : "Canteen Menu"}
-              </h2>
-              </div>
-            </div>
-            {headerAction && <div className="shrink-0">{headerAction}</div>}
-          </div>
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -485,14 +524,42 @@ export function StudentDashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
+              className="min-h-[60vh]"
             >
+              <div className="mb-6 flex items-center justify-between gap-4 min-h-[44px]">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setMobileMenuOpen(true)}
+                    className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </button>
+                  <div>
+                    <h2 className="text-3xl font-bold text-slate-900 leading-none">
+                      {activeTab === "dashboard"
+                        ? "Student Dashboard"
+                        : activeTab === "profile"
+                          ? "My Profile"
+                          : activeTab === "leave"
+                            ? "Leave Management"
+                            : activeTab === "attendance"
+                              ? "Attendance"
+                              : activeTab === "fees"
+                                ? "Fee Status"
+                                : activeTab === "feedback"
+                                  ? "Feedback"
+                                  : "Canteen Menu"}
+                    </h2>
+                  </div>
+                </div>
+                {headerAction && <div className="shrink-0 flex items-center">{headerAction}</div>}
+              </div>
+
               {renderContent()}
             </motion.div>
           </AnimatePresence>
         </div>
       </main>
-
-      {mobileMenuOpen && <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setMobileMenuOpen(false)} />}
     </div>
   );
 }
@@ -501,7 +568,7 @@ function SidebarItem({ icon, label, active, onClick, theme }: SidebarItemProps) 
   return (
     <button
       onClick={onClick}
-      className={`flex items-center w-full p-3 rounded-xl transition-all duration-200 ${
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
         active
           ? "text-white shadow-lg"
           : `${theme.text} hover:bg-white/10`
@@ -509,7 +576,7 @@ function SidebarItem({ icon, label, active, onClick, theme }: SidebarItemProps) 
       style={active ? { backgroundColor: theme.activeColor } : undefined}
     >
       {icon}
-      <span className="ml-3 font-medium">{label}</span>
+      <span>{label}</span>
     </button>
   );
 }

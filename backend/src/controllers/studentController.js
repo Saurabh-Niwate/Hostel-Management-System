@@ -1,27 +1,7 @@
-const fs = require("fs");
-const path = require("path");
 const { oracledb } = require("../config/db");
 const { syncOverdueFeeStatuses } = require("../utils/feeStatus");
-
-const toPublicUrl = (req, value) => {
-  if (!value) return null;
-  if (/^https?:\/\//i.test(value)) return value;
-  return `${req.protocol}://${req.get("host")}${value}`;
-};
-
-const deleteProfileImageFile = (imagePath) => {
-  if (!imagePath) return;
-  const fileName = path.basename(imagePath);
-  if (!fileName) return;
-  const absolutePath = path.join(__dirname, "../../uploads/profile-images", fileName);
-  try {
-    if (fs.existsSync(absolutePath)) {
-      fs.unlinkSync(absolutePath);
-    }
-  } catch (_e) {
-    // ignore cleanup failures
-  }
-};
+const { toPublicUrl, deleteProfileImageFile, safeUnlink } = require("../utils/fileUtils");
+const { withConnection, withTransaction } = require("../utils/dbUtils");
 
 exports.getMyProfile = async (req, res) => {
   const userId = req.user.userId;
@@ -31,11 +11,9 @@ exports.getMyProfile = async (req, res) => {
     return res.status(403).json({ message: "Only students can view this profile" });
   }
 
-  let conn;
   try {
-    conn = await oracledb.getConnection();
-
-    const result = await conn.execute(
+    return await withConnection(async (conn) => {
+      const result = await conn.execute(
       `
       SELECT
         u.user_id,
@@ -59,25 +37,18 @@ exports.getMyProfile = async (req, res) => {
       `,
       { b_user_id: userId },
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
-    );
+      );
 
-    if (!result.rows || result.rows.length === 0) {
-      return res.status(404).json({ message: "Student profile not found" });
-    }
+      if (!result.rows || result.rows.length === 0) {
+        return res.status(404).json({ message: "Student profile not found" });
+      }
 
-    result.rows[0].PROFILE_IMAGE_URL = toPublicUrl(req, result.rows[0].PROFILE_IMAGE_URL);
-    return res.json({ profile: result.rows[0] });
+      result.rows[0].PROFILE_IMAGE_URL = toPublicUrl(req, result.rows[0].PROFILE_IMAGE_URL);
+      return res.json({ profile: result.rows[0] });
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to fetch student profile" });
-  } finally {
-    if (conn) {
-      try {
-        await conn.close();
-      } catch (closeErr) {
-        console.error("Error closing database connection:", closeErr);
-      }
-    }
   }
 };
 
@@ -139,11 +110,7 @@ exports.uploadMyProfileImage = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    try {
-      fs.unlinkSync(req.file.path);
-    } catch (_e) {
-      // no-op cleanup failure
-    }
+    safeUnlink(req.file && req.file.path);
     return res.status(500).json({ message: "Failed to upload profile image" });
   } finally {
     if (conn) {
@@ -164,11 +131,9 @@ exports.deleteMyProfileImage = async (req, res) => {
     return res.status(403).json({ message: "Only students can delete profile image" });
   }
 
-  let conn;
   try {
-    conn = await oracledb.getConnection();
-
-    const previousResult = await conn.execute(
+    return await withConnection(async (conn) => {
+      const previousResult = await conn.execute(
       `
       SELECT profile_image_url
       FROM students
@@ -177,158 +142,120 @@ exports.deleteMyProfileImage = async (req, res) => {
       { b_user_id: userId },
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
+      const previousImagePath =
+        previousResult.rows && previousResult.rows[0]
+          ? previousResult.rows[0].PROFILE_IMAGE_URL
+          : null;
 
-    const previousImagePath =
-      previousResult.rows && previousResult.rows[0]
-        ? previousResult.rows[0].PROFILE_IMAGE_URL
-        : null;
+      await conn.execute(
+        `
+        UPDATE students
+        SET profile_image_url = NULL
+        WHERE user_id = :b_user_id
+        `,
+        { b_user_id: userId },
+        { autoCommit: true }
+      );
 
-    await conn.execute(
-      `
-      UPDATE students
-      SET profile_image_url = NULL
-      WHERE user_id = :b_user_id
-      `,
-      { b_user_id: userId },
-      { autoCommit: true }
-    );
+      if (previousImagePath) {
+        deleteProfileImageFile(previousImagePath);
+      }
 
-    if (previousImagePath) {
-      deleteProfileImageFile(previousImagePath);
-    }
-
-    return res.json({ message: "Profile image removed successfully" });
+      return res.json({ message: "Profile image removed successfully" });
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to remove profile image" });
-  } finally {
-    if (conn) {
-      try {
-        await conn.close();
-      } catch (closeErr) {
-        console.error("Error closing database connection:", closeErr);
-      }
-    }
   }
 };
 
 exports.updateMyProfile = async (req, res) => {
   const userId = req.user.userId;
   const role = req.user.role;
-  const { email, fullName, phone, guardianName, guardianEmail } = req.body;
+  const { email, fullName, phone, guardianName } = req.body;
 
   if (role !== "Student") {
     return res.status(403).json({ message: "Only students can update this profile" });
   }
 
-  let conn;
   try {
-    conn = await oracledb.getConnection();
+    return await withTransaction(async (conn) => {
+      const trimmedEmail = email ? email.trim().toLowerCase() : null;
+      if (trimmedEmail) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedEmail)) {
+          return res.status(400).json({ message: "Invalid email format" });
+        }
 
-    const trimmedEmail = email ? email.trim().toLowerCase() : null;
-    if (trimmedEmail) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(trimmedEmail)) {
-        return res.status(400).json({ message: "Invalid email format" });
+        const duplicateEmailCheck = await conn.execute(
+          `
+          SELECT user_id
+          FROM users
+          WHERE LOWER(TRIM(email)) = :b_email
+            AND user_id <> :b_user_id
+          `,
+          {
+            b_email: trimmedEmail,
+            b_user_id: userId
+          }
+        );
+
+        if (duplicateEmailCheck.rows.length > 0) {
+          return res.status(409).json({ message: "Email already in use" });
+        }
       }
 
-      const duplicateEmailCheck = await conn.execute(
+      await conn.execute(
         `
-        SELECT user_id
-        FROM users
-        WHERE LOWER(TRIM(email)) = :b_email
-          AND user_id <> :b_user_id
+        UPDATE users
+        SET email = :b_email
+        WHERE user_id = :b_user_id
         `,
         {
           b_email: trimmedEmail,
           b_user_id: userId
-        }
+        },
+        { autoCommit: false }
       );
 
-      if (duplicateEmailCheck.rows.length > 0) {
-        return res.status(409).json({ message: "Email already in use" });
-      }
-    }
+      await conn.execute(
+        `
+        MERGE INTO students s
+        USING (SELECT :b_user_id AS user_id FROM dual) src
+        ON (s.user_id = src.user_id)
+        WHEN MATCHED THEN
+          UPDATE SET
+            full_name = :b_full_name,
+            phone = :b_phone,
+            guardian_name = :b_guardian_name
+        WHEN NOT MATCHED THEN
+          INSERT (
+            user_id,
+            full_name,
+            phone,
+            guardian_name
+          )
+          VALUES (
+            :b_user_id,
+            :b_full_name,
+            :b_phone,
+            :b_guardian_name
+          )
+        `,
+        {
+          b_user_id: userId,
+          b_full_name: fullName ? fullName.trim() : null,
+          b_phone: phone ? phone.trim() : null,
+          b_guardian_name: guardianName ? guardianName.trim() : null
+        },
+        { autoCommit: false }
+      );
 
-    const trimmedGuardianEmail = guardianEmail ? guardianEmail.trim().toLowerCase() : null;
-    if (trimmedGuardianEmail) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(trimmedGuardianEmail)) {
-        return res.status(400).json({ message: "Invalid guardian email format" });
-      }
-    }
-
-    await conn.execute(
-      `
-      UPDATE users
-      SET email = :b_email
-      WHERE user_id = :b_user_id
-      `,
-      {
-        b_email: trimmedEmail,
-        b_user_id: userId
-      },
-      { autoCommit: false }
-    );
-
-    await conn.execute(
-      `
-      MERGE INTO students s
-      USING (SELECT :b_user_id AS user_id FROM dual) src
-      ON (s.user_id = src.user_id)
-      WHEN MATCHED THEN
-        UPDATE SET
-          full_name = :b_full_name,
-          phone = :b_phone,
-          guardian_name = :b_guardian_name,
-          guardian_email = :b_guardian_email
-      WHEN NOT MATCHED THEN
-        INSERT (
-          user_id,
-          full_name,
-          phone,
-          guardian_name,
-          guardian_email
-        )
-        VALUES (
-          :b_user_id,
-          :b_full_name,
-          :b_phone,
-          :b_guardian_name,
-          :b_guardian_email
-        )
-      `,
-      {
-        b_user_id: userId,
-        b_full_name: fullName ? fullName.trim() : null,
-        b_phone: phone ? phone.trim() : null,
-        b_guardian_name: guardianName ? guardianName.trim() : null,
-        b_guardian_email: trimmedGuardianEmail
-      },
-      { autoCommit: false }
-    );
-
-    await conn.commit();
-
-    return res.json({ message: "Student profile updated successfully" });
+      return res.json({ message: "Student profile updated successfully" });
+    });
   } catch (err) {
     console.error(err);
-    if (conn) {
-      try {
-        await conn.rollback();
-      } catch (rollbackErr) {
-        console.error("Error rolling back transaction:", rollbackErr);
-      }
-    }
     return res.status(500).json({ message: "Failed to update student profile" });
-  } finally {
-    if (conn) {
-      try {
-        await conn.close();
-      } catch (closeErr) {
-        console.error("Error closing database connection:", closeErr);
-      }
-    }
   }
 };
 
@@ -558,6 +485,60 @@ exports.getCanteenMenu = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to fetch canteen menu" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.getNearbyStaySuggestions = async (req, res) => {
+  const role = req.user.role;
+
+  if (role !== "Student") {
+    return res.status(403).json({ message: "Only students can view nearby stay suggestions" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const result = await conn.execute(
+      `
+      SELECT
+        accommodation_id,
+        name,
+        accommodation_type,
+        address,
+        distance_km,
+        contact_phone,
+        contact_email,
+        rent_min,
+        rent_max,
+        gender_allowed,
+        availability_status,
+        notes
+      FROM external_accommodations
+      WHERE availability_status IN ('Available', 'Limited')
+      ORDER BY
+        CASE availability_status
+          WHEN 'Available' THEN 1
+          ELSE 2
+        END,
+        NVL(distance_km, 999999),
+        accommodation_id DESC
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    return res.json({ accommodations: result.rows || [] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch nearby stay suggestions" });
   } finally {
     if (conn) {
       try {

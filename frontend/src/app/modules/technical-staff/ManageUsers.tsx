@@ -341,7 +341,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
             <div className="mb-4 flex items-center gap-3">
               <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
                 {selectedDetails.studentProfile?.PROFILE_IMAGE_URL ? (
-                  <img
+                  <ImageWithFallback
                     src={selectedDetails.studentProfile.PROFILE_IMAGE_URL}
                     alt="Student profile"
                     className="w-full h-full object-cover"

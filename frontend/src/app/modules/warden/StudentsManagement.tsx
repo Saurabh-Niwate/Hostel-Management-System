@@ -5,33 +5,18 @@ import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { api } from "../../lib/api";
 import { WardenStudent } from "./wardenTypes";
+import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
+import { useListFetch } from "../../hooks/useListFetch";
 
 export function StudentsManagement() {
-  const [students, setStudents] = useState<WardenStudent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const { data: students = [], loading, error, setParams } = useListFetch<WardenStudent>("/warden/students", { q: undefined }, 300);
   const [selectedStudent, setSelectedStudent] = useState<WardenStudent | null>(null);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
   useEffect(() => {
-    const id = setTimeout(async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await api.get("/warden/students", {
-          params: { q: searchTerm.trim() || undefined }
-        });
-        setStudents(res.data?.students || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load students");
-      } finally {
-        setLoading(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(id);
-  }, [searchTerm]);
+    setParams({ q: searchTerm.trim() || undefined });
+  }, [searchTerm, setParams]);
 
   const loadStudentBasic = async (studentId: string) => {
     try {
@@ -113,16 +98,15 @@ export function StudentsManagement() {
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="h-14 w-14 rounded-full overflow-hidden bg-violet-100 border border-violet-200 flex items-center justify-center">
-                    {selectedStudent.PROFILE_IMAGE_URL && !imageLoadFailed ? (
-                      <img
-                        src={selectedStudent.PROFILE_IMAGE_URL}
-                        alt={selectedStudent.FULL_NAME || "Student profile"}
-                        className="h-full w-full object-cover"
-                        onError={() => setImageLoadFailed(true)}
-                      />
-                    ) : (
-                      <User className="h-7 w-7 text-violet-600" />
-                    )}
+                      {selectedStudent.PROFILE_IMAGE_URL ? (
+                        <ImageWithFallback
+                          src={selectedStudent.PROFILE_IMAGE_URL}
+                          alt={selectedStudent.FULL_NAME || "Student profile"}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <User className="h-7 w-7 text-violet-600" />
+                      )}
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{selectedStudent.FULL_NAME || "Student"}</h3>

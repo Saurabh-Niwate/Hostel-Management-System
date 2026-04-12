@@ -171,21 +171,32 @@ export function WardenDashboard() {
         </div>
       </motion.aside>
 
-      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300">
+      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300 min-h-[101vh]">
         <div className="max-w-6xl mx-auto">
-            <div className="mb-6">
-              <h2 className="text-3xl font-bold text-slate-900">
-                {menuItems.find((item) => item.id === activeTab)?.label || "Warden Dashboard"}
-              </h2>
-            </div>
-            <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
+              className="min-h-[60vh]"
             >
+              <div className="mb-6 flex items-center justify-between gap-4 min-h-[44px]">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setMobileMenuOpen(true)}
+                    className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </button>
+                  <div>
+                    <h2 className="text-3xl font-bold text-slate-900 leading-none">
+                      {menuItems.find((item) => item.id === activeTab)?.label || "Warden Dashboard"}
+                    </h2>
+                  </div>
+                </div>
+              </div>
               {activeTab === "overview" && <OverviewTab stats={stats} onNavigate={setActiveTab} recentActivities={recentActivities} />}
               {activeTab === "rooms" && <RoomsManagement />}
               {activeTab === "students" && <StudentsManagement />}
@@ -326,4 +337,3 @@ function OverviewTab({
     </div>
   );
 }
-

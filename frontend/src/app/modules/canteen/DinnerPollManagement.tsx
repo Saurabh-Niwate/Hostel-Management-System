@@ -24,6 +24,7 @@ type DinnerPoll = {
 };
 
 type PollFormOption = {
+  optionId?: number;
   optionName: string;
   description: string;
 };
@@ -37,6 +38,7 @@ export function DinnerPollManagement() {
   const [success, setSuccess] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingPollId, setEditingPollId] = useState<number | null>(null);
+  const [editingHasVotes, setEditingHasVotes] = useState(false);
   const [form, setForm] = useState({
     title: "",
     dinnerDate: getTodayDate(),
@@ -51,7 +53,7 @@ export function DinnerPollManagement() {
     setLoading(true);
     setError("");
     try {
-      const res = await api.get("/canteen-owner/dinner-polls");
+      const res = await api.get("/canteen-owner/dinner-polls", { params: { _t: Date.now() } });
       setPolls(res.data?.polls || []);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load dinner polls");
@@ -68,6 +70,7 @@ export function DinnerPollManagement() {
     const openCreatePoll = () => {
       resetForm();
       setEditingPollId(null);
+      setEditingHasVotes(false);
       setShowCreateForm(true);
     };
 
@@ -100,8 +103,8 @@ export function DinnerPollManagement() {
       dinnerDate: getTodayDate(),
       closesAt: "",
       options: [
-        { optionName: "", description: "" },
-        { optionName: "", description: "" },
+        { optionId: undefined, optionName: "", description: "" },
+        { optionId: undefined, optionName: "", description: "" },
       ],
     });
   };
@@ -109,11 +112,13 @@ export function DinnerPollManagement() {
   const openEditPoll = (poll: DinnerPoll) => {
     const closesValue = poll.CLOSES_AT ? poll.CLOSES_AT.replace(" ", "T").slice(0, 16) : "";
     setEditingPollId(poll.POLL_ID);
+    setEditingHasVotes(Number(poll.TOTAL_VOTES || 0) > 0);
     setForm({
       title: poll.TITLE || "",
       dinnerDate: poll.DINNER_DATE || getTodayDate(),
       closesAt: closesValue,
       options: (poll.OPTIONS || []).map((option) => ({
+        optionId: option.OPTION_ID,
         optionName: option.OPTION_NAME || "",
         description: option.DESCRIPTION || "",
       })),
@@ -131,7 +136,10 @@ export function DinnerPollManagement() {
         title: form.title.trim(),
         dinnerDate: form.dinnerDate,
         closesAt: form.closesAt.replace("T", " "),
-        options: form.options,
+        options: form.options.map((option) => ({
+          optionName: option.optionName,
+          description: option.description,
+        })),
       });
       setSuccess("Dinner poll created successfully");
       setShowCreateForm(false);
@@ -151,11 +159,16 @@ export function DinnerPollManagement() {
         title: form.title.trim(),
         dinnerDate: form.dinnerDate,
         closesAt: form.closesAt.replace("T", " "),
-        options: form.options,
+        options: form.options.map((option) => ({
+          optionId: option.optionId,
+          optionName: option.optionName,
+          description: option.description,
+        })),
       });
       setSuccess("Dinner poll updated successfully");
       setShowCreateForm(false);
       setEditingPollId(null);
+      setEditingHasVotes(false);
       resetForm();
       await loadPolls();
     } catch (err: any) {
@@ -192,14 +205,16 @@ export function DinnerPollManagement() {
 
   const addOption = () => {
     if (form.options.length >= 4) return;
+    if (editingHasVotes) return;
     setForm((prev) => ({
       ...prev,
-      options: [...prev.options, { optionName: "", description: "" }],
+      options: [...prev.options, { optionId: undefined, optionName: "", description: "" }],
     }));
   };
 
   const removeOption = (index: number) => {
     if (form.options.length <= 2) return;
+    if (editingHasVotes) return;
     setForm((prev) => ({
       ...prev,
       options: prev.options.filter((_, currentIndex) => currentIndex !== index),
@@ -226,17 +241,14 @@ export function DinnerPollManagement() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    {poll.POLL_STATUS !== "Closed" && (
-                      <button
-                        type="button"
-                        onClick={() => openEditPoll(poll)}
-                        disabled={Number(poll.TOTAL_VOTES || 0) > 0}
-                        className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        title={Number(poll.TOTAL_VOTES || 0) > 0 ? "Polls with votes cannot be edited" : "Edit poll"}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => openEditPoll(poll)}
+                      className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                      title={poll.POLL_STATUS === "Closed" ? "Reuse poll" : "Edit poll"}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleDeletePoll(poll.POLL_ID)}
@@ -307,10 +319,30 @@ export function DinnerPollManagement() {
       {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{success}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Total Polls</p><p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p></CardContent></Card>
-        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Active</p><p className="text-2xl font-bold text-emerald-600 mt-1">{stats.active}</p></CardContent></Card>
-        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Scheduled</p><p className="text-2xl font-bold text-blue-600 mt-1">{stats.scheduled}</p></CardContent></Card>
-        <Card><CardContent className="p-6"><p className="text-sm text-gray-500">Closed</p><p className="text-2xl font-bold text-slate-700 mt-1">{stats.closed}</p></CardContent></Card>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-sm text-gray-500">Total Polls</p>
+            {loading ? <div className="h-8 w-16 bg-slate-200 rounded animate-pulse mt-1" /> : <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-sm text-gray-500">Active</p>
+            {loading ? <div className="h-8 w-16 bg-emerald-100 rounded animate-pulse mt-1" /> : <p className="text-2xl font-bold text-emerald-600 mt-1">{stats.active}</p>}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-sm text-gray-500">Scheduled</p>
+            {loading ? <div className="h-8 w-16 bg-blue-100 rounded animate-pulse mt-1" /> : <p className="text-2xl font-bold text-blue-600 mt-1">{stats.scheduled}</p>}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-sm text-gray-500">Closed</p>
+            {loading ? <div className="h-8 w-16 bg-slate-200 rounded animate-pulse mt-1" /> : <p className="text-2xl font-bold text-slate-700 mt-1">{stats.closed}</p>}
+          </CardContent>
+        </Card>
       </div>
 
       {loading ? (
@@ -332,6 +364,16 @@ export function DinnerPollManagement() {
               <CardTitle>{editingPollId ? "Edit Dinner Poll" : "Create Dinner Poll"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 overflow-y-auto max-h-[calc(90vh-88px)] pr-2">
+              {editingHasVotes && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  This poll already has votes. You can still edit all poll details, but option count cannot be changed after voting starts.
+                </div>
+              )}
+              {editingPollId && polls.find((poll) => poll.POLL_ID === editingPollId)?.POLL_STATUS === "Closed" && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                  Reusing a closed poll will reopen it for fresh voting and clear its previous vote results.
+                </div>
+              )}
               <input type="text" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} placeholder="Poll title" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="date" value={form.dinnerDate} onChange={(e) => setForm((prev) => ({ ...prev, dinnerDate: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
@@ -343,7 +385,7 @@ export function DinnerPollManagement() {
                   <div key={index} className="rounded-xl border border-slate-200 p-4 space-y-2">
                     <div className="flex items-center justify-between gap-4">
                       <p className="text-sm font-medium text-slate-700">Option {index + 1}</p>
-                      {form.options.length > 2 && (
+                      {form.options.length > 2 && !editingHasVotes && (
                         <button type="button" onClick={() => removeOption(index)} className="text-xs text-red-600">
                           Remove
                         </button>
@@ -382,15 +424,19 @@ export function DinnerPollManagement() {
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <Button type="button" variant="outline" onClick={addOption} disabled={form.options.length >= 4}>
+                <Button type="button" variant="outline" onClick={addOption} disabled={form.options.length >= 4 || editingHasVotes}>
                   Add Option
                 </Button>
                 <div className="flex gap-3">
-                  <Button type="button" variant="outline" onClick={() => { setShowCreateForm(false); setEditingPollId(null); }}>
+                  <Button type="button" variant="outline" onClick={() => { setShowCreateForm(false); setEditingPollId(null); setEditingHasVotes(false); }}>
                     Cancel
                   </Button>
                   <Button type="button" className="bg-amber-600 hover:bg-amber-700" onClick={editingPollId ? handleUpdate : handleCreate}>
-                    {editingPollId ? "Update Poll" : "Create Poll"}
+                    {editingPollId && polls.find((poll) => poll.POLL_ID === editingPollId)?.POLL_STATUS === "Closed"
+                      ? "Reuse Poll"
+                      : editingPollId
+                        ? "Update Poll"
+                        : "Create Poll"}
                   </Button>
                 </div>
               </div>

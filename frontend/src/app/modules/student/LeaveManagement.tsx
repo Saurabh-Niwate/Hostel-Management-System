@@ -40,6 +40,7 @@ export function LeaveManagement({ onLeavesUpdated, initialTab = "list", onTabCha
   const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -76,6 +77,8 @@ export function LeaveManagement({ onLeavesUpdated, initialTab = "list", onTabCha
 
   useEffect(() => {
     setActiveTab(initialTab);
+    setSuccess("");
+    setError("");
   }, [initialTab]);
 
   useEffect(() => {
@@ -108,6 +111,7 @@ export function LeaveManagement({ onLeavesUpdated, initialTab = "list", onTabCha
     e.preventDefault();
     setSubmitting(true);
     setError("");
+    setSuccess("");
     try {
       await api.post("/leave/apply", {
         leaveType: formData.type,
@@ -116,7 +120,7 @@ export function LeaveManagement({ onLeavesUpdated, initialTab = "list", onTabCha
         reason: formData.reason,
       });
       setFormData({ type: "Home Visit", startDate: "", endDate: "", reason: "" });
-      setActiveTab("list");
+      setSuccess("Leave request submitted successfully!");
       await loadLeaves();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to apply leave");
@@ -128,6 +132,7 @@ export function LeaveManagement({ onLeavesUpdated, initialTab = "list", onTabCha
   const handleCancelLeave = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setError("");
+    setSuccess("");
     try {
       await api.delete(`/leave/${id}`);
       if (selectedLeaveId === id) {
@@ -151,10 +156,15 @@ export function LeaveManagement({ onLeavesUpdated, initialTab = "list", onTabCha
           {error}
         </div>
       )}
+      {success && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm">
+          {success}
+        </div>
+      )}
 
       {activeTab === "list" ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4 max-h-[600px] overflow-y-auto pr-2">
             {loading ? (
               <div className="bg-white p-6 rounded-xl border border-slate-100">Loading leaves...</div>
             ) : leaves.length === 0 ? (
@@ -169,7 +179,7 @@ export function LeaveManagement({ onLeavesUpdated, initialTab = "list", onTabCha
                   onClick={() => setSelectedLeaveId(leave.id)}
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
                     selectedLeaveId === leave.id
-                      ? "bg-emerald-50 border-emerald-200 shadow-md ring-1 ring-emerald-700"
+                      ? "bg-emerald-50 border-emerald-500 shadow-md ring-1 ring-emerald-500"
                       : "bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm"
                   }`}
                 >
