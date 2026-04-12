@@ -6,12 +6,28 @@ interface CreateUserProps {
   onUserCreated?: () => void;
 }
 
+type NearbyStay = {
+  ACCOMMODATION_ID: number;
+  NAME: string;
+  ACCOMMODATION_TYPE: string;
+  ADDRESS: string;
+  DISTANCE_KM?: number | null;
+  CONTACT_PHONE?: string | null;
+  CONTACT_EMAIL?: string | null;
+  RENT_MIN?: number | null;
+  RENT_MAX?: number | null;
+  GENDER_ALLOWED?: string;
+  AVAILABILITY_STATUS: string;
+  NOTES?: string | null;
+};
+
 export function CreateUser({ onUserCreated }: CreateUserProps) {
   const [userType, setUserType] = useState<"student" | "staff">("student");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [rooms, setRooms] = useState<any[]>([]);
+  const [nearbyStays, setNearbyStays] = useState<NearbyStay[]>([]);
 
   const [studentForm, setStudentForm] = useState({
     studentId: "",
@@ -40,10 +56,15 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
   useEffect(() => {
     const loadRooms = async () => {
       try {
-        const res = await api.get("/technical-staff/rooms");
-        setRooms(res.data?.rooms || []);
+        const [roomsRes, staysRes] = await Promise.all([
+          api.get("/technical-staff/rooms"),
+          api.get("/technical-staff/external-accommodations"),
+        ]);
+        setRooms(roomsRes.data?.rooms || []);
+        setNearbyStays(staysRes.data?.accommodations || []);
       } catch {
         setRooms([]);
+        setNearbyStays([]);
       }
     };
     loadRooms();
@@ -55,6 +76,12 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
         (room) => Number(room.IS_ACTIVE) === 1 && Number(room.VACANCY || 0) > 0
       ),
     [rooms]
+  );
+
+  const suggestedNearbyStays = useMemo(
+    () =>
+      nearbyStays.filter((stay) => stay.AVAILABILITY_STATUS === "Available" || stay.AVAILABILITY_STATUS === "Limited"),
+    [nearbyStays]
   );
 
   const handleCreateStudent = async (e: React.FormEvent) => {
@@ -70,10 +97,9 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
       !studentForm.aadharNo.trim() ||
       !studentForm.guardianName.trim() ||
       !studentForm.guardianPhone.trim() ||
-      !studentForm.address.trim() ||
-      !studentForm.roomNo.trim()
+      !studentForm.address.trim()
     ) {
-      setError("All student fields are required except email");
+      setError("All student fields are required except email, guardian email, and room when hostel is full");
       return;
     }
 
@@ -90,7 +116,9 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
       }
       formData.append("guardianPhone", studentForm.guardianPhone.trim());
       formData.append("address", studentForm.address.trim());
-      formData.append("roomNo", studentForm.roomNo.trim());
+      if (studentForm.roomNo.trim()) {
+        formData.append("roomNo", studentForm.roomNo.trim());
+      }
       formData.append("password", studentForm.password);
       if (studentForm.email.trim()) {
         formData.append("email", studentForm.email.trim());
@@ -263,15 +291,46 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
               onChange={(e) => setStudentForm({ ...studentForm, roomNo: e.target.value })}
               className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
               disabled={loading}
-              required
+              required={availableRooms.length > 0}
             >
-              <option value="">Select hostel room (required)</option>
+              <option value="">
+                {availableRooms.length > 0 ? "Select hostel room (required)" : "No hostel vacancy available"}
+              </option>
               {availableRooms.map((room) => (
                 <option key={room.ROOM_NO} value={room.ROOM_NO}>
                   {room.ROOM_NO} | Block {room.BLOCK_NAME || "-"} | Vacant: {room.VACANCY}
                 </option>
               ))}
             </select>
+            {availableRooms.length === 0 && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-4">
+                <div>
+                  <p className="font-semibold text-amber-900">No hostel room vacancy left</p>
+                  <p className="text-sm text-amber-800 mt-1">
+                    Student can still be created without a hostel room assignment. You can use these nearby stay suggestions until hostel vacancy opens again.
+                  </p>
+                </div>
+
+                {suggestedNearbyStays.length === 0 ? (
+                  <p className="text-sm text-amber-800">
+                    No nearby PG/dormitory/apartment suggestions have been added yet. Add them from Technical Staff - Nearby Stays.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {suggestedNearbyStays.slice(0, 4).map((stay) => (
+                      <div key={stay.ACCOMMODATION_ID} className="rounded-lg border border-amber-200 bg-white p-3 text-sm text-slate-700">
+                        <p className="font-semibold text-slate-900">{stay.NAME}</p>
+                        <p className="text-xs text-slate-500 mt-1">{stay.ACCOMMODATION_TYPE} | {stay.GENDER_ALLOWED || "Any"} | {stay.AVAILABILITY_STATUS}</p>
+                        <p className="mt-2"><span className="font-medium">Address:</span> {stay.ADDRESS}</p>
+                        <p><span className="font-medium">Distance:</span> {stay.DISTANCE_KM ?? "-"} km</p>
+                        <p><span className="font-medium">Phone:</span> {stay.CONTACT_PHONE || "-"}</p>
+                        <p><span className="font-medium">Rent:</span> {stay.RENT_MIN ?? "-"} - {stay.RENT_MAX ?? "-"}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <textarea
               value={studentForm.address}
               onChange={(e) => setStudentForm({ ...studentForm, address: e.target.value })}

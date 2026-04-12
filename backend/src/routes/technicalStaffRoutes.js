@@ -15,6 +15,10 @@ const {
   createRoom,
   updateRoom,
   deleteRoom,
+  getExternalAccommodations,
+  createExternalAccommodation,
+  updateExternalAccommodation,
+  deleteExternalAccommodation,
   resetUserPassword,
   deleteUser,
   getFeeRecords,
@@ -36,6 +40,10 @@ router.get("/rooms", verifyToken, requireRole("Technical Staff"), getRooms);
 router.post("/rooms", verifyToken, requireRole("Technical Staff"), createRoom);
 router.put("/rooms/:roomNo", verifyToken, requireRole("Technical Staff"), updateRoom);
 router.delete("/rooms/:roomNo", verifyToken, requireRole("Technical Staff"), deleteRoom);
+router.get("/external-accommodations", verifyToken, requireRole("Technical Staff"), getExternalAccommodations);
+router.post("/external-accommodations", verifyToken, requireRole("Technical Staff"), createExternalAccommodation);
+router.put("/external-accommodations/:accommodationId", verifyToken, requireRole("Technical Staff"), updateExternalAccommodation);
+router.delete("/external-accommodations/:accommodationId", verifyToken, requireRole("Technical Staff"), deleteExternalAccommodation);
 router.get("/fees", verifyToken, requireRole("Technical Staff"), getFeeRecords);
 router.post("/fees", verifyToken, requireRole("Technical Staff"), createFeeRecord);
 router.put("/fees/:feeId", verifyToken, requireRole("Technical Staff"), updateFeeRecord);

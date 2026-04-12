@@ -139,7 +139,7 @@ export function FeedbackManagement() {
                   No feedback found
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
                   {feedbackList.map((item) => (
                     <div
                       key={item.FEEDBACK_ID}

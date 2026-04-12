@@ -128,47 +128,48 @@ export function FeedbackView() {
           </form>
         </div>
 
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2">
           <h3 className="text-lg font-bold text-slate-800 mb-4">Previous Feedbacks</h3>
-          {feedbacks.map((item) => (
-            <div
-              key={item.FEEDBACK_ID}
-              className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start space-x-4 mb-3 md:mb-0">
-                <div className={`p-2 rounded-lg mt-1 ${item.STATUS === "Resolved" ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}>
-                  {item.STATUS === "Resolved" ? <CheckCircle2 size={20} /> : <Clock size={20} />}
-                </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded-full">{item.FACILITY_AREA}</span>
-                    <span className="text-sm text-slate-400">{item.CREATED_AT}</span>
+          <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+            {feedbacks.map((item) => (
+              <div
+                key={item.FEEDBACK_ID}
+                className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start space-x-4 mb-3 md:mb-0">
+                  <div className={`p-2 rounded-lg mt-1 ${item.STATUS === "Resolved" ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}>
+                    {item.STATUS === "Resolved" ? <CheckCircle2 size={20} /> : <Clock size={20} />}
                   </div>
-                  <h4 className="font-semibold text-slate-800 mt-1">{item.MESSAGE}</h4>
-                  <p className="text-xs text-slate-500 mt-1">Rating: {item.RATING ?? "-"}</p>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded-full">{item.FACILITY_AREA}</span>
+                      <span className="text-sm text-slate-400">{item.CREATED_AT}</span>
+                    </div>
+                    <h4 className="font-semibold text-slate-800 mt-1">{item.MESSAGE}</h4>
+                    <p className="text-xs text-slate-500 mt-1">Rating: {item.RATING ?? "-"}</p>
+                  </div>
+                </div>
+                <div className="ml-14 md:ml-0 flex items-center">
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium flex items-center ${
+                      item.STATUS === "Resolved" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                    }`}
+                  >
+                    {item.STATUS}
+                  </span>
                 </div>
               </div>
-              <div className="ml-14 md:ml-0 flex items-center">
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium flex items-center ${
-                    item.STATUS === "Resolved" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                  }`}
-                >
-                  {item.STATUS}
-                </span>
-              </div>
-            </div>
-          ))}
+            ))}
 
-          {feedbacks.length === 0 && (
-            <div className="text-center py-10 bg-white rounded-2xl border border-slate-100 border-dashed">
-              <AlertCircle className="mx-auto text-slate-300 mb-3" size={40} />
-              <p className="text-slate-500 font-medium">No feedback submitted yet.</p>
-            </div>
-          )}
+            {feedbacks.length === 0 && (
+              <div className="text-center py-10 bg-white rounded-2xl border border-slate-100 border-dashed">
+                <AlertCircle className="mx-auto text-slate-300 mb-3" size={40} />
+                <p className="text-slate-500 font-medium">No feedback submitted yet.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

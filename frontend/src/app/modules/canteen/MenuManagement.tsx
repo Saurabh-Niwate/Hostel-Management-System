@@ -39,7 +39,7 @@ export function MenuManagement() {
     setLoading(true);
     setError("");
     try {
-      const res = await api.get("/canteen-owner/menu");
+      const res = await api.get("/canteen-owner/menu", { params: { _t: Date.now() } });
       setMenuItems(res.data?.menu || []);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load menu");

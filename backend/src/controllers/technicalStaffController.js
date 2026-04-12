@@ -88,6 +88,44 @@ const ensureRoomExists = async (conn, roomNo) => {
   return roomResult.rows.length > 0;
 };
 
+const ensureRoomHasVacancy = async (conn, roomNo, excludedUserId = null) => {
+  const normalizedRoomNo = roomNo ? String(roomNo).trim() : "";
+  if (!normalizedRoomNo) {
+    return false;
+  }
+
+  const result = await conn.execute(
+    `
+    SELECT
+      r.capacity,
+      (
+        SELECT COUNT(*)
+        FROM students s
+        WHERE TRIM(s.room_no) = TRIM(r.room_no)
+          AND (:b_excluded_user_id IS NULL OR s.user_id <> :b_excluded_user_id)
+      ) AS occupied
+    FROM rooms r
+    WHERE TRIM(r.room_no) = :b_room_no
+    `,
+    {
+      b_room_no: normalizedRoomNo,
+      b_excluded_user_id: excludedUserId
+    },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+
+  if (!result.rows.length) {
+    return false;
+  }
+
+  const room = result.rows[0];
+  return Number(room.OCCUPIED || 0) < Number(room.CAPACITY || 0);
+};
+
+const allowedAccommodationTypes = ["PG", "Dormitory", "Apartment"];
+const allowedAccommodationStatuses = ["Available", "Limited", "Full"];
+const allowedAccommodationGenders = ["Male", "Female", "Any"];
+
 const normalizeAadharNo = (value) => {
   if (value === undefined || value === null) return null;
   const normalized = String(value).replace(/\s+/g, "").trim();
@@ -112,6 +150,7 @@ exports.createStudent = async (req, res) => {
   } = req.body;
   const profileImageUrl = req.file ? `/uploads/profile-images/${req.file.filename}` : null;
   const normalizedAadharNo = normalizeAadharNo(aadharNo);
+  const normalizedRoomNo = roomNo ? String(roomNo).trim() : "";
 
   if (
     !studentId || !studentId.trim() ||
@@ -121,12 +160,11 @@ exports.createStudent = async (req, res) => {
     !normalizedAadharNo ||
     !guardianName || !guardianName.trim() ||
     !guardianPhone || !guardianPhone.trim() ||
-    !address || !address.trim() ||
-    !roomNo || !roomNo.trim()
+    !address || !address.trim()
   ) {
     deleteUploadedFile(req.file?.path);
     return res.status(400).json({
-      message: "studentId, password, fullName, phone, aadharNo, guardianName, guardianPhone, address and roomNo are required (email and guardianEmail are optional)"
+      message: "studentId, password, fullName, phone, aadharNo, guardianName, guardianPhone and address are required (email, guardianEmail and roomNo are optional when hostel is full)"
     });
   }
 
@@ -173,10 +211,18 @@ exports.createStudent = async (req, res) => {
       }
     }
 
-    const roomExists = await ensureRoomExists(conn, roomNo);
-    if (!roomExists) {
-      deleteUploadedFile(req.file?.path);
-      return res.status(400).json({ message: "Assigned room does not exist. Create the room first before allocating it." });
+    if (normalizedRoomNo) {
+      const roomExists = await ensureRoomExists(conn, normalizedRoomNo);
+      if (!roomExists) {
+        deleteUploadedFile(req.file?.path);
+        return res.status(400).json({ message: "Assigned room does not exist. Create the room first before allocating it." });
+      }
+
+      const roomHasVacancy = await ensureRoomHasVacancy(conn, normalizedRoomNo);
+      if (!roomHasVacancy) {
+        deleteUploadedFile(req.file?.path);
+        return res.status(400).json({ message: "Assigned room has no vacancy left. Select another room or use nearby stay suggestions." });
+      }
     }
 
     const roleResult = await conn.execute(
@@ -257,7 +303,7 @@ exports.createStudent = async (req, res) => {
         b_guardian_email: guardianEmail ? guardianEmail.trim().toLowerCase() : null,
         b_guardian_phone: guardianPhone ? guardianPhone.trim() : null,
         b_address: address ? address.trim() : null,
-        b_room_no: roomNo ? roomNo.trim() : null,
+        b_room_no: normalizedRoomNo || null,
         b_profile_image_url: profileImageUrl
       },
       { autoCommit: false }
@@ -750,6 +796,11 @@ exports.updateStudentByStudentId = async (req, res) => {
       const roomExists = await ensureRoomExists(conn, roomNo);
       if (!roomExists) {
         return res.status(400).json({ message: "Assigned room does not exist. Create the room first before allocating it." });
+      }
+
+      const roomHasVacancy = await ensureRoomHasVacancy(conn, roomNo, targetUserId);
+      if (!roomHasVacancy) {
+        return res.status(400).json({ message: "Assigned room has no vacancy left. Select another room or use nearby stay suggestions." });
       }
     }
 
@@ -1366,6 +1417,377 @@ exports.deleteRoom = async (req, res) => {
   }
 };
 
+exports.getExternalAccommodations = async (_req, res) => {
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const result = await conn.execute(
+      `
+      SELECT
+        accommodation_id,
+        name,
+        accommodation_type,
+        address,
+        distance_km,
+        contact_phone,
+        contact_email,
+        rent_min,
+        rent_max,
+        gender_allowed,
+        availability_status,
+        notes,
+        created_by,
+        TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+        TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at
+      FROM external_accommodations
+      ORDER BY
+        CASE availability_status
+          WHEN 'Available' THEN 1
+          WHEN 'Limited' THEN 2
+          ELSE 3
+        END,
+        NVL(distance_km, 999999),
+        accommodation_id DESC
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    return res.json({ accommodations: result.rows || [] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch nearby stay suggestions" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.createExternalAccommodation = async (req, res) => {
+  const {
+    name,
+    accommodationType,
+    address,
+    distanceKm,
+    contactPhone,
+    contactEmail,
+    rentMin,
+    rentMax,
+    genderAllowed,
+    availabilityStatus,
+    notes
+  } = req.body;
+
+  if (!name || !String(name).trim() || !accommodationType || !address || !String(address).trim()) {
+    return res.status(400).json({ message: "name, accommodationType and address are required" });
+  }
+
+  const normalizedType = String(accommodationType).trim();
+  const normalizedGender = genderAllowed ? String(genderAllowed).trim() : "Any";
+  const normalizedStatus = availabilityStatus ? String(availabilityStatus).trim() : "Available";
+  const normalizedDistance = distanceKm === undefined || distanceKm === null || distanceKm === "" ? null : Number(distanceKm);
+  const normalizedRentMin = rentMin === undefined || rentMin === null || rentMin === "" ? null : Number(rentMin);
+  const normalizedRentMax = rentMax === undefined || rentMax === null || rentMax === "" ? null : Number(rentMax);
+
+  if (!allowedAccommodationTypes.includes(normalizedType)) {
+    return res.status(400).json({ message: "accommodationType must be PG, Dormitory or Apartment" });
+  }
+  if (!allowedAccommodationGenders.includes(normalizedGender)) {
+    return res.status(400).json({ message: "genderAllowed must be Male, Female or Any" });
+  }
+  if (!allowedAccommodationStatuses.includes(normalizedStatus)) {
+    return res.status(400).json({ message: "availabilityStatus must be Available, Limited or Full" });
+  }
+  if ((normalizedDistance !== null && Number.isNaN(normalizedDistance)) ||
+      (normalizedRentMin !== null && Number.isNaN(normalizedRentMin)) ||
+      (normalizedRentMax !== null && Number.isNaN(normalizedRentMax))) {
+    return res.status(400).json({ message: "distanceKm, rentMin and rentMax must be numeric" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const insertResult = await conn.execute(
+      `
+      INSERT INTO external_accommodations (
+        name,
+        accommodation_type,
+        address,
+        distance_km,
+        contact_phone,
+        contact_email,
+        rent_min,
+        rent_max,
+        gender_allowed,
+        availability_status,
+        notes,
+        created_by,
+        updated_at
+      )
+      VALUES (
+        :b_name,
+        :b_accommodation_type,
+        :b_address,
+        :b_distance_km,
+        :b_contact_phone,
+        :b_contact_email,
+        :b_rent_min,
+        :b_rent_max,
+        :b_gender_allowed,
+        :b_availability_status,
+        :b_notes,
+        :b_created_by,
+        SYSDATE
+      )
+      RETURNING accommodation_id INTO :b_accommodation_id
+      `,
+      {
+        b_name: String(name).trim(),
+        b_accommodation_type: normalizedType,
+        b_address: String(address).trim(),
+        b_distance_km: normalizedDistance,
+        b_contact_phone: contactPhone ? String(contactPhone).trim() : null,
+        b_contact_email: contactEmail ? String(contactEmail).trim().toLowerCase() : null,
+        b_rent_min: normalizedRentMin,
+        b_rent_max: normalizedRentMax,
+        b_gender_allowed: normalizedGender,
+        b_availability_status: normalizedStatus,
+        b_notes: notes ? String(notes).trim() : null,
+        b_created_by: req.user.userId,
+        b_accommodation_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
+      },
+      { autoCommit: false }
+    );
+
+    const accommodationId = insertResult.outBinds.b_accommodation_id[0];
+    await insertSystemLog(conn, {
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: "CREATE_EXTERNAL_ACCOMMODATION",
+      entityType: "EXTERNAL_ACCOMMODATION",
+      entityId: accommodationId,
+      details: `name=${String(name).trim()}`
+    });
+
+    await conn.commit();
+    return res.status(201).json({ message: "Nearby stay suggestion created successfully", accommodationId });
+  } catch (err) {
+    console.error(err);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Error rolling back transaction:", rollbackErr);
+      }
+    }
+    return res.status(500).json({ message: "Failed to create nearby stay suggestion" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.updateExternalAccommodation = async (req, res) => {
+  const { accommodationId } = req.params;
+  const {
+    name,
+    accommodationType,
+    address,
+    distanceKm,
+    contactPhone,
+    contactEmail,
+    rentMin,
+    rentMax,
+    genderAllowed,
+    availabilityStatus,
+    notes
+  } = req.body;
+
+  if (!accommodationId || Number.isNaN(Number(accommodationId))) {
+    return res.status(400).json({ message: "Valid accommodationId is required" });
+  }
+
+  const normalizedType = accommodationType === undefined ? undefined : String(accommodationType).trim();
+  const normalizedGender = genderAllowed === undefined ? undefined : String(genderAllowed).trim();
+  const normalizedStatus = availabilityStatus === undefined ? undefined : String(availabilityStatus).trim();
+  const normalizedDistance = distanceKm === undefined || distanceKm === "" ? undefined : distanceKm === null ? null : Number(distanceKm);
+  const normalizedRentMin = rentMin === undefined || rentMin === "" ? undefined : rentMin === null ? null : Number(rentMin);
+  const normalizedRentMax = rentMax === undefined || rentMax === "" ? undefined : rentMax === null ? null : Number(rentMax);
+
+  if (normalizedType !== undefined && !allowedAccommodationTypes.includes(normalizedType)) {
+    return res.status(400).json({ message: "accommodationType must be PG, Dormitory or Apartment" });
+  }
+  if (normalizedGender !== undefined && !allowedAccommodationGenders.includes(normalizedGender)) {
+    return res.status(400).json({ message: "genderAllowed must be Male, Female or Any" });
+  }
+  if (normalizedStatus !== undefined && !allowedAccommodationStatuses.includes(normalizedStatus)) {
+    return res.status(400).json({ message: "availabilityStatus must be Available, Limited or Full" });
+  }
+  if ((normalizedDistance !== undefined && normalizedDistance !== null && Number.isNaN(normalizedDistance)) ||
+      (normalizedRentMin !== undefined && normalizedRentMin !== null && Number.isNaN(normalizedRentMin)) ||
+      (normalizedRentMax !== undefined && normalizedRentMax !== null && Number.isNaN(normalizedRentMax))) {
+    return res.status(400).json({ message: "distanceKm, rentMin and rentMax must be numeric" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const existingResult = await conn.execute(
+      `
+      SELECT *
+      FROM external_accommodations
+      WHERE accommodation_id = :b_accommodation_id
+      `,
+      { b_accommodation_id: Number(accommodationId) },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    if (existingResult.rows.length === 0) {
+      return res.status(404).json({ message: "Nearby stay suggestion not found" });
+    }
+
+    const current = existingResult.rows[0];
+    await conn.execute(
+      `
+      UPDATE external_accommodations
+      SET name = :b_name,
+          accommodation_type = :b_accommodation_type,
+          address = :b_address,
+          distance_km = :b_distance_km,
+          contact_phone = :b_contact_phone,
+          contact_email = :b_contact_email,
+          rent_min = :b_rent_min,
+          rent_max = :b_rent_max,
+          gender_allowed = :b_gender_allowed,
+          availability_status = :b_availability_status,
+          notes = :b_notes,
+          updated_at = SYSDATE
+      WHERE accommodation_id = :b_accommodation_id
+      `,
+      {
+        b_name: name === undefined ? current.NAME : (name ? String(name).trim() : null),
+        b_accommodation_type: normalizedType === undefined ? current.ACCOMMODATION_TYPE : normalizedType,
+        b_address: address === undefined ? current.ADDRESS : (address ? String(address).trim() : null),
+        b_distance_km: normalizedDistance === undefined ? current.DISTANCE_KM : normalizedDistance,
+        b_contact_phone: contactPhone === undefined ? current.CONTACT_PHONE : (contactPhone ? String(contactPhone).trim() : null),
+        b_contact_email: contactEmail === undefined ? current.CONTACT_EMAIL : (contactEmail ? String(contactEmail).trim().toLowerCase() : null),
+        b_rent_min: normalizedRentMin === undefined ? current.RENT_MIN : normalizedRentMin,
+        b_rent_max: normalizedRentMax === undefined ? current.RENT_MAX : normalizedRentMax,
+        b_gender_allowed: normalizedGender === undefined ? current.GENDER_ALLOWED : normalizedGender,
+        b_availability_status: normalizedStatus === undefined ? current.AVAILABILITY_STATUS : normalizedStatus,
+        b_notes: notes === undefined ? current.NOTES : (notes ? String(notes).trim() : null),
+        b_accommodation_id: Number(accommodationId)
+      },
+      { autoCommit: false }
+    );
+
+    await insertSystemLog(conn, {
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: "UPDATE_EXTERNAL_ACCOMMODATION",
+      entityType: "EXTERNAL_ACCOMMODATION",
+      entityId: Number(accommodationId),
+      details: null
+    });
+
+    await conn.commit();
+    return res.json({ message: "Nearby stay suggestion updated successfully" });
+  } catch (err) {
+    console.error(err);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Error rolling back transaction:", rollbackErr);
+      }
+    }
+    return res.status(500).json({ message: "Failed to update nearby stay suggestion" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.deleteExternalAccommodation = async (req, res) => {
+  const { accommodationId } = req.params;
+
+  if (!accommodationId || Number.isNaN(Number(accommodationId))) {
+    return res.status(400).json({ message: "Valid accommodationId is required" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const existingResult = await conn.execute(
+      `
+      SELECT name
+      FROM external_accommodations
+      WHERE accommodation_id = :b_accommodation_id
+      `,
+      { b_accommodation_id: Number(accommodationId) },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    if (existingResult.rows.length === 0) {
+      return res.status(404).json({ message: "Nearby stay suggestion not found" });
+    }
+
+    await conn.execute(
+      `
+      DELETE FROM external_accommodations
+      WHERE accommodation_id = :b_accommodation_id
+      `,
+      { b_accommodation_id: Number(accommodationId) },
+      { autoCommit: false }
+    );
+
+    await insertSystemLog(conn, {
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: "DELETE_EXTERNAL_ACCOMMODATION",
+      entityType: "EXTERNAL_ACCOMMODATION",
+      entityId: Number(accommodationId),
+      details: `name=${existingResult.rows[0].NAME || ""}`
+    });
+
+    await conn.commit();
+    return res.json({ message: "Nearby stay suggestion deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Error rolling back transaction:", rollbackErr);
+      }
+    }
+    return res.status(500).json({ message: "Failed to delete nearby stay suggestion" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
 exports.resetUserPassword = async (req, res) => {
   const { userId } = req.params;
   const { newPassword } = req.body;
@@ -1470,6 +1892,20 @@ exports.deleteUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Fetch student profile image before deletion
+    const studentResult = await conn.execute(
+      `
+      SELECT profile_image_url
+      FROM students
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: targetUserId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const profileImageUrl = studentResult.rows && studentResult.rows[0] 
+      ? studentResult.rows[0].PROFILE_IMAGE_URL 
+      : null;
+
     const refsResult = await conn.execute(
       `
       SELECT
@@ -1478,6 +1914,7 @@ exports.deleteUser = async (req, res) => {
         (SELECT COUNT(*) FROM student_fees WHERE user_id = :b_user_id) AS fee_refs,
         (SELECT COUNT(*) FROM student_feedback WHERE user_id = :b_user_id) AS feedback_refs,
         (SELECT COUNT(*) FROM canteen_menu WHERE created_by = :b_user_id) AS canteen_refs,
+        (SELECT COUNT(*) FROM external_accommodations WHERE created_by = :b_user_id) AS accommodation_refs,
         (SELECT COUNT(*) FROM system_logs WHERE actor_user_id = :b_user_id) AS log_refs
       FROM dual
       `,
@@ -1491,6 +1928,7 @@ exports.deleteUser = async (req, res) => {
       Number(refs.FEE_REFS || 0) +
       Number(refs.FEEDBACK_REFS || 0) +
       Number(refs.CANTEEN_REFS || 0) +
+      Number(refs.ACCOMMODATION_REFS || 0) +
       Number(refs.LOG_REFS || 0);
 
     if (totalRefs > 0 && !force) {
@@ -1508,6 +1946,11 @@ exports.deleteUser = async (req, res) => {
       { b_user_id: targetUserId },
       { autoCommit: false }
     );
+
+    // Delete profile image file if it exists
+    if (profileImageUrl) {
+      deleteProfileImageFile(profileImageUrl);
+    }
 
     if (force) {
       await conn.execute(
@@ -1554,6 +1997,15 @@ exports.deleteUser = async (req, res) => {
       await conn.execute(
         `
         UPDATE canteen_menu
+        SET created_by = NULL
+        WHERE created_by = :b_user_id
+        `,
+        { b_user_id: targetUserId },
+        { autoCommit: false }
+      );
+      await conn.execute(
+        `
+        UPDATE external_accommodations
         SET created_by = NULL
         WHERE created_by = :b_user_id
         `,

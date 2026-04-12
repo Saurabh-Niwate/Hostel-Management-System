@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Mail, Phone, Search, TriangleAlert } from "lucide-react";
 import { api } from "../../lib/api";
+import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
+import { useListFetch } from "../../hooks/useListFetch";
 
 type Profile = {
   USER_ID: number;
@@ -63,10 +65,10 @@ type StudentListRow = {
 
 export function AdminStudentView() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [students, setStudents] = useState<StudentListRow[]>([]);
+  const { data: students = [], loading, error, setParams } = useListFetch<StudentListRow>("/admin/students", { q: undefined }, 500);
   const [initialLoading, setInitialLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
-  const [error, setError] = useState("");
+  const [localError, setLocalError] = useState("");
 
   const [modalLoading, setModalLoading] = useState(false);
   const [modalData, setModalData] = useState<StudentDetails | null>(null);
@@ -75,45 +77,27 @@ export function AdminStudentView() {
   const [complaintSubject, setComplaintSubject] = useState("Hostel disciplinary complaint");
   const [complaintMessage, setComplaintMessage] = useState("");
 
-  const loadStudents = async (query?: string, opts?: { background?: boolean }) => {
-    if (opts?.background) setIsFetching(true);
-    else setInitialLoading(true);
-    setError("");
-    try {
-      const res = await api.get("/admin/students", {
-        params: {
-          q: query || undefined,
-        },
-      });
-      setStudents(res.data?.students || []);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load students list");
-    } finally {
-      setIsFetching(false);
-      setInitialLoading(false);
-    }
-  };
+  useEffect(() => {
+    // initial load completed mapping
+    if (!loading) setInitialLoading(false);
+  }, [loading]);
 
   useEffect(() => {
-    loadStudents(undefined, { background: false });
-  }, []);
+    setIsFetching(loading);
+  }, [loading]);
 
   useEffect(() => {
-    if (initialLoading) return;
-    const id = setTimeout(() => {
-      loadStudents(searchQuery.trim() || undefined, { background: true });
-    }, 500);
-    return () => clearTimeout(id);
-  }, [searchQuery, initialLoading]);
+    setParams({ q: searchQuery.trim() || undefined });
+  }, [searchQuery, setParams]);
 
   const openStudentModal = async (studentId: string) => {
     setModalLoading(true);
-    setError("");
+    setLocalError("");
     try {
       const res = await api.get(`/admin/students/${studentId}/details`);
       setModalData(res.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch student details");
+      setLocalError(err.response?.data?.message || "Failed to fetch student details");
     } finally {
       setModalLoading(false);
     }
@@ -121,7 +105,7 @@ export function AdminStudentView() {
 
   const openComplaintModal = async (studentId: string) => {
     setComplaintLoading(true);
-    setError("");
+    setLocalError("");
     setComplaintSubject("Hostel disciplinary complaint");
     setComplaintMessage("");
     try {
@@ -132,7 +116,7 @@ export function AdminStudentView() {
         `Dear ${profile.GUARDIAN_NAME || "Parent"},\n\nThis is to inform you about a hostel decorum complaint involving ${profile.FULL_NAME || "the student"} (${profile.STUDENT_ID || ""}). Please contact the hostel administration at the earliest for further discussion.\n\nRegards,\nHostel Admin`
       );
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch student details");
+      setLocalError(err.response?.data?.message || "Failed to fetch student details");
     } finally {
       setComplaintLoading(false);
     }
@@ -144,11 +128,6 @@ export function AdminStudentView() {
     const body = encodeURIComponent(complaintMessage.trim());
     return `mailto:${complaintData.profile.GUARDIAN_EMAIL}?subject=${subject}&body=${body}`;
   }, [complaintMessage, complaintSubject, complaintData]);
-
-  const complaintSmsHref = useMemo(() => {
-    if (!complaintData?.profile.GUARDIAN_PHONE) return null;
-    return `tel:${complaintData.profile.GUARDIAN_PHONE}`;
-  }, [complaintData]);
 
   if (initialLoading) {
     return (
@@ -165,7 +144,7 @@ export function AdminStudentView() {
         {isFetching && <p className="text-sm text-slate-500">Searching...</p>}
       </div>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
+      {(localError || error) && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{localError || error}</div>}
 
       <div className="bg-white rounded-xl border border-slate-200 p-4">
         <div className="relative">
@@ -238,7 +217,7 @@ export function AdminStudentView() {
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
                   {modalData.profile.PROFILE_IMAGE_URL ? (
-                    <img
+                    <ImageWithFallback
                       src={modalData.profile.PROFILE_IMAGE_URL}
                       alt="Student profile"
                       className="w-full h-full object-cover"
@@ -404,21 +383,6 @@ export function AdminStudentView() {
                       No guardian email available
                     </span>
                   )}
-
-                  {complaintSmsHref ? (
-                    <a
-                      href={complaintSmsHref}
-                      className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-                    >
-                      <Phone className="w-4 h-4" />
-                      Call Guardian
-                    </a>
-                  ) : (
-                    <span className="inline-flex items-center gap-2 rounded-lg bg-slate-200 px-4 py-2 text-sm text-slate-500">
-                      <Phone className="w-4 h-4" />
-                      No guardian phone available
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
@@ -436,7 +400,7 @@ function ModalShell({
 }: {
   title: string;
   onClose: () => void;
-  children: React.ReactNode;
+  children: any;
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">

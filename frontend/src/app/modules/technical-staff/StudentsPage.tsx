@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { api } from "../../lib/api";
+import { useListFetch } from "../../hooks/useListFetch";
 
 interface Student {
   USER_ID: number;
@@ -10,23 +11,7 @@ interface Student {
 }
 
 export function StudentsPage() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await api.get("/technical-staff/students");
-        setStudents(res.data?.students || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load students");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+  const { data: students = [], loading, error } = useListFetch<Student>("/technical-staff/students", {}, 0);
 
   if (loading) {
     return (

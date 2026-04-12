@@ -358,6 +358,28 @@ exports.getOverviewReport = async (req, res) => {
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
 
+    const roomCapacitySummary = await conn.execute(
+      `
+      SELECT
+        NVL(COUNT(*), 0) AS total_rooms,
+        NVL(SUM(NVL(r.capacity, 0)), 0) AS total_capacity,
+        NVL(SUM((
+          SELECT COUNT(*)
+          FROM students s
+          WHERE TRIM(s.room_no) = TRIM(r.room_no)
+        )), 0) AS occupied_beds
+      FROM rooms r
+      WHERE NVL(r.is_active, 1) = 1
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const roomSummaryRow = (roomCapacitySummary.rows && roomCapacitySummary.rows[0]) || {};
+    const totalCapacity = Number(roomSummaryRow.TOTAL_CAPACITY || 0);
+    const occupiedBeds = Number(roomSummaryRow.OCCUPIED_BEDS || 0);
+    const vacancy = Math.max(totalCapacity - occupiedBeds, 0);
+
     return res.json({
       range: {
         dateFrom: dateFrom || null,
@@ -372,7 +394,14 @@ exports.getOverviewReport = async (req, res) => {
         TOTAL_PAID_AMOUNT: 0,
         TOTAL_DUE_AMOUNT: 0
       },
-      pendingFeeStudents: pendingFeeStudents.rows || []
+      pendingFeeStudents: pendingFeeStudents.rows || [],
+      roomCapacity: {
+        TOTAL_ROOMS: Number(roomSummaryRow.TOTAL_ROOMS || 0),
+        TOTAL_CAPACITY: totalCapacity,
+        OCCUPIED_BEDS: occupiedBeds,
+        VACANCY: vacancy,
+        IS_FULL: totalCapacity > 0 && vacancy === 0
+      }
     });
   } catch (err) {
     console.error(err);

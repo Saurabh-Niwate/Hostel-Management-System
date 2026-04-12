@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { User, Mail, Phone, MapPin, Building, Edit2, Check, X } from "lucide-react";
 import { api } from "../../lib/api";
 import { ChangePasswordSection } from "../../components/ChangePasswordSection";
+import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 
 type StudentProfileData = {
   userId: number;
@@ -90,7 +91,6 @@ export function StudentProfile({ onProfileUpdated }: Props) {
         fullName: editForm.fullName,
         phone: editForm.phone,
         guardianName: editForm.guardianName,
-        guardianEmail: editForm.guardianEmail,
       });
       await loadProfile();
       setIsEditing(false);
@@ -188,7 +188,7 @@ export function StudentProfile({ onProfileUpdated }: Props) {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center h-full">
             <div className="w-32 h-32 bg-slate-100 rounded-full mb-4 flex items-center justify-center text-slate-300 overflow-hidden">
               {profile.profileImageUrl ? (
-                <img src={profile.profileImageUrl} alt="Student profile" className="w-full h-full object-cover" />
+                <ImageWithFallback src={profile.profileImageUrl} alt="Student profile" className="w-full h-full object-cover" />
               ) : (
                 <User size={64} />
               )}
@@ -264,7 +264,7 @@ export function StudentProfile({ onProfileUpdated }: Props) {
                 label="Guardian Email"
                 value={editForm.guardianEmail}
                 isEditing={isEditing}
-                onChange={(val) => setEditForm({ ...editForm, guardianEmail: val })}
+                readOnly
               />
               <InfoField
                 icon={<Phone size={18} />}
@@ -281,16 +281,14 @@ export function StudentProfile({ onProfileUpdated }: Props) {
                 isEditing={isEditing}
                 readOnly
               />
-              <div className="md:col-span-2">
-                <InfoField
-                  icon={<MapPin size={18} />}
-                  label="Address"
-                  value={editForm.address}
-                  isEditing={isEditing}
-                  onChange={(val) => setEditForm({ ...editForm, address: val })}
-                  readOnly
-                />
-              </div>
+            <InfoField
+              icon={<MapPin size={18} />}
+              label="Address"
+              value={editForm.address}
+              isEditing={isEditing}
+              onChange={(val) => setEditForm({ ...editForm, address: val })}
+              readOnly
+            />
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Users, Home, AlertCircle, Calendar, TrendingUp } from "lucide-react";
 import { api } from "../../lib/api";
+import { jsonToCsv, downloadCsv } from "../../lib/csv";
 
 type CountRow = { STATUS: string; TOTAL: number };
 
@@ -23,6 +24,13 @@ type OverviewResponse = {
     DUE_DATE?: string;
     STATUS: string;
   }>;
+  roomCapacity?: {
+    TOTAL_ROOMS: number;
+    TOTAL_CAPACITY: number;
+    OCCUPIED_BEDS: number;
+    VACANCY: number;
+    IS_FULL: boolean;
+  };
 };
 
 const sumByStatus = (rows: CountRow[] = [], status: string) =>
@@ -59,6 +67,50 @@ export function AdminReportsOverview() {
     load();
   }, []);
 
+  const handleDownload = async () => {
+    try {
+      const res = await api.get("/admin/reports/overview", {
+        params: { dateFrom: dateFrom || undefined, dateTo: dateTo || undefined },
+      });
+      const payload = res.data || {};
+
+      const parts: string[] = [];
+      parts.push("Report Overview");
+      parts.push(`Range:,${payload.range?.dateFrom || ""},${payload.range?.dateTo || ""}`);
+      parts.push("");
+
+      parts.push("Leave Summary");
+      parts.push(jsonToCsv(payload.leaveSummary || [], ["STATUS", "TOTAL"]));
+      parts.push("");
+
+      parts.push("Attendance Summary");
+      parts.push(jsonToCsv(payload.attendanceSummary || [], ["STATUS", "TOTAL"]));
+      parts.push("");
+
+      parts.push("Fee Summary");
+      parts.push(jsonToCsv(payload.feeSummary || [], ["STATUS", "TOTAL"]));
+      parts.push("");
+
+      parts.push("Fee Totals");
+      parts.push(jsonToCsv([payload.feeTotals || {}]));
+      parts.push("");
+
+      parts.push("Pending Fee Students");
+      parts.push(jsonToCsv(payload.pendingFeeStudents || []));
+      parts.push("");
+
+      parts.push("Room Capacity");
+      parts.push(jsonToCsv([payload.roomCapacity || {}]));
+
+      const csv = parts.join("\n");
+      const from = dateFrom || "all";
+      const to = dateTo || "all";
+      downloadCsv(`overview-report_${from}_to_${to}.csv`, csv);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to download report");
+    }
+  };
+
   const cards = useMemo(() => {
     const leaveTotal = total(data?.leaveSummary || []);
     const pendingLeaves = sumByStatus(data?.leaveSummary || [], "Pending");
@@ -91,7 +143,10 @@ export function AdminReportsOverview() {
           <label className="block text-xs text-slate-500 mb-1">To Date</label>
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
         </div>
-        <button onClick={load} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-600">Apply Date Filter</button>
+        <div className="flex items-center gap-3">
+          <button onClick={load} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-600">Apply Date Filter</button>
+          <button onClick={() => handleDownload()} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500">Download Report (CSV)</button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -144,6 +199,26 @@ export function AdminReportsOverview() {
           Quick Insights
         </h3>
         <div className="space-y-4">
+          {Boolean(data?.roomCapacity?.IS_FULL) && (
+            <div className="p-4 bg-rose-50 rounded-xl border border-rose-200">
+              <p className="text-rose-800 font-semibold">Hostel Capacity Full</p>
+              <p className="mt-1 text-sm text-rose-700">
+                All {Number(data?.roomCapacity?.TOTAL_CAPACITY || 0).toLocaleString()} beds are occupied across{" "}
+                {Number(data?.roomCapacity?.TOTAL_ROOMS || 0).toLocaleString()} active rooms. New students may need nearby stay suggestions until rooms are available.
+              </p>
+            </div>
+          )}
+          {Boolean(data?.roomCapacity && !data?.roomCapacity?.IS_FULL) && (
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+              <p className="text-blue-800 font-medium">
+                Room Vacancy Available: {Number(data?.roomCapacity?.VACANCY || 0).toLocaleString()} bed(s) free
+              </p>
+              <p className="mt-1 text-sm text-blue-700">
+                Occupied {Number(data?.roomCapacity?.OCCUPIED_BEDS || 0).toLocaleString()} of{" "}
+                {Number(data?.roomCapacity?.TOTAL_CAPACITY || 0).toLocaleString()} hostel beds.
+              </p>
+            </div>
+          )}
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
             <p className="text-slate-700 font-medium">
               Paid Fee Total: Rs {Number(data?.feeTotals?.TOTAL_PAID_AMOUNT || 0).toLocaleString()}

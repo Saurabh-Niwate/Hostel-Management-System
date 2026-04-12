@@ -1,15 +1,16 @@
 import { useState,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, Users as UsersIcon, LogOut, Menu, X, ShieldCheck, Wallet, BedDouble, Plus } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Users as UsersIcon, LogOut, Menu, X, ShieldCheck, Wallet, BedDouble, Plus, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from "motion/react";
 import { CreateUser } from './CreateUser';
 import { ManageUsers } from './ManageUsers';
 import { FeeManagement } from './FeeManagement';
 import { RoomManagement } from './RoomManagement';
+import { NearbyStayManagement } from './NearbyStayManagement';
 import { StaffProfileSettings } from '../../components/StaffProfileSettings';
 import { api } from '../../lib/api';
 
-type View = 'dashboard' | 'create-users' | 'manage-users' | 'room-management' | 'fee-management' | 'profile';
+type View = 'dashboard' | 'create-users' | 'manage-users' | 'room-management' | 'nearby-stays' | 'fee-management' | 'profile';
 type LogRow = {
   LOG_ID: number;
   ACTOR_USER_ID: number;
@@ -96,6 +97,7 @@ export function TechnicalStaffDashboard() {
     { id: 'create-users' as View, label: 'Create Users', icon: UserPlus },
     { id: 'manage-users' as View, label: 'Manage Users', icon: UsersIcon },
     { id: 'room-management' as View, label: 'Room Management', icon: BedDouble },
+    { id: 'nearby-stays' as View, label: 'Nearby Stays', icon: MapPin },
     { id: 'fee-management' as View, label: 'Fee Management', icon: Wallet },
     { id: 'profile' as View, label: 'Profile', icon: UsersIcon },
   ];
@@ -109,6 +111,8 @@ export function TechnicalStaffDashboard() {
           ? 'Manage Users'
           : currentView === 'room-management'
             ? 'Room Management'
+          : currentView === 'nearby-stays'
+            ? 'Nearby Stay Suggestions'
           : currentView === 'profile'
             ? 'Profile'
           : 'Fee Management';
@@ -129,6 +133,14 @@ export function TechnicalStaffDashboard() {
       >
         <Plus size={18} className="mr-2" />
         Create Room
+      </button>
+    ) : currentView === 'nearby-stays' ? (
+      <button
+        onClick={() => window.dispatchEvent(new Event('technical-staff:create-nearby-stay'))}
+        className="flex items-center px-4 py-2 bg-cyan-600 text-white rounded-xl hover:bg-cyan-700 transition-all font-medium"
+      >
+        <Plus size={18} className="mr-2" />
+        Add Nearby Stay
       </button>
     ) : null;
 
@@ -205,22 +217,8 @@ export function TechnicalStaffDashboard() {
         />
       )}
 
-      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300">
+      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300 min-h-[101vh]">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <button
-                onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-              <div>
-                <h2 className="text-3xl font-bold text-slate-900">{viewTitle}</h2>
-              </div>
-            </div>
-            {headerAction && <div className="shrink-0">{headerAction}</div>}
-          </div>
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -229,7 +227,23 @@ export function TechnicalStaffDashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
+              className="min-h-[60vh]"
             >
+              <div className="mb-6 flex items-center justify-between gap-4 min-h-[44px]">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setMobileMenuOpen(true)}
+                    className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
+                  >
+                    <Menu className="w-5 h-5" />
+                  </button>
+                  <div>
+                    <h2 className="text-3xl font-bold text-slate-900 leading-none">{viewTitle}</h2>
+                  </div>
+                </div>
+                {headerAction && <div className="shrink-0 flex items-center">{headerAction}</div>}
+              </div>
+
           {currentView === 'dashboard' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -284,7 +298,7 @@ export function TechnicalStaffDashboard() {
 
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <h3 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button
                     onClick={() => setCurrentView('create-users')}
                     className="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-left"
@@ -321,6 +335,19 @@ export function TechnicalStaffDashboard() {
                     <div>
                       <p className="font-medium text-slate-900">Manage Rooms</p>
                       <p className="text-sm text-slate-600">Create, edit, and delete rooms</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setCurrentView('nearby-stays')}
+                    className="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                  >
+                    <div className="p-2 bg-cyan-100 rounded-lg">
+                      <MapPin className="w-5 h-5 text-cyan-700" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900">Nearby Stay Suggestions</p>
+                      <p className="text-sm text-slate-600">Manage PG, dormitory, and apartment fallbacks</p>
                     </div>
                   </button>
                 </div>
@@ -369,6 +396,8 @@ export function TechnicalStaffDashboard() {
           {currentView === 'manage-users' && <ManageUsers refreshTrigger={refreshTrigger} />}
 
           {currentView === 'room-management' && <RoomManagement />}
+
+          {currentView === 'nearby-stays' && <NearbyStayManagement />}
 
           {currentView === 'fee-management' && <FeeManagement />}
 

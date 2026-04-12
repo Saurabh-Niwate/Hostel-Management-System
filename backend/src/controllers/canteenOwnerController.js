@@ -357,6 +357,7 @@ exports.createDinnerPoll = async (req, res) => {
 
   const normalizedOptions = options
     .map((option) => ({
+      optionId: option?.optionId && !Number.isNaN(Number(option.optionId)) ? Number(option.optionId) : null,
       optionName: option?.optionName ? String(option.optionName).trim() : "",
       description: option?.description ? String(option.description).trim() : ""
     }))
@@ -462,7 +463,10 @@ exports.updateDinnerPoll = async (req, res) => {
 
     const existing = await conn.execute(
       `
-      SELECT poll_id, status
+      SELECT
+        poll_id,
+        status,
+        closes_at
       FROM dinner_polls
       WHERE poll_id = :b_poll_id
       `,
@@ -474,9 +478,13 @@ exports.updateDinnerPoll = async (req, res) => {
       return res.status(404).json({ message: "Dinner poll not found" });
     }
 
-    if (existing.rows[0].STATUS === "Closed") {
-      return res.status(400).json({ message: "Closed dinner polls cannot be edited" });
-    }
+    const existingPoll = existing.rows[0];
+    const closesAtValue = existingPoll.CLOSES_AT instanceof Date
+      ? existingPoll.CLOSES_AT
+      : existingPoll.CLOSES_AT
+        ? new Date(existingPoll.CLOSES_AT)
+        : null;
+    const isClosedPoll = existingPoll.STATUS === "Closed" || (closesAtValue instanceof Date && !Number.isNaN(closesAtValue.getTime()) && closesAtValue < new Date());
 
     const voteCountResult = await conn.execute(
       `
@@ -488,9 +496,7 @@ exports.updateDinnerPoll = async (req, res) => {
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
 
-    if (Number(voteCountResult.rows?.[0]?.VOTE_COUNT || 0) > 0) {
-      return res.status(400).json({ message: "Dinner polls with votes cannot be edited" });
-    }
+    const voteCount = Number(voteCountResult.rows?.[0]?.VOTE_COUNT || 0);
 
     await conn.execute(
       `
@@ -509,27 +515,126 @@ exports.updateDinnerPoll = async (req, res) => {
       { autoCommit: false }
     );
 
-    await conn.execute(
-      `DELETE FROM dinner_poll_options WHERE poll_id = :b_poll_id`,
-      { b_poll_id: Number(pollId) },
-      { autoCommit: false }
-    );
-
-    for (let index = 0; index < normalizedOptions.length; index += 1) {
-      const option = normalizedOptions[index];
+    if (isClosedPoll) {
       await conn.execute(
         `
-        INSERT INTO dinner_poll_options (poll_id, option_name, description, display_order)
-        VALUES (:b_poll_id, :b_option_name, :b_description, :b_display_order)
+        UPDATE dinner_polls
+        SET title = :b_title,
+            dinner_date = TO_DATE(:b_dinner_date, 'YYYY-MM-DD'),
+            closes_at = TO_DATE(:b_closes_at, 'YYYY-MM-DD HH24:MI'),
+            status = 'Open',
+            closed_at = NULL
+        WHERE poll_id = :b_poll_id
         `,
         {
-          b_poll_id: Number(pollId),
-          b_option_name: option.optionName,
-          b_description: option.description || null,
-          b_display_order: index + 1
+          b_title: String(title).trim(),
+          b_dinner_date: String(dinnerDate).trim(),
+          b_closes_at: String(closesAt).trim(),
+          b_poll_id: Number(pollId)
         },
         { autoCommit: false }
       );
+
+      await conn.execute(
+        `DELETE FROM dinner_poll_votes WHERE poll_id = :b_poll_id`,
+        { b_poll_id: Number(pollId) },
+        { autoCommit: false }
+      );
+
+      await conn.execute(
+        `DELETE FROM dinner_poll_options WHERE poll_id = :b_poll_id`,
+        { b_poll_id: Number(pollId) },
+        { autoCommit: false }
+      );
+
+      for (let index = 0; index < normalizedOptions.length; index += 1) {
+        const option = normalizedOptions[index];
+        await conn.execute(
+          `
+          INSERT INTO dinner_poll_options (poll_id, option_name, description, display_order)
+          VALUES (:b_poll_id, :b_option_name, :b_description, :b_display_order)
+          `,
+          {
+            b_poll_id: Number(pollId),
+            b_option_name: option.optionName,
+            b_description: option.description || null,
+            b_display_order: index + 1
+          },
+          { autoCommit: false }
+        );
+      }
+    } else if (voteCount > 0) {
+      const existingOptionsResult = await conn.execute(
+        `
+        SELECT option_id
+        FROM dinner_poll_options
+        WHERE poll_id = :b_poll_id
+        ORDER BY display_order, option_id
+        `,
+        { b_poll_id: Number(pollId) },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+
+      const existingOptionIds = (existingOptionsResult.rows || []).map((row) => Number(row.OPTION_ID));
+      const incomingOptionIds = normalizedOptions
+        .map((option) => option.optionId)
+        .filter((optionId) => Number.isFinite(optionId))
+        .map(Number);
+
+      const sameOptionCount = existingOptionIds.length === normalizedOptions.length;
+      const sameOptionSet = sameOptionCount
+        && existingOptionIds.every((optionId) => incomingOptionIds.includes(optionId));
+
+      if (!sameOptionSet) {
+        return res.status(400).json({
+          message: "Poll options with votes cannot be added or removed. You can edit the existing option text only."
+        });
+      }
+
+      for (let index = 0; index < normalizedOptions.length; index += 1) {
+        const option = normalizedOptions[index];
+        await conn.execute(
+          `
+          UPDATE dinner_poll_options
+          SET option_name = :b_option_name,
+              description = :b_description,
+              display_order = :b_display_order
+          WHERE option_id = :b_option_id
+            AND poll_id = :b_poll_id
+          `,
+          {
+            b_option_name: option.optionName,
+            b_description: option.description || null,
+            b_display_order: index + 1,
+            b_option_id: Number(option.optionId),
+            b_poll_id: Number(pollId)
+          },
+          { autoCommit: false }
+        );
+      }
+    } else {
+      await conn.execute(
+        `DELETE FROM dinner_poll_options WHERE poll_id = :b_poll_id`,
+        { b_poll_id: Number(pollId) },
+        { autoCommit: false }
+      );
+
+      for (let index = 0; index < normalizedOptions.length; index += 1) {
+        const option = normalizedOptions[index];
+        await conn.execute(
+          `
+          INSERT INTO dinner_poll_options (poll_id, option_name, description, display_order)
+          VALUES (:b_poll_id, :b_option_name, :b_description, :b_display_order)
+          `,
+          {
+            b_poll_id: Number(pollId),
+            b_option_name: option.optionName,
+            b_description: option.description || null,
+            b_display_order: index + 1
+          },
+          { autoCommit: false }
+        );
+      }
     }
 
     await logSystemAction(
@@ -538,7 +643,9 @@ exports.updateDinnerPoll = async (req, res) => {
       "UPDATE_DINNER_POLL",
       "DINNER_POLL",
       Number(pollId),
-      `Updated dinner poll ${pollId}`
+      isClosedPoll
+        ? `Reused closed dinner poll ${pollId} with fresh voting`
+        : `Updated dinner poll ${pollId}`
     );
 
     await conn.commit();
