@@ -22,7 +22,7 @@ app.use("/api/canteen-owner", require("./src/routes/canteenOwnerRoutes"));
 
 async function start() {
   await initialize();
-  app.listen(process.env.PORT,'0.0.0.0' , () => {
+  app.listen(process.env.PORT , () => {
     console.log("Server running on port", process.env.PORT);
   });
 }
