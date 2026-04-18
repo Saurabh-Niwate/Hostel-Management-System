@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const fs = require("fs");
 const path = require("path");
 const { syncOverdueFeeStatuses } = require("../utils/feeStatus");
+const { isValidImageSignature } = require("../middlewares/uploadMiddleware");
 
 const toPublicUrl = (req, value) => {
   if (!value) return null;
@@ -134,6 +135,82 @@ const normalizeAadharNo = (value) => {
 
 const isValidAadharNo = (value) => /^\d{12}$/.test(value);
 
+const getRoomAllocationRequestRows = async (conn) => {
+  const result = await conn.execute(
+    `
+    SELECT
+      rar.request_id,
+      rar.user_id,
+      u.student_id,
+      s.full_name,
+      s.phone,
+      s.room_no AS current_room_no,
+      rar.status,
+      rar.assigned_room_no,
+      rar.remarks,
+      TO_CHAR(rar.requested_at, 'YYYY-MM-DD HH24:MI:SS') AS requested_at,
+      TO_CHAR(rar.reviewed_at, 'YYYY-MM-DD HH24:MI:SS') AS reviewed_at
+    FROM room_allocation_requests rar
+    JOIN users u ON u.user_id = rar.user_id
+    LEFT JOIN students s ON s.user_id = rar.user_id
+    ORDER BY
+      CASE rar.status
+        WHEN 'Pending' THEN 1
+        WHEN 'Assigned' THEN 2
+        WHEN 'Rejected' THEN 3
+        ELSE 4
+      END,
+      rar.requested_at ASC,
+      rar.request_id ASC
+    `,
+    {},
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+
+  return result.rows || [];
+};
+
+const lockRoomAndGetOccupancy = async (conn, roomNo, excludedUserId = null) => {
+  const normalizedRoomNo = roomNo ? String(roomNo).trim() : "";
+  if (!normalizedRoomNo) {
+    return null;
+  }
+
+  const roomResult = await conn.execute(
+    `
+    SELECT room_no, capacity, is_active
+    FROM rooms
+    WHERE TRIM(room_no) = :b_room_no
+    FOR UPDATE
+    `,
+    { b_room_no: normalizedRoomNo },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+
+  if (!roomResult.rows.length) {
+    return null;
+  }
+
+  const occupancyResult = await conn.execute(
+    `
+    SELECT COUNT(*) AS occupied_count
+    FROM students
+    WHERE TRIM(room_no) = :b_room_no
+      AND (:b_excluded_user_id IS NULL OR user_id <> :b_excluded_user_id)
+    `,
+    {
+      b_room_no: normalizedRoomNo,
+      b_excluded_user_id: excludedUserId
+    },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+
+  return {
+    ...roomResult.rows[0],
+    OCCUPIED_COUNT: Number(occupancyResult.rows?.[0]?.OCCUPIED_COUNT || 0)
+  };
+};
+
 exports.createStudent = async (req, res) => {
   const {
     studentId,
@@ -171,6 +248,11 @@ exports.createStudent = async (req, res) => {
   if (!isValidAadharNo(normalizedAadharNo)) {
     deleteUploadedFile(req.file?.path);
     return res.status(400).json({ message: "aadharNo must be exactly 12 digits" });
+  }
+
+  if (req.file && !isValidImageSignature(req.file.path, req.file.mimetype)) {
+    deleteUploadedFile(req.file.path);
+    return res.status(400).json({ message: "Uploaded file content is not a valid image" });
   }
 
   let conn;
@@ -912,6 +994,15 @@ exports.uploadStudentProfileImageByStudentId = async (req, res) => {
     return res.status(400).json({ message: "Image file is required" });
   }
 
+  if (!isValidImageSignature(req.file.path, req.file.mimetype)) {
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (_e) {
+      // ignore cleanup failure
+    }
+    return res.status(400).json({ message: "Uploaded file content is not a valid image" });
+  }
+
   const imagePath = `/uploads/profile-images/${req.file.filename}`;
   let conn;
   try {
@@ -1267,6 +1358,32 @@ exports.updateRoom = async (req, res) => {
     }
 
     const current = existingResult.rows[0];
+    const occupancyResult = await conn.execute(
+      `
+      SELECT COUNT(*) AS occupied_count
+      FROM students
+      WHERE TRIM(room_no) = :b_room_no
+      `,
+      { b_room_no: normalizedRoomNo },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const occupiedCount = Number(occupancyResult.rows?.[0]?.OCCUPIED_COUNT || 0);
+    const nextCapacity = parsedCapacity === undefined ? Number(current.CAPACITY || 0) : parsedCapacity;
+    const nextIsActive = normalizedIsActive === undefined ? Number(current.IS_ACTIVE || 0) : normalizedIsActive;
+
+    if (nextCapacity < occupiedCount) {
+      return res.status(400).json({
+        message: `Room capacity cannot be set below current occupied count (${occupiedCount}). Reassign students first.`
+      });
+    }
+
+    if (nextIsActive === 0 && occupiedCount > 0) {
+      return res.status(400).json({
+        message: `Room cannot be marked inactive while ${occupiedCount} student(s) are still assigned. Reassign students first.`
+      });
+    }
+
     await conn.execute(
       `
       UPDATE rooms
@@ -1788,6 +1905,156 @@ exports.deleteExternalAccommodation = async (req, res) => {
   }
 };
 
+exports.getRoomAllocationRequests = async (_req, res) => {
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const requests = await getRoomAllocationRequestRows(conn);
+    return res.json({ requests });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch room allocation requests" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.assignRoomAllocationRequest = async (req, res) => {
+  const { requestId } = req.params;
+  const { roomNo, remarks } = req.body;
+  const normalizedRoomNo = roomNo ? String(roomNo).trim() : "";
+
+  if (!requestId || Number.isNaN(Number(requestId))) {
+    return res.status(400).json({ message: "Valid requestId is required" });
+  }
+
+  if (!normalizedRoomNo) {
+    return res.status(400).json({ message: "roomNo is required" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const requestResult = await conn.execute(
+      `
+      SELECT request_id, user_id, status
+      FROM room_allocation_requests
+      WHERE request_id = :b_request_id
+      FOR UPDATE
+      `,
+      { b_request_id: Number(requestId) },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    if (!requestResult.rows.length) {
+      return res.status(404).json({ message: "Room allocation request not found" });
+    }
+
+    const requestRow = requestResult.rows[0];
+    if (requestRow.STATUS !== "Pending") {
+      return res.status(400).json({ message: "Only pending room allocation requests can be assigned" });
+    }
+
+    const roomState = await lockRoomAndGetOccupancy(conn, normalizedRoomNo, requestRow.USER_ID);
+    if (!roomState) {
+      return res.status(400).json({ message: "Assigned room does not exist" });
+    }
+
+    if (Number(roomState.IS_ACTIVE || 0) !== 1) {
+      return res.status(400).json({ message: "Assigned room is inactive" });
+    }
+
+    if (Number(roomState.OCCUPIED_COUNT || 0) >= Number(roomState.CAPACITY || 0)) {
+      return res.status(400).json({ message: "Assigned room has no vacancy left" });
+    }
+
+    const studentResult = await conn.execute(
+      `
+      SELECT room_no
+      FROM students
+      WHERE user_id = :b_user_id
+      FOR UPDATE
+      `,
+      { b_user_id: requestRow.USER_ID },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const currentRoomNo = studentResult.rows?.[0]?.ROOM_NO ? String(studentResult.rows[0].ROOM_NO).trim() : "";
+    if (currentRoomNo) {
+      return res.status(400).json({ message: "Student already has a hostel room assigned" });
+    }
+
+    await conn.execute(
+      `
+      UPDATE students
+      SET room_no = :b_room_no
+      WHERE user_id = :b_user_id
+      `,
+      {
+        b_room_no: normalizedRoomNo,
+        b_user_id: requestRow.USER_ID
+      },
+      { autoCommit: false }
+    );
+
+    await conn.execute(
+      `
+      UPDATE room_allocation_requests
+      SET status = 'Assigned',
+          assigned_room_no = :b_room_no,
+          reviewed_by = :b_reviewed_by,
+          reviewed_at = SYSDATE,
+          remarks = :b_remarks
+      WHERE request_id = :b_request_id
+      `,
+      {
+        b_room_no: normalizedRoomNo,
+        b_reviewed_by: req.user.userId,
+        b_remarks: remarks ? String(remarks).trim() : null,
+        b_request_id: Number(requestId)
+      },
+      { autoCommit: false }
+    );
+
+    await insertSystemLog(conn, {
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: "ASSIGN_ROOM_BY_REQUEST",
+      entityType: "ROOM_ALLOCATION_REQUEST",
+      entityId: Number(requestId),
+      details: `Assigned room ${normalizedRoomNo} for request ${requestId}`
+    });
+
+    await conn.commit();
+    return res.json({ message: "Room assigned successfully from request queue" });
+  } catch (err) {
+    console.error(err);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Error rolling back transaction:", rollbackErr);
+      }
+    }
+    return res.status(500).json({ message: "Failed to assign room from request queue" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
 exports.resetUserPassword = async (req, res) => {
   const { userId } = req.params;
   const { newPassword } = req.body;
@@ -1915,6 +2182,7 @@ exports.deleteUser = async (req, res) => {
         (SELECT COUNT(*) FROM student_feedback WHERE user_id = :b_user_id) AS feedback_refs,
         (SELECT COUNT(*) FROM canteen_menu WHERE created_by = :b_user_id) AS canteen_refs,
         (SELECT COUNT(*) FROM external_accommodations WHERE created_by = :b_user_id) AS accommodation_refs,
+        (SELECT COUNT(*) FROM room_allocation_requests WHERE user_id = :b_user_id OR reviewed_by = :b_user_id) AS room_request_refs,
         (SELECT COUNT(*) FROM system_logs WHERE actor_user_id = :b_user_id) AS log_refs
       FROM dual
       `,
@@ -1929,6 +2197,7 @@ exports.deleteUser = async (req, res) => {
       Number(refs.FEEDBACK_REFS || 0) +
       Number(refs.CANTEEN_REFS || 0) +
       Number(refs.ACCOMMODATION_REFS || 0) +
+      Number(refs.ROOM_REQUEST_REFS || 0) +
       Number(refs.LOG_REFS || 0);
 
     if (totalRefs > 0 && !force) {
@@ -2008,6 +2277,23 @@ exports.deleteUser = async (req, res) => {
         UPDATE external_accommodations
         SET created_by = NULL
         WHERE created_by = :b_user_id
+        `,
+        { b_user_id: targetUserId },
+        { autoCommit: false }
+      );
+      await conn.execute(
+        `
+        UPDATE room_allocation_requests
+        SET reviewed_by = NULL
+        WHERE reviewed_by = :b_user_id
+        `,
+        { b_user_id: targetUserId },
+        { autoCommit: false }
+      );
+      await conn.execute(
+        `
+        DELETE FROM room_allocation_requests
+        WHERE user_id = :b_user_id
         `,
         { b_user_id: targetUserId },
         { autoCommit: false }

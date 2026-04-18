@@ -8,6 +8,8 @@ import { GateEntryExit } from "./GateEntryExit";
 import { TodayLogs } from "./TodayLogs";
 import { StudentsOutside } from "./StudentsOutside";
 import { StaffProfileSettings } from "../../components/StaffProfileSettings";
+import { api } from "../../lib/api";
+import { clearAuthSession, getStoredIdentifier, getStoredRole, getStoredToken } from "../../lib/authStorage";
 
 type Tab = "gate" | "logs" | "outside" | "profile";
 
@@ -25,18 +27,18 @@ export function SecurityDashboard() {
     const navigate = useNavigate();
 
     React.useEffect(() => {
-        const token = localStorage.getItem("token");
-        const role = localStorage.getItem("userRole");
+        const token = getStoredToken();
+        const role = getStoredRole();
         if (!token || role !== "Security") {
             navigate("/");
         }
     }, [navigate]);
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userRole");
-        localStorage.removeItem("userIdentifier");
-        navigate("/");
+        api.post("/auth/logout").catch(() => undefined).finally(() => {
+            clearAuthSession();
+            navigate("/");
+        });
     };
 
     const renderContent = () => {
@@ -79,7 +81,7 @@ export function SecurityDashboard() {
                             <ShieldCheck className={theme.text} size={24} />
                             <div>
                                 <h1 className={`text-xl font-bold tracking-wide truncate ${theme.text}`}>Security Portal</h1>
-                                <p className={`text-xs ${theme.muted}`}>{localStorage.getItem("userIdentifier") || "SECURITY"}</p>
+                                <p className={`text-xs ${theme.muted}`}>{getStoredIdentifier() || "SECURITY"}</p>
                             </div>
                         </div>
                     ) : (

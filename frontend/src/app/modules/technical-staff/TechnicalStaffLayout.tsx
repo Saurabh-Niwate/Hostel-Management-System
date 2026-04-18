@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router';
+import { clearAuthSession } from '../../lib/authStorage';
 
 interface NavItem {
   label: string;
@@ -22,7 +23,7 @@ export function TechnicalStaffLayout() {
   const location = useLocation();
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
+    clearAuthSession();
     navigate('/');
   };
 

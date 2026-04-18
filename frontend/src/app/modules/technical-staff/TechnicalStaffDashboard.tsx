@@ -9,6 +9,7 @@ import { RoomManagement } from './RoomManagement';
 import { NearbyStayManagement } from './NearbyStayManagement';
 import { StaffProfileSettings } from '../../components/StaffProfileSettings';
 import { api } from '../../lib/api';
+import { clearAuthSession, getStoredIdentifier, getStoredRole, getStoredToken } from '../../lib/authStorage';
 
 type View = 'dashboard' | 'create-users' | 'manage-users' | 'room-management' | 'nearby-stays' | 'fee-management' | 'profile';
 type LogRow = {
@@ -44,8 +45,8 @@ export function TechnicalStaffDashboard() {
 
   // Load stats
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('userRole');
+    const token = getStoredToken();
+    const role = getStoredRole();
     if (!token || role !== 'Technical Staff') {
       navigate('/');
     }
@@ -81,10 +82,10 @@ export function TechnicalStaffDashboard() {
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userIdentifier');
-      navigate('/');
+      api.post('/auth/logout').catch(() => undefined).finally(() => {
+        clearAuthSession();
+        navigate('/');
+      });
     }
   };
 
@@ -161,7 +162,7 @@ export function TechnicalStaffDashboard() {
                 <ShieldCheck className={`w-5 h-5 ${theme.text}`} />
                 <div>
                   <h1 className={`text-xl font-bold tracking-wide ${theme.text}`}>Technical Portal</h1>
-                  <p className={`text-xs ${theme.muted}`}>{localStorage.getItem('userIdentifier') || 'TECHNICAL'}</p>
+                  <p className={`text-xs ${theme.muted}`}>{getStoredIdentifier() || 'TECHNICAL'}</p>
                 </div>
               </div>
               <button

@@ -7,9 +7,25 @@ type RoomRow = {
   BLOCK_NAME?: string;
   FLOOR_NO?: number;
   CAPACITY: number;
+  OCCUPIED?: number;
+  VACANCY?: number;
   ROOM_TYPE?: string;
   IS_ACTIVE: number;
   CREATED_AT?: string;
+};
+
+type RoomRequestRow = {
+  REQUEST_ID: number;
+  USER_ID: number;
+  STUDENT_ID: string;
+  FULL_NAME?: string;
+  PHONE?: string;
+  CURRENT_ROOM_NO?: string | null;
+  STATUS: string;
+  ASSIGNED_ROOM_NO?: string | null;
+  REMARKS?: string | null;
+  REQUESTED_AT?: string;
+  REVIEWED_AT?: string | null;
 };
 
 type RoomForm = {
@@ -36,17 +52,25 @@ export function RoomManagement() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [requests, setRequests] = useState<RoomRequestRow[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState<RoomForm>(defaultForm);
   const [editingRoomNo, setEditingRoomNo] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<RoomForm>(defaultForm);
+  const [assigningRequest, setAssigningRequest] = useState<RoomRequestRow | null>(null);
+  const [assignRoomNo, setAssignRoomNo] = useState("");
+  const [assignRemarks, setAssignRemarks] = useState("");
 
   const loadRooms = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await api.get("/technical-staff/rooms");
-      setRooms(res.data?.rooms || []);
+      const [roomsRes, requestsRes] = await Promise.all([
+        api.get("/technical-staff/rooms"),
+        api.get("/technical-staff/room-allocation-requests"),
+      ]);
+      setRooms(roomsRes.data?.rooms || []);
+      setRequests(requestsRes.data?.requests || []);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load rooms");
     } finally {
@@ -79,6 +103,9 @@ export function RoomManagement() {
       String(room.ROOM_TYPE || "").toLowerCase().includes(q)
     );
   });
+
+  const pendingRequests = requests.filter((request) => request.STATUS === "Pending");
+  const assignableRooms = rooms.filter((room) => Number(room.IS_ACTIVE) === 1 && Number(room.VACANCY || 0) > 0);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,6 +181,34 @@ export function RoomManagement() {
         }
       }
       setError(message);
+    }
+  };
+
+  const openAssignModal = (request: RoomRequestRow) => {
+    setAssigningRequest(request);
+    setAssignRoomNo("");
+    setAssignRemarks("");
+    setError("");
+    setSuccess("");
+  };
+
+  const handleAssignRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assigningRequest || !assignRoomNo) return;
+    setError("");
+    setSuccess("");
+    try {
+      await api.put(`/technical-staff/room-allocation-requests/${assigningRequest.REQUEST_ID}/assign`, {
+        roomNo: assignRoomNo,
+        remarks: assignRemarks.trim() || undefined,
+      });
+      setSuccess("Room request processed successfully");
+      setAssigningRequest(null);
+      setAssignRoomNo("");
+      setAssignRemarks("");
+      await loadRooms();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to assign room");
     }
   };
 
@@ -255,6 +310,73 @@ export function RoomManagement() {
         </div>
       </div>
 
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Room Allocation Requests</h3>
+            <p className="text-sm text-slate-500 mt-1">Oldest pending requests appear first.</p>
+          </div>
+          <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-800">
+            Pending: {pendingRequests.length}
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700">Student ID</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700">Name</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700">Requested At</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700">Status</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700">Assigned Room</th>
+                <th className="text-right px-6 py-4 text-sm font-semibold text-slate-700">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {requests.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-500">
+                    No room allocation requests yet.
+                  </td>
+                </tr>
+              ) : (
+                requests.map((request) => (
+                  <tr key={request.REQUEST_ID} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{request.STUDENT_ID}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{request.FULL_NAME || "-"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{request.REQUESTED_AT || "-"}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        request.STATUS === "Pending"
+                          ? "bg-amber-100 text-amber-800"
+                          : request.STATUS === "Assigned"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-slate-100 text-slate-700"
+                      }`}>
+                        {request.STATUS}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{request.ASSIGNED_ROOM_NO || "-"}</td>
+                    <td className="px-6 py-4 text-right">
+                      {request.STATUS === "Pending" ? (
+                        <button
+                          onClick={() => openAssignModal(request)}
+                          className="px-3 py-1.5 text-sm rounded-lg bg-cyan-600 text-white hover:bg-cyan-700"
+                        >
+                          Assign Room
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-400">Processed</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {isCreateModalOpen && (
         <ModalShell title="Create Room" onClose={() => setIsCreateModalOpen(false)}>
           <form onSubmit={handleCreate} className="space-y-3">
@@ -287,6 +409,41 @@ export function RoomManagement() {
             <div className="grid grid-cols-2 gap-2">
               <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Update Room</button>
               <button type="button" onClick={() => setEditingRoomNo(null)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200">Cancel</button>
+            </div>
+          </form>
+        </ModalShell>
+      )}
+
+      {assigningRequest && (
+        <ModalShell title={`Assign Room - ${assigningRequest.STUDENT_ID}`} onClose={() => setAssigningRequest(null)}>
+          <form onSubmit={handleAssignRequest} className="space-y-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              <p><span className="font-medium">Student:</span> {assigningRequest.FULL_NAME || assigningRequest.STUDENT_ID}</p>
+              <p className="mt-1"><span className="font-medium">Requested At:</span> {assigningRequest.REQUESTED_AT || "-"}</p>
+            </div>
+            <select
+              value={assignRoomNo}
+              onChange={(e) => setAssignRoomNo(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+              required
+            >
+              <option value="">Select vacant room</option>
+              {assignableRooms.map((room) => (
+                <option key={room.ROOM_NO} value={room.ROOM_NO}>
+                  {room.ROOM_NO} | Block {room.BLOCK_NAME || "-"} | Vacant: {room.VACANCY || 0}
+                </option>
+              ))}
+            </select>
+            <textarea
+              value={assignRemarks}
+              onChange={(e) => setAssignRemarks(e.target.value)}
+              placeholder="Remarks (optional)"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              rows={3}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <button type="submit" className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">Assign Room</button>
+              <button type="button" onClick={() => setAssigningRequest(null)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200">Cancel</button>
             </div>
           </form>
         </ModalShell>

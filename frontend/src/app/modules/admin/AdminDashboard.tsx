@@ -1,7 +1,9 @@
-import React, { useState } from "react";
-import { User, LogOut, FileText, LayoutDashboard, CalendarCheck } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { User, LogOut, FileText, LayoutDashboard, CalendarCheck, Menu } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../../lib/api";
+import { clearAuthSession, getStoredIdentifier, getStoredRole, getStoredToken } from "../../lib/authStorage";
 
 // Components
 import { AdminReportsOverview } from "./AdminReportsOverview";
@@ -20,13 +22,25 @@ export function AdminDashboard() {
     };
     const [activeTab, setActiveTab] = useState<Tab>("dashboard");
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isAuthChecking, setIsAuthChecking] = useState(true);
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const token = getStoredToken();
+        const role = getStoredRole();
+        if (!token || role !== "Admin") {
+            navigate("/");
+        }
+        else {
+            setIsAuthChecking(false);
+        }
+    }, [navigate]);
+
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userRole");
-        localStorage.removeItem("userIdentifier");
-        navigate("/");
+        api.post("/auth/logout").catch(() => undefined).finally(() => {
+            clearAuthSession();
+            navigate("/");
+        });
     };
 
     const renderContent = () => {
@@ -53,6 +67,17 @@ export function AdminDashboard() {
         }
     };
 
+    if (isAuthChecking) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-blue-50">
+                <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+                    <p className="text-sm font-medium text-blue-700">Verifying access...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className={`min-h-screen ${theme.bg} flex`}>
             {/* Sidebar */}
@@ -64,14 +89,17 @@ export function AdminDashboard() {
             >
                 <div className="p-6 flex items-center justify-between border-b border-white/20">
                     {isSidebarOpen ? (
-                        <h1 className="text-xl font-bold tracking-wide truncate">Admin Portal</h1>
+                        <div>
+                            <h1 className="text-xl font-bold tracking-wide truncate">Admin Portal</h1>
+                            <p className="text-xs text-white/80">{getStoredIdentifier() || "ADMIN"}</p>
+                        </div>
                     ) : (
                         <div className="w-8 h-8 rounded-lg mx-auto flex items-center justify-center bg-white/15">
                             <span className="font-bold text-sm">A</span>
                         </div>
                     )}
                     <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg md:hidden">
-                        {/* Mobile toggle icon if needed */}
+                        <Menu className="h-5 w-5" />
                     </button>
                 </div>
 
@@ -154,14 +182,13 @@ function SidebarItem({ icon, label, active, onClick, isOpen, activeColor }: any)
     return (
         <button
             onClick={onClick}
-            className={`flex items-center w-full p-3 rounded-xl transition-all duration-200 ${active
-                    ? "text-white shadow-lg"
-                    : "text-white/90 hover:bg-white/10 hover:text-white"
-                } ${!isOpen && 'justify-center'}`}
+            className={`w-full flex items-center p-3 rounded-xl transition-colors font-medium ${
+                active ? "bg-white/10 text-white" : "text-white/80 hover:bg-white/5"
+            } ${!isOpen && "justify-center"}`}
             style={active ? { backgroundColor: activeColor } : undefined}
         >
             {icon}
-            {isOpen && <span className="ml-3 font-medium">{label}</span>}
+            {isOpen && <span className="ml-3">{label}</span>}
         </button>
     );
 }

@@ -24,6 +24,7 @@ import { FeesView } from "./FeesView";
 import { FeedbackView } from "./FeedbackView";
 import { CanteenMenuView } from "./CanteenMenuView";
 import { api } from "../../lib/api";
+import { clearAuthSession, getStoredIdentifier, getStoredRole, getStoredToken } from "../../lib/authStorage";
 
 type Tab = "dashboard" | "profile" | "leave" | "attendance" | "fees" | "feedback" | "canteen";
 type LeaveStatus = "Pending" | "Approved" | "Rejected";
@@ -66,6 +67,22 @@ type NearbyStay = {
   AVAILABILITY_STATUS: string;
 };
 
+type RoomAllocationStatus = {
+  hasAssignedRoom: boolean;
+  roomNo?: string | null;
+  totalVacancy: number;
+  hasPendingRequest: boolean;
+  canRequestRoom: boolean;
+  latestRequest?: {
+    REQUEST_ID: number;
+    STATUS: string;
+    ASSIGNED_ROOM_NO?: string | null;
+    REMARKS?: string | null;
+    REQUESTED_AT?: string | null;
+    REVIEWED_AT?: string | null;
+  } | null;
+};
+
 type SidebarItemProps = {
   icon: React.ReactNode;
   label: string;
@@ -98,26 +115,40 @@ export function StudentDashboard() {
   const [fees, setFees] = useState<FeeItem[]>([]);
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [nearbyStays, setNearbyStays] = useState<NearbyStay[]>([]);
+  const [dashboardLoaded, setDashboardLoaded] = useState(false);
+  const [roomAllocation, setRoomAllocation] = useState<RoomAllocationStatus>({
+    hasAssignedRoom: false,
+    totalVacancy: 0,
+    hasPendingRequest: false,
+    canRequestRoom: false,
+    latestRequest: null,
+  });
+  const [roomRequestFeedback, setRoomRequestFeedback] = useState<{message: string, type: "success" | "error"} | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("userRole");
+    const token = getStoredToken();
+    const role = getStoredRole();
     if (!token || role !== "Student") {
       navigate("/");
+    } else {
+      setIsAuthChecking(false);
     }
   }, [navigate]);
 
   useEffect(() => {
+    if (isAuthChecking) return;
     const loadDashboardData = async () => {
       try {
-        const [leavesRes, profileRes, attendanceRes, feesRes, menuRes, staysRes] = await Promise.allSettled([
+        const [leavesRes, profileRes, attendanceRes, feesRes, menuRes, staysRes, roomAllocationRes] = await Promise.allSettled([
           api.get("/leave/my-leaves"),
           api.get("/student/profile"),
           api.get("/student/attendance"),
           api.get("/student/fees"),
           api.get("/student/canteen-menu"),
           api.get("/student/nearby-stays"),
+          api.get("/student/room-allocation-status"),
         ]);
 
         const leaveRows = leavesRes.status === "fulfilled" ? leavesRes.value.data?.leaves || [] : [];
@@ -136,13 +167,43 @@ export function StudentDashboard() {
         setFees(feesRes.status === "fulfilled" ? feesRes.value.data?.fees || [] : []);
         setMenu(menuRes.status === "fulfilled" ? menuRes.value.data?.menu || [] : []);
         setNearbyStays(staysRes.status === "fulfilled" ? staysRes.value.data?.accommodations || [] : []);
-      } catch {
+        setRoomAllocation(
+          roomAllocationRes.status === "fulfilled"
+            ? {
+                hasAssignedRoom: Boolean(roomAllocationRes.value.data?.hasAssignedRoom),
+                roomNo: roomAllocationRes.value.data?.roomNo || null,
+                totalVacancy: Number(roomAllocationRes.value.data?.totalVacancy || 0),
+                hasPendingRequest: Boolean(roomAllocationRes.value.data?.hasPendingRequest),
+                canRequestRoom: Boolean(roomAllocationRes.value.data?.canRequestRoom),
+                latestRequest: roomAllocationRes.value.data?.latestRequest || null,
+              }
+            : {
+                hasAssignedRoom: false,
+                totalVacancy: 0,
+                hasPendingRequest: false,
+                canRequestRoom: false,
+                latestRequest: null,
+              }
+        );
+      } catch (err) {
         // Keep dashboard lightweight; dedicated pages handle detailed errors.
+      } finally {
+        setDashboardLoaded(true);
       }
     };
 
     loadDashboardData();
-  }, []);
+    const pollingWindow = window.setInterval(loadDashboardData, 30000);
+    return () => window.clearInterval(pollingWindow);
+  }, [isAuthChecking]);
+
+  const hasAssignedRoom = dashboardLoaded && Boolean(profile.roomNo || roomAllocation.roomNo || roomAllocation.hasAssignedRoom);
+
+  useEffect(() => {
+    if (!hasAssignedRoom && (activeTab === "leave" || activeTab === "attendance" || activeTab === "fees" || activeTab === "feedback")) {
+      setActiveTab("dashboard");
+    }
+  }, [activeTab, hasAssignedRoom]);
 
   const leaveStats = useMemo(() => {
     const total = leaves.length;
@@ -179,16 +240,148 @@ export function StudentDashboard() {
     return { total: menu.length, available };
   }, [menu]);
 
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-emerald-50">
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
+          <p className="text-sm font-medium text-emerald-700">Verifying access...</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userIdentifier");
-    navigate("/");
+    api.post("/auth/logout").catch(() => undefined).finally(() => {
+      clearAuthSession();
+      navigate("/");
+    });
+  };
+
+  const handleRoomRequest = async () => {
+    try {
+      await api.post("/student/room-allocation-requests");
+      setRoomAllocation((prev) => ({
+        ...prev,
+        hasPendingRequest: true,
+        canRequestRoom: false,
+      }));
+      setRoomRequestFeedback({ message: "Room request submitted successfully", type: "success" });
+    } catch (err: any) {
+      setRoomRequestFeedback({ message: err.response?.data?.message || "Failed to submit room request", type: "error" });
+    }
+    setTimeout(() => setRoomRequestFeedback(null), 5000);
   };
 
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
+        if (!dashboardLoaded) {
+          return (
+            <div className="rounded-2xl border border-emerald-100 bg-white p-10 text-center shadow-sm">
+              <p className="text-sm text-slate-500">Loading dashboard...</p>
+            </div>
+          );
+        }
+
+        if (!hasAssignedRoom) {
+          return (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-amber-200">
+                  <h3 className="text-slate-500 text-sm font-medium">Room Status</h3>
+                  <p className="text-3xl font-bold text-amber-700 mt-2">Not Allocated</p>
+                </div>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100">
+                  <h3 className="text-slate-500 text-sm font-medium">Current Hostel Vacancy</h3>
+                  <p className="text-3xl font-bold text-emerald-700 mt-2">{roomAllocation.totalVacancy}</p>
+                </div>
+                <button
+                  onClick={() => setActiveTab("canteen")}
+                  className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 text-left hover:border-emerald-300"
+                >
+                  <h3 className="text-slate-500 text-sm font-medium">Today&apos;s Meals</h3>
+                  <p className="text-3xl font-bold text-emerald-700 mt-2">{menuStats.available}</p>
+                  <p className="text-xs text-slate-500 mt-2">Available items today</p>
+                </button>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-amber-200">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">Hostel Room Request</h3>
+                    <p className="text-sm text-slate-600 mt-1">
+                      You will get access to hostel services after a room is assigned. If vacancy opens, you can request hostel allocation here.
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-start gap-2 md:items-end">
+                    {roomAllocation.hasPendingRequest ? (
+                      <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                        Request Pending
+                      </span>
+                    ) : roomAllocation.canRequestRoom ? (
+                      <button
+                        onClick={handleRoomRequest}
+                        className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600"
+                      >
+                        Apply For Hostel Room
+                      </button>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                        No vacancy available right now
+                      </span>
+                    )}
+                    {roomRequestFeedback && (
+                      <p className={`text-xs mt-2 font-medium ${roomRequestFeedback.type === "success" ? "text-emerald-600" : "text-rose-600"}`}>
+                        {roomRequestFeedback.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-amber-200">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">Nearby Stay Suggestions</h3>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Hostel room is not assigned yet. These nearby manual suggestions can help for temporary stay.
+                    </p>
+                  </div>
+                  <span className="text-xs px-3 py-1 rounded-full bg-amber-100 text-amber-800">
+                    Room Not Assigned
+                  </span>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  Until a room is allotted, you can use these nearby options shared by technical staff. New hostel vacancies will appear here automatically.
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {nearbyStays.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                      No nearby stay suggestions are available right now.
+                    </div>
+                  ) : (
+                    nearbyStays.slice(0, 3).map((stay) => (
+                      <div key={stay.ACCOMMODATION_ID} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="font-semibold text-slate-900">{stay.NAME}</p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {stay.ACCOMMODATION_TYPE} | {stay.GENDER_ALLOWED || "Any"} | {stay.AVAILABILITY_STATUS}
+                        </p>
+                        <p className="mt-3 text-sm text-slate-700"><span className="font-medium">Address:</span> {stay.ADDRESS}</p>
+                        <p className="text-sm text-slate-700"><span className="font-medium">Distance:</span> {stay.DISTANCE_KM ?? "-"} km</p>
+                        <p className="text-sm text-slate-700"><span className="font-medium">Phone:</span> {stay.CONTACT_PHONE || "-"}</p>
+                        <p className="text-sm text-slate-700"><span className="font-medium">Rent:</span> {stay.RENT_MIN ?? "-"} - {stay.RENT_MAX ?? "-"}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -210,7 +403,7 @@ export function StudentDashboard() {
               </div>
             </div>
 
-            {!profile.roomNo && (
+            {!hasAssignedRoom && (
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-amber-200">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -354,9 +547,8 @@ export function StudentDashboard() {
                 </div>
               </div>
             </div>
-
-            </div>
-          );
+          </div>
+        );
       case "profile":
         return (
           <StudentProfile
@@ -397,7 +589,7 @@ export function StudentDashboard() {
   };
 
   const headerAction =
-    activeTab === "leave" ? (
+    hasAssignedRoom && activeTab === "leave" ? (
       leaveViewTab === "list" ? (
         <button
           onClick={() => setLeaveInitialTab("apply")}
@@ -430,7 +622,7 @@ export function StudentDashboard() {
               <GraduationCap className={`h-5 w-5 ${theme.text}`} />
               <div>
                 <h1 className={`text-xl font-bold tracking-wide truncate ${theme.text}`}>Student Portal</h1>
-                <p className={`text-xs ${theme.muted}`}>{localStorage.getItem("userIdentifier") || "STUDENT"}</p>
+                <p className={`text-xs ${theme.muted}`}>{getStoredIdentifier() || "STUDENT"}</p>
               </div>
             </div>
             <button
@@ -449,37 +641,41 @@ export function StudentDashboard() {
               onClick={() => setActiveTab("dashboard")}
               theme={theme}
             />
-            <SidebarItem
-              icon={<FileText className="w-5 h-5" />}
-              label="Leave Management"
-              active={activeTab === "leave"}
-              onClick={() => {
-                setLeaveInitialTab("list");
-                setActiveTab("leave");
-              }}
-              theme={theme}
-            />
-            <SidebarItem
-              icon={<CalendarCheck className="w-5 h-5" />}
-              label="Attendance"
-              active={activeTab === "attendance"}
-              onClick={() => setActiveTab("attendance")}
-              theme={theme}
-            />
-            <SidebarItem
-              icon={<CreditCard className="w-5 h-5" />}
-              label="Fees"
-              active={activeTab === "fees"}
-              onClick={() => setActiveTab("fees")}
-              theme={theme}
-            />
-            <SidebarItem
-              icon={<MessageSquare className="w-5 h-5" />}
-              label="Feedback"
-              active={activeTab === "feedback"}
-              onClick={() => setActiveTab("feedback")}
-              theme={theme}
-            />
+            {hasAssignedRoom && (
+              <>
+                <SidebarItem
+                  icon={<FileText className="w-5 h-5" />}
+                  label="Leave Management"
+                  active={activeTab === "leave"}
+                  onClick={() => {
+                    setLeaveInitialTab("list");
+                    setActiveTab("leave");
+                  }}
+                  theme={theme}
+                />
+                <SidebarItem
+                  icon={<CalendarCheck className="w-5 h-5" />}
+                  label="Attendance"
+                  active={activeTab === "attendance"}
+                  onClick={() => setActiveTab("attendance")}
+                  theme={theme}
+                />
+                <SidebarItem
+                  icon={<CreditCard className="w-5 h-5" />}
+                  label="Fees"
+                  active={activeTab === "fees"}
+                  onClick={() => setActiveTab("fees")}
+                  theme={theme}
+                />
+                <SidebarItem
+                  icon={<MessageSquare className="w-5 h-5" />}
+                  label="Feedback"
+                  active={activeTab === "feedback"}
+                  onClick={() => setActiveTab("feedback")}
+                  theme={theme}
+                />
+              </>
+            )}
             <SidebarItem
               icon={<Coffee className="w-5 h-5" />}
               label="Canteen Menu"
@@ -580,3 +776,4 @@ function SidebarItem({ icon, label, active, onClick, theme }: SidebarItemProps) 
     </button>
   );
 }
+          

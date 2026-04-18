@@ -2,6 +2,8 @@ const { oracledb } = require("../config/db");
 const { syncOverdueFeeStatuses } = require("../utils/feeStatus");
 const { toPublicUrl, deleteProfileImageFile, safeUnlink } = require("../utils/fileUtils");
 const { withConnection, withTransaction } = require("../utils/dbUtils");
+const { getStudentRoomState } = require("../utils/studentRoomAccess");
+const { isValidImageSignature } = require("../middlewares/uploadMiddleware");
 
 exports.getMyProfile = async (req, res) => {
   const userId = req.user.userId;
@@ -62,6 +64,11 @@ exports.uploadMyProfileImage = async (req, res) => {
 
   if (!req.file) {
     return res.status(400).json({ message: "Image file is required" });
+  }
+
+  if (!isValidImageSignature(req.file.path, req.file.mimetype)) {
+    safeUnlink(req.file.path);
+    return res.status(400).json({ message: "Uploaded file content is not a valid image" });
   }
 
   const imagePath = `/uploads/profile-images/${req.file.filename}`;
@@ -270,6 +277,10 @@ exports.getMyAttendance = async (req, res) => {
   let conn;
   try {
     conn = await oracledb.getConnection();
+    const roomState = await getStudentRoomState(conn, userId);
+    if (!roomState.hasAssignedRoom) {
+      return res.status(403).json({ message: "Attendance is available only after hostel room allocation" });
+    }
 
     const result = await conn.execute(
       `
@@ -313,6 +324,10 @@ exports.getMyFeeStatus = async (req, res) => {
   let conn;
   try {
     conn = await oracledb.getConnection();
+    const roomState = await getStudentRoomState(conn, userId);
+    if (!roomState.hasAssignedRoom) {
+      return res.status(403).json({ message: "Fee status is available only after hostel room allocation" });
+    }
     await syncOverdueFeeStatuses(conn);
 
     const result = await conn.execute(
@@ -371,6 +386,10 @@ exports.submitFeedback = async (req, res) => {
   let conn;
   try {
     conn = await oracledb.getConnection();
+    const roomState = await getStudentRoomState(conn, userId);
+    if (!roomState.hasAssignedRoom) {
+      return res.status(403).json({ message: "Feedback is available only after hostel room allocation" });
+    }
 
     await conn.execute(
       `
@@ -412,6 +431,10 @@ exports.getMyFeedback = async (req, res) => {
   let conn;
   try {
     conn = await oracledb.getConnection();
+    const roomState = await getStudentRoomState(conn, userId);
+    if (!roomState.hasAssignedRoom) {
+      return res.status(403).json({ message: "Feedback history is available only after hostel room allocation" });
+    }
 
     const result = await conn.execute(
       `
@@ -539,6 +562,201 @@ exports.getNearbyStaySuggestions = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to fetch nearby stay suggestions" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.getRoomAllocationStatus = async (req, res) => {
+  const role = req.user.role;
+  const userId = req.user.userId;
+
+  if (role !== "Student") {
+    return res.status(403).json({ message: "Only students can view room allocation status" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const roomState = await getStudentRoomState(conn, userId);
+    const vacancyResult = await conn.execute(
+      `
+      SELECT NVL(SUM(
+        CASE
+          WHEN NVL(r.is_active, 1) = 1 THEN
+            GREATEST(
+              NVL(r.capacity, 0) - (
+                SELECT COUNT(*)
+                FROM students s
+                WHERE TRIM(s.room_no) = TRIM(r.room_no)
+              ),
+              0
+            )
+          ELSE 0
+        END
+      ), 0) AS total_vacancy
+      FROM rooms r
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const requestResult = await conn.execute(
+      `
+      SELECT *
+      FROM (
+        SELECT
+          request_id,
+          status,
+          assigned_room_no,
+          remarks,
+          TO_CHAR(requested_at, 'YYYY-MM-DD HH24:MI:SS') AS requested_at,
+          TO_CHAR(reviewed_at, 'YYYY-MM-DD HH24:MI:SS') AS reviewed_at
+        FROM room_allocation_requests
+        WHERE user_id = :b_user_id
+        ORDER BY requested_at DESC, request_id DESC
+      )
+      WHERE ROWNUM = 1
+      `,
+      { b_user_id: userId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const latestRequest = requestResult.rows?.[0] || null;
+    const totalVacancy = Number(vacancyResult.rows?.[0]?.TOTAL_VACANCY || 0);
+    const hasPendingRequest = latestRequest?.STATUS === "Pending";
+
+    return res.json({
+      hasAssignedRoom: roomState.hasAssignedRoom,
+      roomNo: roomState.roomNo || null,
+      totalVacancy,
+      hasPendingRequest,
+      canRequestRoom: !roomState.hasAssignedRoom && totalVacancy > 0 && !hasPendingRequest,
+      latestRequest
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch room allocation status" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.createRoomAllocationRequest = async (req, res) => {
+  const role = req.user.role;
+  const userId = req.user.userId;
+
+  if (role !== "Student") {
+    return res.status(403).json({ message: "Only students can request hostel room allocation" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const roomState = await getStudentRoomState(conn, userId);
+    if (roomState.hasAssignedRoom) {
+      return res.status(400).json({ message: "Hostel room is already assigned to this student" });
+    }
+
+    const lockedStudentResult = await conn.execute(
+      `
+      SELECT room_no
+      FROM students
+      WHERE user_id = :b_user_id
+      FOR UPDATE
+      `,
+      { b_user_id: userId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const lockedRoomNo = lockedStudentResult.rows?.[0]?.ROOM_NO ? String(lockedStudentResult.rows[0].ROOM_NO).trim() : "";
+    if (lockedRoomNo) {
+      return res.status(400).json({ message: "Hostel room is already assigned to this student" });
+    }
+
+    const existingPendingRequest = await conn.execute(
+      `
+      SELECT request_id
+      FROM room_allocation_requests
+      WHERE user_id = :b_user_id
+        AND status = 'Pending'
+      `,
+      { b_user_id: userId }
+    );
+
+    if (existingPendingRequest.rows.length > 0) {
+      return res.status(409).json({ message: "A room allocation request is already pending" });
+    }
+
+    const vacancyResult = await conn.execute(
+      `
+      SELECT NVL(SUM(
+        CASE
+          WHEN NVL(r.is_active, 1) = 1 THEN
+            GREATEST(
+              NVL(r.capacity, 0) - (
+                SELECT COUNT(*)
+                FROM students s
+                WHERE TRIM(s.room_no) = TRIM(r.room_no)
+              ),
+              0
+            )
+          ELSE 0
+        END
+      ), 0) AS total_vacancy
+      FROM rooms r
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const totalVacancy = Number(vacancyResult.rows?.[0]?.TOTAL_VACANCY || 0);
+    if (totalVacancy <= 0) {
+      return res.status(400).json({ message: "No hostel vacancy is available right now" });
+    }
+
+    const insertResult = await conn.execute(
+      `
+      INSERT INTO room_allocation_requests (user_id, status)
+      VALUES (:b_user_id, 'Pending')
+      RETURNING request_id INTO :b_request_id
+      `,
+      {
+        b_user_id: userId,
+        b_request_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
+      },
+      { autoCommit: false }
+    );
+
+    await conn.commit();
+    return res.status(201).json({
+      message: "Room allocation request submitted successfully",
+      requestId: insertResult.outBinds.b_request_id[0]
+    });
+  } catch (err) {
+    console.error(err);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Error rolling back transaction:", rollbackErr);
+      }
+    }
+    return res.status(500).json({ message: "Failed to submit room allocation request" });
   } finally {
     if (conn) {
       try {

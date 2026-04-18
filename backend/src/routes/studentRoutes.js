@@ -8,6 +8,8 @@ const {
   submitFeedback,
   getMyFeedback,
   getNearbyStaySuggestions,
+  getRoomAllocationStatus,
+  createRoomAllocationRequest,
   getCanteenMenu,
   getDinnerPollsForStudents,
   voteDinnerPoll,
@@ -24,6 +26,8 @@ router.get("/fees", verifyToken, requireRole("Student"), getMyFeeStatus);
 router.post("/feedback", verifyToken, requireRole("Student"), submitFeedback);
 router.get("/feedback", verifyToken, requireRole("Student"), getMyFeedback);
 router.get("/nearby-stays", verifyToken, requireRole("Student"), getNearbyStaySuggestions);
+router.get("/room-allocation-status", verifyToken, requireRole("Student"), getRoomAllocationStatus);
+router.post("/room-allocation-requests", verifyToken, requireRole("Student"), createRoomAllocationRequest);
 router.get("/canteen-menu", verifyToken, requireRole("Student"), getCanteenMenu);
 router.get("/dinner-polls", verifyToken, requireRole("Student"), getDinnerPollsForStudents);
 router.post("/dinner-polls/:pollId/vote", verifyToken, requireRole("Student"), voteDinnerPoll);

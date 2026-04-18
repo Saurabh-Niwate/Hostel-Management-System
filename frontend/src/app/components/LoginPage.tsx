@@ -4,6 +4,7 @@ import { Building2, Eye, EyeOff, Lock, Mail, IdCard } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
+import { setAuthSession } from "../lib/authStorage";
 import {
   Dialog,
   DialogContent,
@@ -83,10 +84,11 @@ const hostelRules = [
 ];
 
 export function LoginPage() {
-  const [selectedRole, setSelectedRole] = useState<Role>("student");
+  const [selectedRole, setSelectedRole] = useState<Role>(() => (localStorage.getItem("saved_role") as Role) || "student");
   const [showPassword, setShowPassword] = useState(false);
-  const [identifier, setIdentifier] = useState(""); // email, student ID, or employee ID
+  const [identifier, setIdentifier] = useState(() => localStorage.getItem("saved_identifier") || ""); // email, student ID, or employee ID
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showTermsDialog, setShowTermsDialog] = useState(false);
@@ -137,17 +139,19 @@ export function LoginPage() {
       const response = await api.post("/auth/login", {
         identifier,
         password,
+        roleHint: selectedRoleData.label,
       });
       const { token, role } = response.data;
 
-      // Store JWT
-      localStorage.setItem("token", token);
-      localStorage.setItem("userRole", role);
-      localStorage.setItem("userIdentifier", identifier);
+      setAuthSession({ token, role, identifier, rememberMe });
 
-      if (selectedRoleData.label !== role) {
-        setError("Selected role does not match your account role");
-        return;
+      // Save identifier and role for prefilling on the next visit
+      if (rememberMe) {
+        localStorage.setItem("saved_identifier", identifier);
+        localStorage.setItem("saved_role", selectedRole);
+      } else {
+        localStorage.removeItem("saved_identifier");
+        localStorage.removeItem("saved_role");
       }
 
       // Redirect based on role
@@ -415,6 +419,8 @@ export function LoginPage() {
                     <input
                       id="remember"
                       type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
                       className="w-4 h-4 border-slate-300 rounded focus:ring-2"
                       style={{
                         accentColor: selectedRoleData.color,

@@ -1,4 +1,5 @@
 const { oracledb } = require("../config/db");
+const { getStudentRoomState } = require("../utils/studentRoomAccess");
 
 exports.applyLeave = async (req, res) => {
   const { leaveType, fromDate, toDate, reason } = req.body;
@@ -25,6 +26,10 @@ exports.applyLeave = async (req, res) => {
   let conn;
   try {
     conn = await oracledb.getConnection();
+    const roomState = await getStudentRoomState(conn, userId);
+    if (!roomState.hasAssignedRoom) {
+      return res.status(403).json({ message: "Leave requests are available only after hostel room allocation" });
+    }
 
     await conn.execute(
       `
@@ -72,6 +77,10 @@ exports.getMyLeaves = async (req, res) => {
   let conn;
   try {
     conn = await oracledb.getConnection();
+    const roomState = await getStudentRoomState(conn, userId);
+    if (!roomState.hasAssignedRoom) {
+      return res.status(403).json({ message: "Leave history is available only after hostel room allocation" });
+    }
 
     const result = await conn.execute(
       `
@@ -122,6 +131,10 @@ exports.getMyLeaveById = async (req, res) => {
   let conn;
   try {
     conn = await oracledb.getConnection();
+    const roomState = await getStudentRoomState(conn, userId);
+    if (!roomState.hasAssignedRoom) {
+      return res.status(403).json({ message: "Leave details are available only after hostel room allocation" });
+    }
 
     const result = await conn.execute(
       `
@@ -179,6 +192,10 @@ exports.deleteMyPendingLeave = async (req, res) => {
   let conn;
   try {
     conn = await oracledb.getConnection();
+    const roomState = await getStudentRoomState(conn, userId);
+    if (!roomState.hasAssignedRoom) {
+      return res.status(403).json({ message: "Leave cancellation is available only after hostel room allocation" });
+    }
 
     const leaveCheck = await conn.execute(
       `

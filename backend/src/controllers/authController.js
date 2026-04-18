@@ -1,12 +1,13 @@
 const { oracledb } = require("../config/db");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const { clearAuthAttempts } = require("../middlewares/authSecurityMiddleware");
 
 const staffRoles = new Set(["Admin", "Technical Staff", "Warden", "Security", "Canteen Owner"]);
 
 exports.login = async (req, res) => {
-  const { identifier, password } = req.body;
+  const { identifier, password, roleHint } = req.body;
 
   if (typeof identifier !== "string" || typeof password !== "string") {
     return res.status(400).json({ message: "identifier and password are required" });
@@ -19,14 +20,21 @@ exports.login = async (req, res) => {
 
     const result = await conn.execute(
   `
-  SELECT u.user_id, u.password, r.role_name
+  SELECT u.user_id, u.password, r.role_name, NVL(u.token_version, 0) AS token_version
   FROM users u
   JOIN roles r ON u.role_id = r.role_id
-  WHERE TRIM(u.student_id) = :id
-     OR TRIM(u.emp_id) = :id
-     OR TRIM(u.email) = :id
+  WHERE r.role_name = :role_hint
+    AND (
+      TRIM(u.student_id) = :id
+      OR TRIM(u.emp_id) = :id
+      OR LOWER(TRIM(u.email)) = :id_lower
+    )
   `,
-  { id: identifier }
+  {
+    id: identifier,
+    id_lower: String(identifier).trim().toLowerCase(),
+    role_hint: roleHint
+  }
 );
 
 
@@ -40,6 +48,7 @@ exports.login = async (req, res) => {
     const userId = user[0];
     const dbPassword = user[1];
     const role = user[2];
+    const tokenVersion = Number(user[3] || 0);
 
 
     const passwordMatches = await bcrypt.compare(password, dbPassword);
@@ -49,9 +58,9 @@ exports.login = async (req, res) => {
     }
     
     const token = jwt.sign(
-      { userId, role },
+      { userId, role, tokenVersion },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "1d", jwtid: crypto.randomUUID() }
     );
 
     clearAuthAttempts(req);
@@ -68,6 +77,54 @@ exports.login = async (req, res) => {
         await conn.close();
       } catch (err) {
         console.error("Error closing database connection:", err);
+      }
+    }
+  }
+};
+
+exports.logout = async (req, res) => {
+  const { userId, jti, exp } = req.user || {};
+
+  if (!userId || !jti || !exp) {
+    return res.status(400).json({ message: "Valid authenticated session is required" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    await conn.execute(
+      `
+      MERGE INTO revoked_tokens rt
+      USING (
+        SELECT
+          :b_jti AS jti,
+          :b_user_id AS user_id,
+          TO_DATE(:b_expires_at, 'YYYY-MM-DD HH24:MI:SS') AS expires_at
+        FROM dual
+      ) src
+      ON (rt.jti = src.jti)
+      WHEN NOT MATCHED THEN
+        INSERT (jti, user_id, expires_at)
+        VALUES (src.jti, src.user_id, src.expires_at)
+      `,
+      {
+        b_jti: String(jti),
+        b_user_id: Number(userId),
+        b_expires_at: new Date(Number(exp) * 1000).toISOString().slice(0, 19).replace("T", " ")
+      },
+      { autoCommit: true }
+    );
+
+    return res.json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to logout" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
       }
     }
   }
@@ -255,7 +312,8 @@ exports.changeMyPassword = async (req, res) => {
     await conn.execute(
       `
       UPDATE users
-      SET password = :b_password
+      SET password = :b_password,
+          token_version = NVL(token_version, 0) + 1
       WHERE user_id = :b_user_id
       `,
       {

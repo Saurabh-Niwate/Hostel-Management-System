@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { oracledb } = require("../config/db");
 
-exports.verifyToken = (req, res, next) => {
+exports.verifyToken = async (req, res, next) => {
   const header = req.headers.authorization;
 
   if (!header) {
@@ -10,12 +10,59 @@ exports.verifyToken = (req, res, next) => {
 
   const token = header.split(" ")[1];
 
+  let conn;
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    conn = await oracledb.getConnection();
+
+    const userResult = await conn.execute(
+      `
+      SELECT NVL(token_version, 0) AS token_version
+      FROM users
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: decoded.userId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    if (!userResult.rows || userResult.rows.length === 0) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    const currentTokenVersion = Number(userResult.rows[0].TOKEN_VERSION || 0);
+    if (Number(decoded.tokenVersion || 0) !== currentTokenVersion) {
+      return res.status(401).json({ message: "Session has expired. Please login again." });
+    }
+
+    if (decoded.jti) {
+      const revokedResult = await conn.execute(
+        `
+        SELECT jti
+        FROM revoked_tokens
+        WHERE jti = :b_jti
+          AND expires_at > SYSDATE
+        `,
+        { b_jti: String(decoded.jti) },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+
+      if (revokedResult.rows && revokedResult.rows.length > 0) {
+        return res.status(401).json({ message: "Session has been logged out" });
+      }
+    }
+
     req.user = decoded;
-    next();
+    return next();
   } catch {
     return res.status(401).json({ message: "Invalid token" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
   }
 };
 

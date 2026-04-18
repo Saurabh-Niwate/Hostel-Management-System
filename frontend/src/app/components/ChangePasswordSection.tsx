@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { api } from "../lib/api";
+import { clearAuthSession } from "../lib/authStorage";
+import { useNavigate } from "react-router-dom";
 
 export function ChangePasswordSection() {
+  const navigate = useNavigate();
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -31,10 +34,14 @@ export function ChangePasswordSection() {
         newPassword,
         confirmPassword,
       });
-      setSuccess("Password changed successfully");
+      setSuccess("Password changed successfully. Please login again.");
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      window.setTimeout(() => {
+        clearAuthSession();
+        navigate("/");
+      }, 1200);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to change password");
     } finally {

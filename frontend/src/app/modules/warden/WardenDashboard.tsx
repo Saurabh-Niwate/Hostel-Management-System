@@ -11,6 +11,7 @@ import { LeaveRequests } from "./LeaveRequests";
 import { FeedbackManagement } from "./FeedbackManagement";
 import { StaffProfileSettings } from "../../components/StaffProfileSettings";
 import { useNavigate } from "react-router-dom";
+import { clearAuthSession, getStoredIdentifier, getStoredRole, getStoredToken } from "../../lib/authStorage";
 
 type TabType = "overview" | "rooms" | "students" | "attendance" | "leaves" | "feedback" | "profile";
 
@@ -49,8 +50,8 @@ export function WardenDashboard() {
   const [recentActivities, setRecentActivities] = useState<OverviewActivity[]>([]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("userRole");
+    const token = getStoredToken();
+    const role = getStoredRole();
     if (!token || role !== "Warden") {
       navigate("/");
     }
@@ -116,10 +117,10 @@ export function WardenDashboard() {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userIdentifier");
-    navigate("/");
+    api.post("/auth/logout").catch(() => undefined).finally(() => {
+      clearAuthSession();
+      navigate("/");
+    });
   };
 
   return (
@@ -135,7 +136,7 @@ export function WardenDashboard() {
             <ShieldCheck className="h-5 w-5 text-white" />
             <div>
               <h1 className="text-xl font-bold tracking-wide truncate">Warden Portal</h1>
-              <p className="text-xs text-white/80">{localStorage.getItem("userIdentifier") || "WARDEN"}</p>
+              <p className="text-xs text-white/80">{getStoredIdentifier() || "WARDEN"}</p>
             </div>
           </div>
           <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 hover:bg-white/10 rounded-lg lg:hidden">

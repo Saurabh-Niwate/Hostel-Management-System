@@ -27,7 +27,11 @@ CREATE TABLE users (
   emp_id VARCHAR2(20),
   email VARCHAR2(100),
   password VARCHAR2(255) NOT NULL,
+  token_version NUMBER DEFAULT 0 NOT NULL,
   role_id NUMBER,
+  CONSTRAINT uq_users_student_id UNIQUE (student_id),
+  CONSTRAINT uq_users_emp_id UNIQUE (emp_id),
+  CONSTRAINT uq_users_email UNIQUE (email),
   CONSTRAINT fk_role FOREIGN KEY (role_id)
     REFERENCES roles(role_id)
 );
@@ -318,6 +322,49 @@ BEGIN
   END IF;
 END;
 /
+
+CREATE TABLE room_allocation_requests (
+  request_id NUMBER PRIMARY KEY,
+  user_id NUMBER NOT NULL,
+  status VARCHAR2(20) DEFAULT 'Pending' NOT NULL,
+  assigned_room_no VARCHAR2(20),
+  remarks VARCHAR2(500),
+  reviewed_by NUMBER,
+  requested_at DATE DEFAULT SYSDATE NOT NULL,
+  reviewed_at DATE,
+  CONSTRAINT fk_room_req_user FOREIGN KEY (user_id)
+    REFERENCES users(user_id),
+  CONSTRAINT fk_room_req_room FOREIGN KEY (assigned_room_no)
+    REFERENCES rooms(room_no),
+  CONSTRAINT fk_room_req_reviewer FOREIGN KEY (reviewed_by)
+    REFERENCES users(user_id),
+  CONSTRAINT chk_room_req_status CHECK (status IN ('Pending', 'Assigned', 'Rejected', 'Cancelled'))
+);
+
+CREATE SEQUENCE room_allocation_requests_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER room_alloc_req_trigger
+BEFORE INSERT ON room_allocation_requests
+FOR EACH ROW
+BEGIN
+  IF :NEW.request_id IS NULL THEN
+    SELECT room_allocation_requests_seq.NEXTVAL
+    INTO :NEW.request_id
+    FROM dual;
+  END IF;
+END;
+/
+
+CREATE TABLE revoked_tokens (
+  jti VARCHAR2(80) PRIMARY KEY,
+  user_id NUMBER NOT NULL,
+  expires_at DATE NOT NULL,
+  created_at DATE DEFAULT SYSDATE NOT NULL,
+  CONSTRAINT fk_rev_tok_user FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+);
 
 CREATE TABLE dinner_polls (
   poll_id NUMBER PRIMARY KEY,

@@ -2,6 +2,7 @@ const AUTH_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_MAX_ATTEMPTS = process.env.NODE_ENV === "production" ? 10 : 50;
 const AUTH_MAX_IDENTIFIER_LENGTH = 100;
 const AUTH_MAX_PASSWORD_LENGTH = 128;
+const ALLOWED_ROLE_HINTS = ["Admin", "Student", "Technical Staff", "Warden", "Security", "Canteen Owner"];
 
 const attempts = new Map();
 
@@ -17,9 +18,7 @@ const cleanupExpiredEntries = () => {
 setInterval(cleanupExpiredEntries, 5 * 60 * 1000).unref();
 
 const getClientKey = (req) => {
-  const forwardedFor = req.headers["x-forwarded-for"];
   const ip =
-    (typeof forwardedFor === "string" && forwardedFor.split(",")[0].trim()) ||
     req.ip ||
     req.socket?.remoteAddress ||
     "unknown";
@@ -67,9 +66,14 @@ exports.clearAuthAttempts = (req) => {
 exports.validateLoginPayload = (req, res, next) => {
   const identifier = normalizeOptionalString(req.body?.identifier);
   const password = normalizeOptionalString(req.body?.password);
+  const roleHint = normalizeOptionalString(req.body?.roleHint);
 
   if (!identifier.trim() || !password.trim()) {
     return res.status(400).json({ message: "identifier and password are required" });
+  }
+
+  if (!roleHint.trim() || !ALLOWED_ROLE_HINTS.includes(roleHint.trim())) {
+    return res.status(400).json({ message: "Valid roleHint is required" });
   }
 
   if (identifier.length > AUTH_MAX_IDENTIFIER_LENGTH) {
@@ -82,6 +86,7 @@ exports.validateLoginPayload = (req, res, next) => {
 
   req.body.identifier = identifier.trim();
   req.body.password = password;
+  req.body.roleHint = roleHint.trim();
   return next();
 };
 

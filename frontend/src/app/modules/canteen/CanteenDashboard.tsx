@@ -6,6 +6,8 @@ import { DinnerPollManagement } from "./DinnerPollManagement";
 import { StaffProfileSettings } from "../../components/StaffProfileSettings";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
+import { api } from "../../lib/api";
+import { clearAuthSession, getStoredIdentifier, getStoredRole, getStoredToken } from "../../lib/authStorage";
 
 type SidebarItemProps = {
   icon: React.ReactNode;
@@ -34,8 +36,8 @@ export function CanteenDashboard() {
   const [activeTab, setActiveTab] = useState<"overview" | "menu" | "dinnerPolls" | "profile">("overview");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("userRole");
+    const token = getStoredToken();
+    const role = getStoredRole();
     if (!token || role !== "Canteen Owner") {
       navigate("/");
     }
@@ -98,7 +100,7 @@ export function CanteenDashboard() {
               <ChefHat className={`h-5 w-5 ${theme.text}`} />
               <div>
                 <h1 className={`text-xl font-bold tracking-wide truncate ${theme.text}`}>Canteen Portal</h1>
-                <p className={`text-xs ${theme.muted}`}>{localStorage.getItem("userIdentifier") || "CANTEEN OWNER"}</p>
+                  <p className={`text-xs ${theme.muted}`}>{getStoredIdentifier() || "CANTEEN OWNER"}</p>
               </div>
             </div>
             <button
@@ -142,7 +144,7 @@ export function CanteenDashboard() {
 
           <div className="p-4 border-t border-white/20">
             <button
-              onClick={() => { localStorage.removeItem("token"); navigate("/"); }}
+              onClick={() => { api.post("/auth/logout").catch(() => undefined).finally(() => { clearAuthSession(); navigate("/"); }); }}
               className="flex items-center w-full gap-3 px-4 py-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl font-medium transition-colors border border-slate-200 shadow-sm"
             >
               <LogOut className="w-5 h-5" />
