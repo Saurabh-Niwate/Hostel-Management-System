@@ -32,9 +32,9 @@ const uploadProfileImage = multer({
   limits: { fileSize: 2 * 1024 * 1024 }
 });
 
-const isValidImageSignature = (filePath, mimetype) => {
+const isValidImageSignature = async (filePath, mimetype) => {
   try {
-    const buffer = fs.readFileSync(filePath);
+    const buffer = await fs.promises.readFile(filePath);
     if (!buffer || buffer.length < 12) {
       return false;
     }

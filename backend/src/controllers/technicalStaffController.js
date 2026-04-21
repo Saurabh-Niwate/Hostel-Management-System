@@ -250,7 +250,7 @@ exports.createStudent = async (req, res) => {
     return res.status(400).json({ message: "aadharNo must be exactly 12 digits" });
   }
 
-  if (req.file && !isValidImageSignature(req.file.path, req.file.mimetype)) {
+  if (req.file && !(await isValidImageSignature(req.file.path, req.file.mimetype))) {
     deleteUploadedFile(req.file.path);
     return res.status(400).json({ message: "Uploaded file content is not a valid image" });
   }
@@ -994,7 +994,7 @@ exports.uploadStudentProfileImageByStudentId = async (req, res) => {
     return res.status(400).json({ message: "Image file is required" });
   }
 
-  if (!isValidImageSignature(req.file.path, req.file.mimetype)) {
+  if (!(await isValidImageSignature(req.file.path, req.file.mimetype))) {
     try {
       fs.unlinkSync(req.file.path);
     } catch (_e) {

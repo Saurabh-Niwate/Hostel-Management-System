@@ -278,8 +278,16 @@ export function StudentDashboard() {
       case "dashboard":
         if (!dashboardLoaded) {
           return (
-            <div className="rounded-2xl border border-emerald-100 bg-white p-10 text-center shadow-sm">
-              <p className="text-sm text-slate-500">Loading dashboard...</p>
+            <div className="space-y-6 animate-pulse">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-emerald-50 p-6 rounded-2xl shadow-sm border border-emerald-100 h-28"></div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="bg-slate-50 p-6 rounded-2xl shadow-sm border border-slate-100 h-64"></div>
+                 <div className="bg-slate-50 p-6 rounded-2xl shadow-sm border border-slate-100 h-64"></div>
+              </div>
             </div>
           );
         }

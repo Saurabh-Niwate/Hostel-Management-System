@@ -11,7 +11,10 @@ async function initialize() {
   await oracledb.createPool({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    connectString: process.env.DB_CONNECTION_STRING
+    connectString: process.env.DB_CONNECTION_STRING,
+    poolMin: 10,
+    poolMax: 10,
+    poolIncrement: 0
   });
 
   console.log("Oracle Database connected successfully");

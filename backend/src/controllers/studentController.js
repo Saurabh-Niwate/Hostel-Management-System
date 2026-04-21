@@ -66,7 +66,7 @@ exports.uploadMyProfileImage = async (req, res) => {
     return res.status(400).json({ message: "Image file is required" });
   }
 
-  if (!isValidImageSignature(req.file.path, req.file.mimetype)) {
+  if (!(await isValidImageSignature(req.file.path, req.file.mimetype))) {
     safeUnlink(req.file.path);
     return res.status(400).json({ message: "Uploaded file content is not a valid image" });
   }
