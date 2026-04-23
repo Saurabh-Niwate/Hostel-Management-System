@@ -2216,6 +2216,15 @@ exports.deleteUser = async (req, res) => {
       { autoCommit: false }
     );
 
+    await conn.execute(
+      `
+      DELETE FROM staff_profiles
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: targetUserId },
+      { autoCommit: false }
+    );
+
     // Delete profile image file if it exists
     if (profileImageUrl) {
       deleteProfileImageFile(profileImageUrl);

@@ -223,85 +223,88 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
         {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm mb-4">{success}</div>}
 
         {userType === "student" ? (
-          <form onSubmit={handleCreateStudent} className="space-y-4 max-w-2xl">
-            <input
-              type="text"
-              value={studentForm.studentId}
-              onChange={(e) => setStudentForm({ ...studentForm, studentId: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
-              placeholder="Student ID (required)"
-              disabled={loading}
-              required
-            />
-            <input
-              type="text"
-              value={studentForm.fullName}
-              onChange={(e) => setStudentForm({ ...studentForm, fullName: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
-              placeholder="Full Name (required)"
-              disabled={loading}
-              required
-            />
-            <input
-              type="text"
-              value={studentForm.phone}
-              onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
-              placeholder="Student Phone (required)"
-              disabled={loading}
-              required
-            />
-            <input
-              type="text"
-              value={studentForm.aadharNo}
-              onChange={(e) => setStudentForm({ ...studentForm, aadharNo: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
-              placeholder="Aadhar Number (required)"
-              disabled={loading}
-              required
-            />
-            <input
-              type="text"
-              value={studentForm.guardianName}
-              onChange={(e) => setStudentForm({ ...studentForm, guardianName: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
-              placeholder="Guardian Name (required)"
-              disabled={loading}
-              required
-            />
-            <input
-              type="email"
-              value={studentForm.guardianEmail}
-              onChange={(e) => setStudentForm({ ...studentForm, guardianEmail: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
-              placeholder="Guardian Email (optional)"
-              disabled={loading}
-            />
-            <input
-              type="text"
-              value={studentForm.guardianPhone}
-              onChange={(e) => setStudentForm({ ...studentForm, guardianPhone: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
-              placeholder="Guardian Phone (required)"
-              disabled={loading}
-              required
-            />
-            <select
-              value={studentForm.roomNo}
-              onChange={(e) => setStudentForm({ ...studentForm, roomNo: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
-              disabled={loading}
-              required={availableRooms.length > 0}
-            >
-              <option value="">
-                {availableRooms.length > 0 ? "Select hostel room (required)" : "No hostel vacancy available"}
-              </option>
-              {availableRooms.map((room) => (
-                <option key={room.ROOM_NO} value={room.ROOM_NO}>
-                  {room.ROOM_NO} | Block {room.BLOCK_NAME || "-"} | Vacant: {room.VACANCY}
+          <form onSubmit={handleCreateStudent} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                value={studentForm.studentId}
+                onChange={(e) => setStudentForm({ ...studentForm, studentId: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                placeholder="Student ID (required)"
+                disabled={loading}
+                required
+              />
+              <input
+                type="text"
+                value={studentForm.fullName}
+                onChange={(e) => setStudentForm({ ...studentForm, fullName: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                placeholder="Full Name (required)"
+                disabled={loading}
+                required
+              />
+              <input
+                type="text"
+                value={studentForm.phone}
+                onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                placeholder="Student Phone (required)"
+                disabled={loading}
+                required
+              />
+              <input
+                type="text"
+                value={studentForm.aadharNo}
+                onChange={(e) => setStudentForm({ ...studentForm, aadharNo: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                placeholder="Aadhar Number (required)"
+                disabled={loading}
+                required
+              />
+              <input
+                type="text"
+                value={studentForm.guardianName}
+                onChange={(e) => setStudentForm({ ...studentForm, guardianName: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                placeholder="Guardian Name (required)"
+                disabled={loading}
+                required
+              />
+              <input
+                type="email"
+                value={studentForm.guardianEmail}
+                onChange={(e) => setStudentForm({ ...studentForm, guardianEmail: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                placeholder="Guardian Email (optional)"
+                disabled={loading}
+              />
+              <input
+                type="text"
+                value={studentForm.guardianPhone}
+                onChange={(e) => setStudentForm({ ...studentForm, guardianPhone: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                placeholder="Guardian Phone (required)"
+                disabled={loading}
+                required
+              />
+              <select
+                value={studentForm.roomNo}
+                onChange={(e) => setStudentForm({ ...studentForm, roomNo: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                disabled={loading}
+                required={availableRooms.length > 0}
+              >
+                <option value="">
+                  {availableRooms.length > 0 ? "Select hostel room (required)" : "No hostel vacancy available"}
                 </option>
-              ))}
-            </select>
+                {availableRooms.map((room) => (
+                  <option key={room.ROOM_NO} value={room.ROOM_NO}>
+                    {room.ROOM_NO} | Block {room.BLOCK_NAME || "-"} | Vacant: {room.VACANCY}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {availableRooms.length === 0 && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-4">
                 <div>
@@ -331,52 +334,56 @@ export function CreateUser({ onUserCreated }: CreateUserProps) {
                 )}
               </div>
             )}
-            <textarea
-              value={studentForm.address}
-              onChange={(e) => setStudentForm({ ...studentForm, address: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
-              placeholder="Home Address (required)"
-              disabled={loading}
-              rows={3}
-              required
-            />
-            <input
-              type="email"
-              value={studentForm.email}
-              onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
-              placeholder="Email (optional)"
-              disabled={loading}
-            />
-            <div>
-              <label className="block text-sm text-slate-600 mb-1">Profile Photo (optional)</label>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <textarea
+                value={studentForm.address}
+                onChange={(e) => setStudentForm({ ...studentForm, address: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg md:col-span-2"
+                placeholder="Home Address (required)"
+                disabled={loading}
+                rows={3}
+                required
+              />
               <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(e) => setStudentImageFile(e.target.files?.[0] || null)}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                type="email"
+                value={studentForm.email}
+                onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                placeholder="Email (optional)"
                 disabled={loading}
               />
+              <input
+                type="password"
+                value={studentForm.password}
+                onChange={(e) => setStudentForm({ ...studentForm, password: e.target.value })}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
+                placeholder="Password (required)"
+                disabled={loading}
+                required
+              />
+              <div className="md:col-span-2">
+                <label className="block text-sm text-slate-600 mb-1">Profile Photo (optional)</label>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => setStudentImageFile(e.target.files?.[0] || null)}
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white"
+                  disabled={loading}
+                />
+              </div>
             </div>
-            <input
-              type="password"
-              value={studentForm.password}
-              onChange={(e) => setStudentForm({ ...studentForm, password: e.target.value })}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
-              placeholder="Password (required)"
-              disabled={loading}
-              required
-            />
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50"
+              className="w-full px-4 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50 mt-4"
             >
               {loading ? "Creating Student..." : "Create Student"}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleCreateStaff} className="space-y-4 max-w-2xl">
+          <form onSubmit={handleCreateStaff} className="space-y-4">
             <input
               type="text"
               value={staffForm.employeeId}
