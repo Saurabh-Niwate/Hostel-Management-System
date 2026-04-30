@@ -117,12 +117,12 @@ export function AdminAttendanceSummary() {
 
       <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-3 md:items-end">
         <div>
-          <label className="block text-xs text-slate-500 mb-1">From Date</label>
-          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
+          <label htmlFor="dateFrom" className="block text-xs text-slate-500 mb-1">From Date</label>
+          <input id="dateFrom" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
         </div>
         <div>
-          <label className="block text-xs text-slate-500 mb-1">To Date</label>
-          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
+          <label htmlFor="dateTo" className="block text-xs text-slate-500 mb-1">To Date</label>
+          <input id="dateTo" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
         </div>
         <div className="flex items-center gap-3">
           <button onClick={load} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-600">Apply Date Filter</button>
@@ -141,11 +141,11 @@ export function AdminAttendanceSummary() {
           <UserCheck size={32} className="text-emerald-500 mb-2" />
           <h3 className="text-slate-500 text-sm font-medium">Students With Presence</h3>
           <p className="text-3xl font-bold text-emerald-600 mt-2">{summary.presentToday}</p>
-          <span className="text-xs text-slate-400 mt-1">out of {summary.totalStudents}</span>
+          <span className="text-xs text-slate-500 mt-1">out of {summary.totalStudents}</span>
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-          <Users size={32} className="text-slate-400 mb-2" />
+          <Users size={32} className="text-slate-500 mb-2" />
           <h3 className="text-slate-500 text-sm font-medium">Fully Absent Students</h3>
           <p className="text-3xl font-bold text-slate-700 mt-2">{summary.absentToday}</p>
         </div>

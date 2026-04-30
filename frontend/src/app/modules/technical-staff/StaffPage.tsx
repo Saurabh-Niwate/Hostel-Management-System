@@ -18,7 +18,7 @@ export function StaffPage() {
       try {
         const res = await api.get("/technical-staff/staff");
         setStaff(res.data?.staff || []);
-      } catch (err: any) {
+      } catch (err: any ) {
         setError(err.response?.data?.message || "Failed to load staff");
       } finally {
         setLoading(false);

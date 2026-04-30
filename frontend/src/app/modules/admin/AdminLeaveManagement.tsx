@@ -92,16 +92,18 @@ export function AdminLeaveManagement() {
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col md:flex-row gap-3 md:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" size={18} />
           <input
             type="text"
             placeholder="Search student ID or reason..."
+            aria-label="Search student ID or reason"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg w-full"
           />
         </div>
         <select
+          aria-label="Filter by status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-3 py-2 border border-slate-200 rounded-lg bg-white"
@@ -175,7 +177,7 @@ export function AdminLeaveManagement() {
                         </button>
                       </div>
                     ) : (
-                      <span className="text-slate-400 text-sm italic">Processed</span>
+                      <span className="text-slate-500 text-sm italic">Processed</span>
                     )}
                   </td>
                 </tr>

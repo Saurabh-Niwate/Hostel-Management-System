@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Coffee, Utensils, UtensilsCrossed, Apple, Clock } from "lucide-react";
 import { api } from "../../lib/api";
+import { motion } from "motion/react";
 
 type MenuRow = {
   MENU_ID: number;
@@ -48,8 +49,8 @@ export function CanteenMenuView() {
   const [polls, setPolls] = useState<DinnerPoll[]>([]);
   const [votingPollId, setVotingPollId] = useState<number | null>(null);
 
-  const loadMenu = async () => {
-    setLoading(true);
+  const loadMenu = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError("");
     try {
       const [menuRes, pollRes] = await Promise.all([
@@ -61,7 +62,7 @@ export function CanteenMenuView() {
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load canteen menu");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -96,7 +97,7 @@ export function CanteenMenuView() {
     setError("");
     try {
       await api.post(`/student/dinner-polls/${pollId}/vote`, { optionId });
-      await loadMenu();
+      await loadMenu(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to submit vote");
     } finally {
@@ -139,11 +140,14 @@ export function CanteenMenuView() {
             {activePoll.OPTIONS.map((option) => {
               const isSelected = activePoll.MY_OPTION_ID === option.OPTION_ID;
               return (
-                <button
+                <motion.button
+                  layout
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   key={option.OPTION_ID}
                   onClick={() => handleVote(activePoll.POLL_ID, option.OPTION_ID)}
                   disabled={votingPollId === activePoll.POLL_ID}
-                  className={`text-left rounded-xl border p-4 transition-all ${
+                  className={`text-left rounded-xl border p-4 transition-colors ${
                     isSelected
                       ? "border-indigo-500 bg-indigo-50"
                       : "border-slate-200 bg-white hover:border-indigo-200"
@@ -154,12 +158,14 @@ export function CanteenMenuView() {
                       <p className="font-semibold text-slate-900">{option.OPTION_NAME}</p>
                       <p className="text-sm text-slate-500 mt-1">{option.DESCRIPTION || "No description"}</p>
                     </div>
-                    <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600">
+                    <motion.span layout className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600">
                       {option.VOTE_COUNT}
-                    </span>
+                    </motion.span>
                   </div>
-                  <p className="text-xs mt-3 text-indigo-700">{isSelected ? "Your current choice" : "Tap to vote"}</p>
-                </button>
+                  <motion.p layout className="text-xs mt-3 text-indigo-700">
+                    {isSelected ? "Your current choice" : "Tap to vote"}
+                  </motion.p>
+                </motion.button>
               );
             })}
           </div>

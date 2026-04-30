@@ -3,6 +3,7 @@ import { Edit2, Search, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { api } from "../../lib/api";
+import { motion, AnimatePresence } from "motion/react";
 
 type MenuRow = {
   MENU_ID: number;
@@ -35,8 +36,8 @@ export function MenuManagement() {
   const [busyItemId, setBusyItemId] = useState<number | null>(null);
   const [form, setForm] = useState<MenuForm>(emptyForm);
 
-  const loadMenu = async () => {
-    setLoading(true);
+  const loadMenu = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError("");
     try {
       const res = await api.get("/canteen-owner/menu", { params: { _t: Date.now() } });
@@ -44,7 +45,7 @@ export function MenuManagement() {
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load menu");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -105,7 +106,7 @@ export function MenuManagement() {
       });
       setSuccess("Menu item created successfully");
       closeModal();
-      await loadMenu();
+      await loadMenu(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to create menu item");
     }
@@ -123,7 +124,7 @@ export function MenuManagement() {
       });
       setSuccess("Menu item updated successfully");
       closeModal();
-      await loadMenu();
+      await loadMenu(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to update menu item");
     }
@@ -139,7 +140,7 @@ export function MenuManagement() {
     try {
       await api.delete(`/canteen-owner/menu/${item.MENU_ID}`);
       setSuccess("Menu item deleted successfully");
-      await loadMenu();
+      await loadMenu(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to delete menu item");
     } finally {
@@ -160,7 +161,7 @@ export function MenuManagement() {
           ? `"${item.ITEM_NAME}" is now part of today's menu`
           : `"${item.ITEM_NAME}" removed from today's menu`
       );
-      await loadMenu();
+      await loadMenu(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to update availability");
     } finally {
@@ -264,62 +265,77 @@ export function MenuManagement() {
         )}
       </div>
 
-      {(showAddForm || editingItem) && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-          onClick={closeModal}
-        >
-          <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <CardHeader>
-              <CardTitle>{editingItem ? "Edit Menu Item" : "Add Menu Item"}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <select
-                value={form.mealType}
-                onChange={(e) => setForm((prev) => ({ ...prev, mealType: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
-              >
-                <option value="Breakfast">Breakfast</option>
-                <option value="Lunch">Lunch</option>
-                <option value="Snacks">Snacks</option>
-                <option value="Dinner">Dinner</option>
-              </select>
+      <AnimatePresence>
+        {(showAddForm || editingItem) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={closeModal}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>{editingItem ? "Edit Menu Item" : "Add Menu Item"}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <select
+                    value={form.mealType}
+                    onChange={(e) => setForm((prev) => ({ ...prev, mealType: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
+                  >
+                    <option value="Breakfast">Breakfast</option>
+                    <option value="Lunch">Lunch</option>
+                    <option value="Snacks">Snacks</option>
+                    <option value="Dinner">Dinner</option>
+                  </select>
 
-              <input
-                type="text"
-                value={form.itemName}
-                onChange={(e) => setForm((prev) => ({ ...prev, itemName: e.target.value }))}
-                placeholder="Item name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              />
+                  <input
+                    type="text"
+                    value={form.itemName}
+                    onChange={(e) => setForm((prev) => ({ ...prev, itemName: e.target.value }))}
+                    placeholder="Item name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  />
 
-              <label className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-900">Available Today</p>
-                  <p className="text-xs text-slate-500">
-                    New items stay unavailable by default until you turn this on
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={form.isAvailable}
-                  onChange={(e) => setForm((prev) => ({ ...prev, isAvailable: e.target.checked }))}
-                  className="h-4 w-4 accent-amber-700"
-                />
-              </label>
+                  <label className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Available Today</p>
+                      <p className="text-xs text-slate-500">
+                        New items stay unavailable by default until you turn this on
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={form.isAvailable}
+                      onChange={(e) => setForm((prev) => ({ ...prev, isAvailable: e.target.checked }))}
+                      className="h-4 w-4 accent-amber-700"
+                    />
+                  </label>
 
-              <div className="flex gap-3">
-                <Button className="flex-1 bg-amber-700 hover:bg-amber-800" onClick={editingItem ? handleUpdate : handleCreate}>
-                  {editingItem ? "Update" : "Create"}
-                </Button>
-                <Button variant="outline" className="flex-1" onClick={closeModal}>
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                  <div className="flex gap-3">
+                    <Button className="flex-1 bg-amber-700 hover:bg-amber-800" onClick={editingItem ? handleUpdate : handleCreate}>
+                      {editingItem ? "Update" : "Create"}
+                    </Button>
+                    <Button variant="outline" className="flex-1" onClick={closeModal}>
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

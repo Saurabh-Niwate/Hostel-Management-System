@@ -1,2 +1,11 @@
 frontend/guildlines/guildlines.md
 frontend/.gitignore
+node_modules/
+dist/
+.env
+*.log
+*.crswap
+.vscode/
+.idea/
+backend/uploads/*
+!backend/uploads/.gitkeep

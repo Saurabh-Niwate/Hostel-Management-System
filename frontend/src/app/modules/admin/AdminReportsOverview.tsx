@@ -136,12 +136,12 @@ export function AdminReportsOverview() {
 
       <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-3 md:items-end">
         <div>
-          <label className="block text-xs text-slate-500 mb-1">From Date</label>
-          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
+          <label htmlFor="dateFrom" className="block text-xs text-slate-500 mb-1">From Date</label>
+          <input id="dateFrom" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
         </div>
         <div>
-          <label className="block text-xs text-slate-500 mb-1">To Date</label>
-          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
+          <label htmlFor="dateTo" className="block text-xs text-slate-500 mb-1">To Date</label>
+          <input id="dateTo" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
         </div>
         <div className="flex items-center gap-3">
           <button onClick={load} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-600">Apply Date Filter</button>
@@ -167,7 +167,7 @@ export function AdminReportsOverview() {
           <div>
             <h3 className="text-slate-500 text-sm font-medium">Pending Leaves</h3>
             <p className="text-2xl font-bold text-slate-800">{cards.pendingLeaves}</p>
-            <p className="text-xs text-slate-400 mt-1">Awaiting admin review</p>
+            <p className="text-xs text-slate-500 mt-1">Awaiting admin review</p>
           </div>
         </div>
 
@@ -188,7 +188,7 @@ export function AdminReportsOverview() {
           <div>
             <h3 className="text-slate-500 text-sm font-medium">Attendance Entries</h3>
             <p className="text-2xl font-bold text-slate-800">{cards.attendanceTotal}</p>
-            <p className="text-xs text-slate-400 mt-1">Absent: {cards.absentTotal}</p>
+            <p className="text-xs text-slate-500 mt-1">Absent: {cards.absentTotal}</p>
           </div>
         </div>
       </div>

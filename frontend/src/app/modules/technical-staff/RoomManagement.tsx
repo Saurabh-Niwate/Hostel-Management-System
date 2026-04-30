@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
+import { motion, AnimatePresence } from "motion/react";
 
 type RoomRow = {
   ROOM_NO: string;
@@ -61,8 +62,8 @@ export function RoomManagement() {
   const [assignRoomNo, setAssignRoomNo] = useState("");
   const [assignRemarks, setAssignRemarks] = useState("");
 
-  const loadRooms = async () => {
-    setLoading(true);
+  const loadRooms = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError("");
     try {
       const [roomsRes, requestsRes] = await Promise.all([
@@ -74,7 +75,7 @@ export function RoomManagement() {
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load rooms");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -123,7 +124,7 @@ export function RoomManagement() {
       setSuccess("Room created successfully");
       setCreateForm(defaultForm);
       setIsCreateModalOpen(false);
-      await loadRooms();
+      await loadRooms(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to create room");
     }
@@ -156,7 +157,7 @@ export function RoomManagement() {
       });
       setSuccess("Room updated successfully");
       setEditingRoomNo(null);
-      await loadRooms();
+      await loadRooms(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to update room");
     }
@@ -170,7 +171,7 @@ export function RoomManagement() {
         params: { force },
       });
       setSuccess(force ? "Room force deleted successfully" : "Room deleted successfully");
-      await loadRooms();
+      await loadRooms(false);
     } catch (err: any) {
       const message = err.response?.data?.message || "Failed to delete room";
       if (!force && String(message).includes("Use ?force=true")) {
@@ -206,7 +207,7 @@ export function RoomManagement() {
       setAssigningRequest(null);
       setAssignRoomNo("");
       setAssignRemarks("");
-      await loadRooms();
+      await loadRooms(false);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to assign room");
     }
@@ -377,77 +378,79 @@ export function RoomManagement() {
         </div>
       </div>
 
-      {isCreateModalOpen && (
-        <ModalShell title="Create Room" onClose={() => setIsCreateModalOpen(false)}>
-          <form onSubmit={handleCreate} className="space-y-3">
-            <input value={createForm.roomNo} onChange={(e) => setCreateForm({ ...createForm, roomNo: e.target.value })} placeholder="Room No" className="w-full px-3 py-2 border border-slate-300 rounded-lg" required />
-            <input value={createForm.blockName} onChange={(e) => setCreateForm({ ...createForm, blockName: e.target.value })} placeholder="Block Name" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
-            <input type="number" value={createForm.floorNo} onChange={(e) => setCreateForm({ ...createForm, floorNo: e.target.value })} placeholder="Floor No" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
-            <input type="number" min="1" value={createForm.capacity} onChange={(e) => setCreateForm({ ...createForm, capacity: e.target.value })} placeholder="Capacity" className="w-full px-3 py-2 border border-slate-300 rounded-lg" required />
-            <input value={createForm.roomType} onChange={(e) => setCreateForm({ ...createForm, roomType: e.target.value })} placeholder="Room Type" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
-            <select value={createForm.isActive} onChange={(e) => setCreateForm({ ...createForm, isActive: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white">
-              <option value="1">Active</option>
-              <option value="0">Inactive</option>
-            </select>
-            <button type="submit" className="w-full px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">Create Room</button>
-          </form>
-        </ModalShell>
-      )}
+      <AnimatePresence>
+        {isCreateModalOpen && (
+          <ModalShell title="Create Room" onClose={() => setIsCreateModalOpen(false)}>
+            <form onSubmit={handleCreate} className="space-y-3">
+              <input value={createForm.roomNo} onChange={(e) => setCreateForm({ ...createForm, roomNo: e.target.value })} placeholder="Room No" className="w-full px-3 py-2 border border-slate-300 rounded-lg" required />
+              <input value={createForm.blockName} onChange={(e) => setCreateForm({ ...createForm, blockName: e.target.value })} placeholder="Block Name" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+              <input type="number" value={createForm.floorNo} onChange={(e) => setCreateForm({ ...createForm, floorNo: e.target.value })} placeholder="Floor No" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+              <input type="number" min="1" value={createForm.capacity} onChange={(e) => setCreateForm({ ...createForm, capacity: e.target.value })} placeholder="Capacity" className="w-full px-3 py-2 border border-slate-300 rounded-lg" required />
+              <input value={createForm.roomType} onChange={(e) => setCreateForm({ ...createForm, roomType: e.target.value })} placeholder="Room Type" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+              <select value={createForm.isActive} onChange={(e) => setCreateForm({ ...createForm, isActive: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white">
+                <option value="1">Active</option>
+                <option value="0">Inactive</option>
+              </select>
+              <button type="submit" className="w-full px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">Create Room</button>
+            </form>
+          </ModalShell>
+        )}
 
-      {editingRoomNo && (
-        <ModalShell title="Edit Room" onClose={() => setEditingRoomNo(null)}>
-          <form onSubmit={handleUpdate} className="space-y-3">
-            <input value={editForm.roomNo} readOnly className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50" />
-            <input value={editForm.blockName} onChange={(e) => setEditForm({ ...editForm, blockName: e.target.value })} placeholder="Block Name" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
-            <input type="number" value={editForm.floorNo} onChange={(e) => setEditForm({ ...editForm, floorNo: e.target.value })} placeholder="Floor No" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
-            <input type="number" min="1" value={editForm.capacity} onChange={(e) => setEditForm({ ...editForm, capacity: e.target.value })} placeholder="Capacity" className="w-full px-3 py-2 border border-slate-300 rounded-lg" required />
-            <input value={editForm.roomType} onChange={(e) => setEditForm({ ...editForm, roomType: e.target.value })} placeholder="Room Type" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
-            <select value={editForm.isActive} onChange={(e) => setEditForm({ ...editForm, isActive: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white">
-              <option value="1">Active</option>
-              <option value="0">Inactive</option>
-            </select>
-            <div className="grid grid-cols-2 gap-2">
-              <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Update Room</button>
-              <button type="button" onClick={() => setEditingRoomNo(null)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200">Cancel</button>
-            </div>
-          </form>
-        </ModalShell>
-      )}
+        {editingRoomNo && (
+          <ModalShell title="Edit Room" onClose={() => setEditingRoomNo(null)}>
+            <form onSubmit={handleUpdate} className="space-y-3">
+              <input value={editForm.roomNo} readOnly className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50" />
+              <input value={editForm.blockName} onChange={(e) => setEditForm({ ...editForm, blockName: e.target.value })} placeholder="Block Name" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+              <input type="number" value={editForm.floorNo} onChange={(e) => setEditForm({ ...editForm, floorNo: e.target.value })} placeholder="Floor No" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+              <input type="number" min="1" value={editForm.capacity} onChange={(e) => setEditForm({ ...editForm, capacity: e.target.value })} placeholder="Capacity" className="w-full px-3 py-2 border border-slate-300 rounded-lg" required />
+              <input value={editForm.roomType} onChange={(e) => setEditForm({ ...editForm, roomType: e.target.value })} placeholder="Room Type" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+              <select value={editForm.isActive} onChange={(e) => setEditForm({ ...editForm, isActive: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white">
+                <option value="1">Active</option>
+                <option value="0">Inactive</option>
+              </select>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Update Room</button>
+                <button type="button" onClick={() => setEditingRoomNo(null)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200">Cancel</button>
+              </div>
+            </form>
+          </ModalShell>
+        )}
 
-      {assigningRequest && (
-        <ModalShell title={`Assign Room - ${assigningRequest.STUDENT_ID}`} onClose={() => setAssigningRequest(null)}>
-          <form onSubmit={handleAssignRequest} className="space-y-3">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-              <p><span className="font-medium">Student:</span> {assigningRequest.FULL_NAME || assigningRequest.STUDENT_ID}</p>
-              <p className="mt-1"><span className="font-medium">Requested At:</span> {assigningRequest.REQUESTED_AT || "-"}</p>
-            </div>
-            <select
-              value={assignRoomNo}
-              onChange={(e) => setAssignRoomNo(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
-              required
-            >
-              <option value="">Select vacant room</option>
-              {assignableRooms.map((room) => (
-                <option key={room.ROOM_NO} value={room.ROOM_NO}>
-                  {room.ROOM_NO} | Block {room.BLOCK_NAME || "-"} | Vacant: {room.VACANCY || 0}
-                </option>
-              ))}
-            </select>
-            <textarea
-              value={assignRemarks}
-              onChange={(e) => setAssignRemarks(e.target.value)}
-              placeholder="Remarks (optional)"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-              rows={3}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <button type="submit" className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">Assign Room</button>
-              <button type="button" onClick={() => setAssigningRequest(null)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200">Cancel</button>
-            </div>
-          </form>
-        </ModalShell>
-      )}
+        {assigningRequest && (
+          <ModalShell title={`Assign Room - ${assigningRequest.STUDENT_ID}`} onClose={() => setAssigningRequest(null)}>
+            <form onSubmit={handleAssignRequest} className="space-y-3">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                <p><span className="font-medium">Student:</span> {assigningRequest.FULL_NAME || assigningRequest.STUDENT_ID}</p>
+                <p className="mt-1"><span className="font-medium">Requested At:</span> {assigningRequest.REQUESTED_AT || "-"}</p>
+              </div>
+              <select
+                value={assignRoomNo}
+                onChange={(e) => setAssignRoomNo(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                required
+              >
+                <option value="">Select vacant room</option>
+                {assignableRooms.map((room) => (
+                  <option key={room.ROOM_NO} value={room.ROOM_NO}>
+                    {room.ROOM_NO} | Block {room.BLOCK_NAME || "-"} | Vacant: {room.VACANCY || 0}
+                  </option>
+                ))}
+              </select>
+              <textarea
+                value={assignRemarks}
+                onChange={(e) => setAssignRemarks(e.target.value)}
+                placeholder="Remarks (optional)"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                rows={3}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <button type="submit" className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">Assign Room</button>
+                <button type="button" onClick={() => setAssigningRequest(null)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200">Cancel</button>
+              </div>
+            </form>
+          </ModalShell>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -462,14 +465,26 @@ function ModalShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-      <div className="w-full max-w-xl bg-white rounded-lg shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="w-full max-w-xl bg-white rounded-lg shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto"
+      >
         <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-900">{title}</h3>
           <button onClick={onClose} className="px-3 py-1 text-sm bg-slate-100 rounded-lg hover:bg-slate-200">Close</button>
         </div>
         <div className="p-6">{children}</div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
