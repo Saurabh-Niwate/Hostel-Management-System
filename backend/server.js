@@ -4,6 +4,9 @@ const cors = require("cors");
 const path = require("path");
 const { initialize } = require("./src/config/db");
 
+const http = require("http");
+const { Server } = require("socket.io");
+
 const compression = require("compression");
 const app = express();
 
@@ -12,6 +15,34 @@ app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: "16kb" }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+});
+
+// Socket connection handler
+io.on("connection", (socket) => {
+  console.log("Socket client connected:", socket.id);
+  
+  socket.on("join", (userId) => {
+    socket.join(`user:${userId}`);
+    console.log(`Socket ${socket.id} joined room user:${userId}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Socket client disconnected:", socket.id);
+  });
+});
+
+// Attach io to app
+app.set("io", io);
 
 // Routes
 app.use("/api/auth", require("./src/routes/authRoutes"));
@@ -25,8 +56,9 @@ app.use("/api/canteen-owner", require("./src/routes/canteenOwnerRoutes"));
 
 async function start() {
   await initialize();
-  app.listen(process.env.PORT , () => {
-    console.log("Server running on port", process.env.PORT);
+  const PORT = process.env.PORT || 5000;
+  server.listen(PORT, () => {
+    console.log("Server running on port", PORT);
   });
 }
 

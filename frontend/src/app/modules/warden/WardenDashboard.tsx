@@ -12,6 +12,8 @@ import { FeedbackManagement } from "./FeedbackManagement";
 import { StaffProfileSettings } from "../../components/StaffProfileSettings";
 import { useNavigate } from "react-router-dom";
 import { clearAuthSession, getStoredIdentifier, getStoredRole, getStoredToken } from "../../lib/authStorage";
+import { socket } from "../../lib/socket";
+import { toast } from "sonner";
 
 type TabType = "overview" | "rooms" | "students" | "attendance" | "leaves" | "feedback" | "profile";
 
@@ -49,62 +51,75 @@ export function WardenDashboard() {
   });
   const [recentActivities, setRecentActivities] = useState<OverviewActivity[]>([]);
 
+  const loadOverview = async () => {
+    try {
+      const [roomsRes, studentsRes, attendanceRes, leavesRes] = await Promise.all([
+        api.get("/warden/rooms"),
+        api.get("/warden/students"),
+        api.get(`/warden/attendance/date/${today}`),
+        api.get("/warden/leave-status", { params: { status: "Pending" } })
+      ]);
+
+      setStats({
+        totalRooms: (roomsRes.data?.rooms || []).length,
+        totalStudents: (studentsRes.data?.students || []).length,
+        attendanceMarkedToday: (attendanceRes.data?.attendance || []).length,
+        pendingLeaves: (leavesRes.data?.leaves || []).length
+      });
+      const recentLeaves = (leavesRes.data?.leaves || []).slice(0, 4).map((leave: any) => ({
+        id: `leave-${leave.LEAVE_ID}`,
+        time: leave.CREATED_AT || "-",
+        action: `${leave.LEAVE_TYPE || "Leave"} Request`,
+        details: `${leave.FULL_NAME || leave.STUDENT_ID || "Student"} | ${leave.FROM_DATE || "-"} to ${leave.TO_DATE || "-"}`,
+        status: leave.STATUS || "Pending"
+      }));
+      const attendanceActivity =
+        (attendanceRes.data?.attendance || []).length > 0
+          ? [
+              {
+                id: "attendance-today",
+                time: today,
+                action: "Attendance Loaded",
+                details: `${(attendanceRes.data?.attendance || []).length} student attendance record(s) found for ${today}`,
+                status: "Marked"
+              }
+            ]
+          : [];
+      setRecentActivities([...attendanceActivity, ...recentLeaves]);
+    } catch {
+      setStats({
+        totalRooms: 0,
+        totalStudents: 0,
+        attendanceMarkedToday: 0,
+        pendingLeaves: 0
+      });
+      setRecentActivities([]);
+    }
+  };
+
   useEffect(() => {
     const token = getStoredToken();
     const role = getStoredRole();
     if (!token || role !== "Warden") {
       navigate("/");
+      return;
     }
-  }, [navigate]);
 
-  useEffect(() => {
-    const loadOverview = async () => {
-      try {
-        const [roomsRes, studentsRes, attendanceRes, leavesRes] = await Promise.all([
-          api.get("/warden/rooms"),
-          api.get("/warden/students"),
-          api.get(`/warden/attendance/date/${today}`),
-          api.get("/warden/leave-status", { params: { status: "Pending" } })
-        ]);
-
-        setStats({
-          totalRooms: (roomsRes.data?.rooms || []).length,
-          totalStudents: (studentsRes.data?.students || []).length,
-          attendanceMarkedToday: (attendanceRes.data?.attendance || []).length,
-          pendingLeaves: (leavesRes.data?.leaves || []).length
-        });
-        const recentLeaves = (leavesRes.data?.leaves || []).slice(0, 4).map((leave: any) => ({
-          id: `leave-${leave.LEAVE_ID}`,
-          time: leave.CREATED_AT || "-",
-          action: `${leave.LEAVE_TYPE || "Leave"} Request`,
-          details: `${leave.FULL_NAME || leave.STUDENT_ID || "Student"} | ${leave.FROM_DATE || "-"} to ${leave.TO_DATE || "-"}`,
-          status: leave.STATUS || "Pending"
-        }));
-        const attendanceActivity =
-          (attendanceRes.data?.attendance || []).length > 0
-            ? [
-                {
-                  id: "attendance-today",
-                  time: today,
-                  action: "Attendance Loaded",
-                  details: `${(attendanceRes.data?.attendance || []).length} student attendance record(s) found for ${today}`,
-                  status: "Marked"
-                }
-              ]
-            : [];
-        setRecentActivities([...attendanceActivity, ...recentLeaves]);
-      } catch {
-        setStats({
-          totalRooms: 0,
-          totalStudents: 0,
-          attendanceMarkedToday: 0,
-          pendingLeaves: 0
-        });
-        setRecentActivities([]);
-      }
-    };
     loadOverview();
-  }, []);
+
+    socket.connect();
+    socket.on("gatePassLogged", (data: any) => {
+      toast.info(`Gate Alert: Student ${data.studentName} (${data.studentId}) has checked ${data.type}! ${data.remarks ? 'Remarks: ' + data.remarks : ''}`, {
+        duration: 8000
+      });
+      loadOverview();
+    });
+
+    return () => {
+      socket.off("gatePassLogged");
+      socket.disconnect();
+    };
+  }, [navigate]);
 
   const menuItems = [
     { id: "overview" as TabType, label: "Overview", icon: Users },

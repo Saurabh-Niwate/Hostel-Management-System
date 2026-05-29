@@ -2,6 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { Users, Home, AlertCircle, Calendar, TrendingUp } from "lucide-react";
 import { api } from "../../lib/api";
 import { jsonToCsv, downloadCsv } from "../../lib/csv";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
+  Cell
+} from "recharts";
 
 type CountRow = { STATUS: string; TOTAL: number };
 
@@ -31,6 +44,21 @@ type OverviewResponse = {
     VACANCY: number;
     IS_FULL: boolean;
   };
+  occupancyTrend?: Array<{
+    BLOCK_NAME: string;
+    OCCUPIED: number;
+    TOTAL_CAPACITY: number;
+  }>;
+  feeTrend?: Array<{
+    TERM_NAME: string;
+    TOTAL_AMOUNT: number;
+    PAID_AMOUNT: number;
+    DUE_AMOUNT: number;
+  }>;
+  gatePassActivity?: Array<{
+    EXIT_TYPE: string;
+    TOTAL: number;
+  }>;
 };
 
 const sumByStatus = (rows: CountRow[] = [], status: string) =>
@@ -191,6 +219,136 @@ export function AdminReportsOverview() {
             <p className="text-xs text-slate-500 mt-1">Absent: {cards.absentTotal}</p>
           </div>
         </div>
+      </div>
+
+      {/* Visual Analytics Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        
+        {/* Block Occupancy Chart */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+            <Home size={20} className="mr-2 text-indigo-500" />
+            Block-wise Hostel Occupancy
+          </h3>
+          <div className="h-72 w-full flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data?.occupancyTrend || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="BLOCK_NAME" stroke="#94a3b8" fontSize={12} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: "#1e293b", borderRadius: "8px", border: "none", color: "#f8fafc" }}
+                  itemStyle={{ color: "#38bdf8" }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                <Bar name="Occupied Beds" dataKey="OCCUPIED" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar name="Total Capacity" dataKey="TOTAL_CAPACITY" fill="#e2e8f0" radius={[4, 4, 0, 0]} maxBarSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Fee Collection Trend Chart */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+            <TrendingUp size={20} className="mr-2 text-indigo-500" />
+            Term-wise Fee Breakdown
+          </h3>
+          <div className="h-72 w-full flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data?.feeTrend || []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="TERM_NAME" stroke="#94a3b8" fontSize={12} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} tickFormatter={(v) => `₹${v >= 1000 ? (v / 1000) + 'k' : v}`} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: "#1e293b", borderRadius: "8px", border: "none", color: "#f8fafc" }}
+                  formatter={(value: any) => [`₹${Number(value).toLocaleString()}`]}
+                />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                <Bar name="Total Billed" dataKey="TOTAL_AMOUNT" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                <Bar name="Paid" dataKey="PAID_AMOUNT" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                <Bar name="Due" dataKey="DUE_AMOUNT" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={30} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Gate Pass Exits Distribution Chart */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+            <Users size={20} className="mr-2 text-indigo-500" />
+            Security Exit Categories
+          </h3>
+          <div className="h-72 w-full flex-1 flex items-center justify-center">
+            {(!data?.gatePassActivity || data.gatePassActivity.length === 0) ? (
+              <p className="text-slate-400 text-sm">No exit records logged yet</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data.gatePassActivity}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={5}
+                    dataKey="TOTAL"
+                    nameKey="EXIT_TYPE"
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
+                    {data.gatePassActivity.map((entry, index) => {
+                      const colors = ["#f59e0b", "#10b981"]; // Amber for daily exit, Emerald for approved leave
+                      return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                    })}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value} exits`]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Attendance breakdown ratio */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+            <Calendar size={20} className="mr-2 text-indigo-500" />
+            Overall Attendance Split
+          </h3>
+          <div className="h-72 w-full flex-1 flex items-center justify-center">
+            {(!data?.attendanceSummary || data.attendanceSummary.length === 0) ? (
+              <p className="text-slate-400 text-sm">No attendance records logged yet</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data.attendanceSummary}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={0}
+                    outerRadius={90}
+                    dataKey="TOTAL"
+                    nameKey="STATUS"
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
+                    {data.attendanceSummary.map((entry, index) => {
+                      const colors: Record<string, string> = {
+                        "Present": "#10b981", // Emerald
+                        "Absent": "#ef4444",  // Red
+                        "Late": "#f59e0b"    // Amber
+                      };
+                      const fill = colors[entry.STATUS] || "#6366f1";
+                      return <Cell key={`cell-${index}`} fill={fill} />;
+                    })}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value} entries`]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
       </div>
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-8">

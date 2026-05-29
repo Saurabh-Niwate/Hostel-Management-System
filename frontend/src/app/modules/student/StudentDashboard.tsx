@@ -25,6 +25,8 @@ import { FeedbackView } from "./FeedbackView";
 import { CanteenMenuView } from "./CanteenMenuView";
 import { api } from "../../lib/api";
 import { clearAuthSession, getStoredIdentifier, getStoredRole, getStoredToken } from "../../lib/authStorage";
+import { socket } from "../../lib/socket";
+import { toast } from "sonner";
 
 type Tab = "dashboard" | "profile" | "leave" | "attendance" | "fees" | "feedback" | "canteen";
 type LeaveStatus = "Pending" | "Approved" | "Rejected";
@@ -137,64 +139,80 @@ export function StudentDashboard() {
     }
   }, [navigate]);
 
+  const loadDashboardData = async () => {
+    try {
+      const [leavesRes, profileRes, attendanceRes, feesRes, menuRes, staysRes, roomAllocationRes] = await Promise.allSettled([
+        api.get("/leave/my-leaves"),
+        api.get("/student/profile"),
+        api.get("/student/attendance"),
+        api.get("/student/fees"),
+        api.get("/student/canteen-menu"),
+        api.get("/student/nearby-stays"),
+        api.get("/student/room-allocation-status"),
+      ]);
+
+      const leaveRows = leavesRes.status === "fulfilled" ? leavesRes.value.data?.leaves || [] : [];
+      const mappedLeaves = leaveRows.map((row: any) => ({
+        id: String(row.LEAVE_ID),
+        type: row.LEAVE_TYPE || "General",
+        fromDate: row.FROM_DATE || "",
+        toDate: row.TO_DATE || "",
+        status: row.STATUS as LeaveStatus,
+      }));
+      setLeaves(mappedLeaves);
+
+      const roomNo = profileRes.status === "fulfilled" ? profileRes.value.data?.profile?.ROOM_NO || "" : "";
+      setProfile({ roomNo });
+      setAttendance(attendanceRes.status === "fulfilled" ? attendanceRes.value.data?.attendance || [] : []);
+      setFees(feesRes.status === "fulfilled" ? feesRes.value.data?.fees || [] : []);
+      setMenu(menuRes.status === "fulfilled" ? menuRes.value.data?.menu || [] : []);
+      setNearbyStays(staysRes.status === "fulfilled" ? staysRes.value.data?.accommodations || [] : []);
+      setRoomAllocation(
+        roomAllocationRes.status === "fulfilled"
+          ? {
+              hasAssignedRoom: Boolean(roomAllocationRes.value.data?.hasAssignedRoom),
+              roomNo: roomAllocationRes.value.data?.roomNo || null,
+              totalVacancy: Number(roomAllocationRes.value.data?.totalVacancy || 0),
+              hasPendingRequest: Boolean(roomAllocationRes.value.data?.hasPendingRequest),
+              canRequestRoom: Boolean(roomAllocationRes.value.data?.canRequestRoom),
+              latestRequest: roomAllocationRes.value.data?.latestRequest || null,
+            }
+          : {
+              hasAssignedRoom: false,
+              totalVacancy: 0,
+              hasPendingRequest: false,
+              canRequestRoom: false,
+              latestRequest: null,
+            }
+      );
+
+      const userId = profileRes.status === "fulfilled" ? profileRes.value.data?.profile?.USER_ID : null;
+      if (userId) {
+        socket.connect();
+        socket.emit("join", userId);
+      }
+    } catch (err) {
+      // Keep dashboard lightweight
+    } finally {
+      setDashboardLoaded(true);
+    }
+  };
+
   useEffect(() => {
     if (isAuthChecking) return;
-    const loadDashboardData = async () => {
-      try {
-        const [leavesRes, profileRes, attendanceRes, feesRes, menuRes, staysRes, roomAllocationRes] = await Promise.allSettled([
-          api.get("/leave/my-leaves"),
-          api.get("/student/profile"),
-          api.get("/student/attendance"),
-          api.get("/student/fees"),
-          api.get("/student/canteen-menu"),
-          api.get("/student/nearby-stays"),
-          api.get("/student/room-allocation-status"),
-        ]);
-
-        const leaveRows = leavesRes.status === "fulfilled" ? leavesRes.value.data?.leaves || [] : [];
-        const mappedLeaves = leaveRows.map((row: any) => ({
-          id: String(row.LEAVE_ID),
-          type: row.LEAVE_TYPE || "General",
-          fromDate: row.FROM_DATE || "",
-          toDate: row.TO_DATE || "",
-          status: row.STATUS as LeaveStatus,
-        }));
-        setLeaves(mappedLeaves);
-
-        const roomNo = profileRes.status === "fulfilled" ? profileRes.value.data?.profile?.ROOM_NO || "" : "";
-        setProfile({ roomNo });
-        setAttendance(attendanceRes.status === "fulfilled" ? attendanceRes.value.data?.attendance || [] : []);
-        setFees(feesRes.status === "fulfilled" ? feesRes.value.data?.fees || [] : []);
-        setMenu(menuRes.status === "fulfilled" ? menuRes.value.data?.menu || [] : []);
-        setNearbyStays(staysRes.status === "fulfilled" ? staysRes.value.data?.accommodations || [] : []);
-        setRoomAllocation(
-          roomAllocationRes.status === "fulfilled"
-            ? {
-                hasAssignedRoom: Boolean(roomAllocationRes.value.data?.hasAssignedRoom),
-                roomNo: roomAllocationRes.value.data?.roomNo || null,
-                totalVacancy: Number(roomAllocationRes.value.data?.totalVacancy || 0),
-                hasPendingRequest: Boolean(roomAllocationRes.value.data?.hasPendingRequest),
-                canRequestRoom: Boolean(roomAllocationRes.value.data?.canRequestRoom),
-                latestRequest: roomAllocationRes.value.data?.latestRequest || null,
-              }
-            : {
-                hasAssignedRoom: false,
-                totalVacancy: 0,
-                hasPendingRequest: false,
-                canRequestRoom: false,
-                latestRequest: null,
-              }
-        );
-      } catch (err) {
-        // Keep dashboard lightweight; dedicated pages handle detailed errors.
-      } finally {
-        setDashboardLoaded(true);
-      }
-    };
-
     loadDashboardData();
     const pollingWindow = window.setInterval(loadDashboardData, 30000);
-    return () => window.clearInterval(pollingWindow);
+
+    socket.on("leaveStatusChanged", (data: any) => {
+      toast.success(`Your leave request was reviewed: status is ${data.status}! Remarks: ${data.remarks || 'None'}`);
+      loadDashboardData();
+    });
+
+    return () => {
+      window.clearInterval(pollingWindow);
+      socket.off("leaveStatusChanged");
+      socket.disconnect();
+    };
   }, [isAuthChecking]);
 
   const hasAssignedRoom = dashboardLoaded && Boolean(profile.roomNo || roomAllocation.roomNo || roomAllocation.hasAssignedRoom);

@@ -175,6 +175,17 @@ exports.markExit = async (req, res) => {
       }).catch(err => console.error("Error in background exit alert:", err));
     }
 
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("gatePassLogged", {
+        studentId: student.STUDENT_ID,
+        studentName: student.FULL_NAME,
+        type: "EXIT",
+        time: new Date().toISOString(),
+        remarks: normalizedRemarks
+      });
+    }
+
     return res.status(201).json({
       message: activeLeave
         ? "Student exit marked successfully (Long Leave Alert Triggered)"
@@ -274,6 +285,17 @@ exports.markEntry = async (req, res) => {
           }
         }).catch(err => console.error("Error in background entry alert:", err));
       }
+    }
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("gatePassLogged", {
+        studentId: student.STUDENT_ID,
+        studentName: student.FULL_NAME,
+        type: "ENTRY",
+        time: new Date().toISOString(),
+        remarks: normalizedRemarks
+      });
     }
 
     return res.json({
