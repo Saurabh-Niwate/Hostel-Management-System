@@ -147,26 +147,25 @@ exports.createMenuItem = async (req, res) => {
       `
       INSERT INTO canteen_menu (menu_date, meal_type, item_name, is_available, created_by, updated_at)
       VALUES (
-        TRUNC(SYSDATE),
+        CURRENT_DATE,
         :b_meal_type,
         :b_item_name,
         :b_is_available,
         :b_created_by,
-        SYSDATE
+        CURRENT_TIMESTAMP
       )
-      RETURNING menu_id INTO :b_menu_id
+      RETURNING menu_id
       `,
       {
         b_meal_type: String(mealType).trim(),
         b_item_name: String(itemName).trim(),
         b_is_available: Number(isAvailable) === 0 ? 0 : 1,
-        b_created_by: actorUserId,
-        b_menu_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
+        b_created_by: actorUserId
       },
       { autoCommit: false }
     );
 
-    const menuId = insertResult.outBinds.b_menu_id[0];
+    const menuId = insertResult.rows[0][0];
 
     await logSystemAction(
       conn,
@@ -380,19 +379,18 @@ exports.createDinnerPoll = async (req, res) => {
         'Open',
         :b_created_by
       )
-      RETURNING poll_id INTO :b_poll_id
+      RETURNING poll_id
       `,
       {
         b_title: String(title).trim(),
         b_dinner_date: String(dinnerDate).trim(),
         b_closes_at: String(closesAt).trim(),
-        b_created_by: actorUserId,
-        b_poll_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
+        b_created_by: actorUserId
       },
       { autoCommit: false }
     );
 
-    const pollId = pollInsert.outBinds.b_poll_id[0];
+    const pollId = pollInsert.rows[0][0];
 
     for (let index = 0; index < normalizedOptions.length; index += 1) {
       const option = normalizedOptions[index];

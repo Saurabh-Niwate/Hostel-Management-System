@@ -94,18 +94,9 @@ exports.logout = async (req, res) => {
     conn = await oracledb.getConnection();
     await conn.execute(
       `
-      MERGE INTO revoked_tokens rt
-      USING (
-        SELECT
-          :b_jti AS jti,
-          :b_user_id AS user_id,
-          TO_DATE(:b_expires_at, 'YYYY-MM-DD HH24:MI:SS') AS expires_at
-        FROM dual
-      ) src
-      ON (rt.jti = src.jti)
-      WHEN NOT MATCHED THEN
-        INSERT (jti, user_id, expires_at)
-        VALUES (src.jti, src.user_id, src.expires_at)
+      INSERT INTO revoked_tokens (jti, user_id, expires_at)
+      VALUES (:b_jti, :b_user_id, TO_DATE(:b_expires_at, 'YYYY-MM-DD HH24:MI:SS'))
+      ON CONFLICT (jti) DO NOTHING
       `,
       {
         b_jti: String(jti),
@@ -231,16 +222,12 @@ exports.updateMyProfile = async (req, res) => {
 
     await conn.execute(
       `
-      MERGE INTO staff_profiles sp
-      USING (SELECT :b_user_id AS user_id FROM dual) src
-      ON (sp.user_id = src.user_id)
-      WHEN MATCHED THEN
-        UPDATE SET
-          full_name = :b_full_name,
-          phone = :b_phone
-      WHEN NOT MATCHED THEN
-        INSERT (user_id, full_name, phone)
-        VALUES (:b_user_id, :b_full_name, :b_phone)
+      INSERT INTO staff_profiles (user_id, full_name, phone)
+      VALUES (:b_user_id, :b_full_name, :b_phone)
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        phone = EXCLUDED.phone
       `,
       {
         b_user_id: userId,

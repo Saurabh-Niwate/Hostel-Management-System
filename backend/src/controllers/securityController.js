@@ -70,24 +70,21 @@ const getActiveApprovedLeave = async (conn, userId, refDate) => {
 const getOpenExitLog = async (conn, userId) => {
   const result = await conn.execute(
     `
-    SELECT *
-    FROM (
-      SELECT
-        log_id,
-        user_id,
-        TO_CHAR(exit_time, 'YYYY-MM-DD HH24:MI:SS') AS exit_time,
-        TO_CHAR(entry_time, 'YYYY-MM-DD HH24:MI:SS') AS entry_time,
-        status,
-        leave_id,
-        exit_remarks,
-        entry_remarks
-      FROM entry_exit_logs
-      WHERE user_id = :b_user_id
-        AND status = 'OUT'
-        AND entry_time IS NULL
-      ORDER BY exit_time DESC, log_id DESC
-    )
-    WHERE ROWNUM = 1
+    SELECT
+      log_id,
+      user_id,
+      TO_CHAR(exit_time, 'YYYY-MM-DD HH24:MI:SS') AS exit_time,
+      TO_CHAR(entry_time, 'YYYY-MM-DD HH24:MI:SS') AS entry_time,
+      status,
+      leave_id,
+      exit_remarks,
+      entry_remarks
+    FROM entry_exit_logs
+    WHERE user_id = :b_user_id
+      AND status = 'OUT'
+      AND entry_time IS NULL
+    ORDER BY exit_time DESC, log_id DESC
+    LIMIT 1
     `,
     { b_user_id: userId },
     { outFormat: oracledb.OUT_FORMAT_OBJECT }

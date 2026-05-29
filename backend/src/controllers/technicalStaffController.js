@@ -901,42 +901,38 @@ exports.updateStudentByStudentId = async (req, res) => {
 
     await conn.execute(
       `
-      MERGE INTO students s
-      USING (SELECT :b_user_id AS user_id FROM dual) src
-      ON (s.user_id = src.user_id)
-      WHEN MATCHED THEN
-        UPDATE SET
-          full_name = :b_full_name,
-          phone = :b_phone,
-          aadhar_no = :b_aadhar_no,
-          guardian_name = :b_guardian_name,
-          guardian_email = :b_guardian_email,
-          guardian_phone = :b_guardian_phone,
-          address = :b_address,
-          room_no = :b_room_no
-      WHEN NOT MATCHED THEN
-        INSERT (
-          user_id,
-          full_name,
-          phone,
-          aadhar_no,
-          guardian_name,
-          guardian_email,
-          guardian_phone,
-          address,
-          room_no
-        )
-        VALUES (
-          :b_user_id,
-          :b_full_name,
-          :b_phone,
-          :b_aadhar_no,
-          :b_guardian_name,
-          :b_guardian_email,
-          :b_guardian_phone,
-          :b_address,
-          :b_room_no
-        )
+      INSERT INTO students (
+        user_id,
+        full_name,
+        phone,
+        aadhar_no,
+        guardian_name,
+        guardian_email,
+        guardian_phone,
+        address,
+        room_no
+      )
+      VALUES (
+        :b_user_id,
+        :b_full_name,
+        :b_phone,
+        :b_aadhar_no,
+        :b_guardian_name,
+        :b_guardian_email,
+        :b_guardian_phone,
+        :b_address,
+        :b_room_no
+      )
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        phone = EXCLUDED.phone,
+        aadhar_no = EXCLUDED.aadhar_no,
+        guardian_name = EXCLUDED.guardian_name,
+        guardian_email = EXCLUDED.guardian_email,
+        guardian_phone = EXCLUDED.guardian_phone,
+        address = EXCLUDED.address,
+        room_no = EXCLUDED.room_no
       `,
       {
         b_user_id: targetUserId,
@@ -1047,14 +1043,11 @@ exports.uploadStudentProfileImageByStudentId = async (req, res) => {
 
     await conn.execute(
       `
-      MERGE INTO students s
-      USING (SELECT :b_user_id AS user_id FROM dual) src
-      ON (s.user_id = src.user_id)
-      WHEN MATCHED THEN
-        UPDATE SET profile_image_url = :b_profile_image_url
-      WHEN NOT MATCHED THEN
-        INSERT (user_id, profile_image_url)
-        VALUES (:b_user_id, :b_profile_image_url)
+      INSERT INTO students (user_id, profile_image_url)
+      VALUES (:b_user_id, :b_profile_image_url)
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        profile_image_url = EXCLUDED.profile_image_url
       `,
       {
         b_user_id: targetUserId,
@@ -1659,9 +1652,9 @@ exports.createExternalAccommodation = async (req, res) => {
         :b_availability_status,
         :b_notes,
         :b_created_by,
-        SYSDATE
+        CURRENT_TIMESTAMP
       )
-      RETURNING accommodation_id INTO :b_accommodation_id
+      RETURNING accommodation_id
       `,
       {
         b_name: String(name).trim(),
@@ -1675,13 +1668,12 @@ exports.createExternalAccommodation = async (req, res) => {
         b_gender_allowed: normalizedGender,
         b_availability_status: normalizedStatus,
         b_notes: notes ? String(notes).trim() : null,
-        b_created_by: req.user.userId,
-        b_accommodation_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
+        b_created_by: req.user.userId
       },
       { autoCommit: false }
     );
 
-    const accommodationId = insertResult.outBinds.b_accommodation_id[0];
+    const accommodationId = insertResult.rows[0][0];
     await insertSystemLog(conn, {
       actorUserId: req.user.userId,
       actorRole: req.user.role,
@@ -2612,25 +2604,22 @@ exports.getSystemLogs = async (req, res) => {
     conn = await oracledb.getConnection();
     const result = await conn.execute(
       `
-      SELECT *
-      FROM (
-        SELECT
-          log_id,
-          actor_user_id,
-          actor_role,
-          action,
-          entity_type,
-          entity_id,
-          details,
-          TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
-        FROM system_logs
-        WHERE (:b_action IS NULL OR action = :b_action)
-          AND (:b_actor_user_id IS NULL OR actor_user_id = :b_actor_user_id)
-          AND (:b_date_from IS NULL OR created_at >= TO_DATE(:b_date_from, 'YYYY-MM-DD'))
-          AND (:b_date_to IS NULL OR created_at < TO_DATE(:b_date_to, 'YYYY-MM-DD') + 1)
-        ORDER BY created_at DESC, log_id DESC
-      )
-      WHERE ROWNUM <= :b_row_limit
+      SELECT
+        log_id,
+        actor_user_id,
+        actor_role,
+        action,
+        entity_type,
+        entity_id,
+        details,
+        TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
+      FROM system_logs
+      WHERE (:b_action IS NULL OR action = :b_action)
+        AND (:b_actor_user_id IS NULL OR actor_user_id = :b_actor_user_id)
+        AND (:b_date_from IS NULL OR created_at >= TO_DATE(:b_date_from, 'YYYY-MM-DD'))
+        AND (:b_date_to IS NULL OR created_at < TO_DATE(:b_date_to, 'YYYY-MM-DD') + 1)
+      ORDER BY created_at DESC, log_id DESC
+      LIMIT :b_row_limit
       `,
       {
         b_action: action ? action.trim() : null,
