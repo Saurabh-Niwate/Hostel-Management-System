@@ -49,33 +49,134 @@ function parseSqlAndParams(sql, params) {
   const keyMap = {}; // Maps paramName -> index (1-based)
   let paramCounter = 1;
 
-  // Match colons followed by word character, but skip standard casting syntaxes like ::date
-  // Regex matches any colon followed by letters/numbers/underscores, provided it is not preceded by a colon.
-  const regex = /(?<!:):([a-zA-Z0-9_]+)/g;
+  let inStringLiteral = false;
+  let inDoubleQuote = false;
+  let inSingleLineComment = false;
+  let inMultiLineComment = false;
 
-  const query = sql.replace(regex, (match, name) => {
-    if (keyMap[name] !== undefined) {
-      return `$${keyMap[name]}`;
+  let resultQuery = "";
+  let i = 0;
+  while (i < sql.length) {
+    const char = sql[i];
+    const nextChar = sql[i + 1];
+
+    if (inSingleLineComment) {
+      if (char === "\n") {
+        inSingleLineComment = false;
+      }
+      resultQuery += char;
+      i++;
+      continue;
     }
 
-    let val = params[name];
-    if (val === undefined) {
-      // Case-insensitive lookup
-      const foundKey = Object.keys(params).find(k => k.toLowerCase() === name.toLowerCase());
-      if (foundKey !== undefined) {
-        val = params[foundKey];
-      } else {
-        val = null;
+    if (inMultiLineComment) {
+      if (char === "*" && nextChar === "/") {
+        inMultiLineComment = false;
+        resultQuery += "*/";
+        i += 2;
+        continue;
+      }
+      resultQuery += char;
+      i++;
+      continue;
+    }
+
+    if (inStringLiteral) {
+      if (char === "'") {
+        if (nextChar === "'") {
+          resultQuery += "''";
+          i += 2;
+          continue;
+        }
+        inStringLiteral = false;
+      }
+      resultQuery += char;
+      i++;
+      continue;
+    }
+
+    if (inDoubleQuote) {
+      if (char === '"') {
+        inDoubleQuote = false;
+      }
+      resultQuery += char;
+      i++;
+      continue;
+    }
+
+    if (char === "-" && nextChar === "-") {
+      inSingleLineComment = true;
+      resultQuery += "--";
+      i += 2;
+      continue;
+    }
+    if (char === "/" && nextChar === "*") {
+      inMultiLineComment = true;
+      resultQuery += "/*";
+      i += 2;
+      continue;
+    }
+
+    if (char === "'") {
+      inStringLiteral = true;
+      resultQuery += "'";
+      i++;
+      continue;
+    }
+    if (char === '"') {
+      inDoubleQuote = true;
+      resultQuery += '"';
+      i++;
+      continue;
+    }
+
+    if (char === ":") {
+      if (nextChar === ":") {
+        resultQuery += "::";
+        i += 2;
+        continue;
+      }
+      if (resultQuery.endsWith(":")) {
+        resultQuery += ":";
+        i++;
+        continue;
+      }
+
+      let name = "";
+      let j = i + 1;
+      while (j < sql.length && /[a-zA-Z0-9_]/.test(sql[j])) {
+        name += sql[j];
+        j++;
+      }
+
+      if (name.length > 0) {
+        if (keyMap[name] !== undefined) {
+          resultQuery += `$${keyMap[name]}`;
+        } else {
+          let val = params[name];
+          if (val === undefined) {
+            const foundKey = Object.keys(params).find(k => k.toLowerCase() === name.toLowerCase());
+            if (foundKey !== undefined) {
+              val = params[foundKey];
+            } else {
+              val = null;
+            }
+          }
+          keyMap[name] = paramCounter;
+          values.push(val);
+          paramCounter++;
+          resultQuery += `$${keyMap[name]}`;
+        }
+        i = j;
+        continue;
       }
     }
 
-    keyMap[name] = paramCounter;
-    values.push(val);
-    paramCounter++;
-    return `$${keyMap[name]}`;
-  });
+    resultQuery += char;
+    i++;
+  }
 
-  return { query, values };
+  return { query: resultQuery, values };
 }
 
 // Oracle Database constants
@@ -107,11 +208,20 @@ class PostgresConnectionWrapper {
     // E. TRUNC(date_col) -> date_col::date
     processedSql = processedSql.replace(/\bTRUNC\s*\(\s*([a-zA-Z0-9_.]+)\s*\)/gi, "$1::date");
 
-    // F. TO_DATE(x, '...') -> TO_TIMESTAMP(x, '...')
-    processedSql = processedSql.replace(/\bTO_DATE\b/gi, "TO_TIMESTAMP");
+    // F. TO_DATE(x, '...') -> TO_TIMESTAMP(x, '...') (only when calling function)
+    processedSql = processedSql.replace(/\bTO_DATE\s*\(/gi, "TO_TIMESTAMP(");
+
+    // G. Replace date + 1 (Oracle syntax) with date + INTERVAL '1 day' (PostgreSQL syntax)
+    processedSql = processedSql.replace(/(TO_TIMESTAMP\s*\([^)]+\))\s*\+\s*1\b/gi, "$1 + INTERVAL '1 day'");
 
     // 2. Parse parameters
-    const { query, values } = parseSqlAndParams(processedSql, bindParams);
+    let { query, values } = parseSqlAndParams(processedSql, bindParams);
+
+    // Cast parameter placeholders in IS NULL/IS NOT NULL conditions (e.g. $1 IS NULL -> ($1::text) IS NULL)
+    // to prevent PostgreSQL "could not determine data type of parameter" errors.
+    query = query.replace(/\$([0-9]+)\s+IS\s+(NOT\s+)?NULL/gi, (match, num, notStr) => {
+      return `($${num}::text) IS ${notStr || ""}NULL`;
+    });
 
     // 3. Auto-transaction logic (if autoCommit is false and not already in transaction)
     if (options.autoCommit === false && !this.inTransaction) {

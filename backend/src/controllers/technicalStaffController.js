@@ -103,7 +103,7 @@ const ensureRoomHasVacancy = async (conn, roomNo, excludedUserId = null) => {
         SELECT COUNT(*)
         FROM students s
         WHERE TRIM(s.room_no) = TRIM(r.room_no)
-          AND (:b_excluded_user_id IS NULL OR s.user_id <> :b_excluded_user_id)
+          AND (:b_excluded_user_id IS NULL OR s.user_id <> CAST(:b_excluded_user_id AS INTEGER))
       ) AS occupied
     FROM rooms r
     WHERE TRIM(r.room_no) = :b_room_no
@@ -196,7 +196,7 @@ const lockRoomAndGetOccupancy = async (conn, roomNo, excludedUserId = null) => {
     SELECT COUNT(*) AS occupied_count
     FROM students
     WHERE TRIM(room_no) = :b_room_no
-      AND (:b_excluded_user_id IS NULL OR user_id <> :b_excluded_user_id)
+      AND (:b_excluded_user_id IS NULL OR user_id <> CAST(:b_excluded_user_id AS INTEGER))
     `,
     {
       b_room_no: normalizedRoomNo,
@@ -2615,7 +2615,7 @@ exports.getSystemLogs = async (req, res) => {
         TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
       FROM system_logs
       WHERE (:b_action IS NULL OR action = :b_action)
-        AND (:b_actor_user_id IS NULL OR actor_user_id = :b_actor_user_id)
+        AND (:b_actor_user_id IS NULL OR actor_user_id = CAST(:b_actor_user_id AS INTEGER))
         AND (:b_date_from IS NULL OR created_at >= TO_DATE(:b_date_from, 'YYYY-MM-DD'))
         AND (:b_date_to IS NULL OR created_at < TO_DATE(:b_date_to, 'YYYY-MM-DD') + 1)
       ORDER BY created_at DESC, log_id DESC

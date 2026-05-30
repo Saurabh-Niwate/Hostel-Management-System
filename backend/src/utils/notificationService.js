@@ -399,7 +399,7 @@ async function sendStudentLeaveResponseAlert({
           
           <div class="status-box">
             <strong>Status: ${status}</strong>
-            <p>Your request for ${leaveType} has been ${status.toLowerCase()} by the Warden.</p>
+            <p>Your request for ${leaveType} has been ${status.toLowerCase()} by the Admin.</p>
           </div>
 
           <table class="details-table">
@@ -413,7 +413,7 @@ async function sendStudentLeaveResponseAlert({
             </tr>
             ${remarks ? `
             <tr>
-              <th>Warden Comments</th>
+              <th>Admin Comments</th>
               <td><strong>${remarks}</strong></td>
             </tr>
             ` : ''}
@@ -422,7 +422,7 @@ async function sendStudentLeaveResponseAlert({
           <p class="greeting" style="font-size: 14px; color: #64748b;">
             ${isApproved 
               ? "Since your leave is approved, you may check out at the gate on your departure date. Security will log your departure, and your guardian will be alerted." 
-              : "If you have any questions regarding the rejection or need to modify your request, please visit the Warden's office during office hours."}
+              : "If you have any questions regarding the rejection or need to modify your request, please visit the Admin's office during office hours."}
           </p>
         </div>
         <div class="footer">
@@ -440,13 +440,13 @@ async function sendStudentLeaveResponseAlert({
     Your leave request has been reviewed by the hostel administration.
     
     Status: ${status}
-    Your request for ${leaveType} from ${fromDate} to ${toDate} has been ${status.toLowerCase()} by the Warden.
+    Your request for ${leaveType} from ${fromDate} to ${toDate} has been ${status.toLowerCase()} by the Admin.
     
-    ${remarks ? `Warden Comments: ${remarks}` : ''}
+    ${remarks ? `Admin Comments: ${remarks}` : ''}
     
     ${isApproved 
       ? "Since your leave is approved, you may check out at the gate on your departure date." 
-      : "If you have questions, please visit the Warden's office."}
+      : "If you have questions, please visit the Admin's office."}
     
     Regards,
     Hostel Management Administration

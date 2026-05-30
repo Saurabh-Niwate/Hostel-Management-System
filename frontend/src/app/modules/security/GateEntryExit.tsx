@@ -40,24 +40,111 @@ export function GateEntryExit() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [studentStatus, setStudentStatus] = useState<StudentStatusResponse | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+
+  const countdownIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, []);
 
   const normalizeStudentIdInput = (value: string) => value.toUpperCase().trim();
 
+  const startAutoClearCountdown = () => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    setCountdown(5);
+    countdownIntervalRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+          clearState();
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const clearState = () => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    setStudentStatus(null);
+    setSearchQuery("");
+    setRemarks("");
+    setError("");
+    setSuccess("");
+    setCountdown(null);
+  };
+
   const loadStudentStatus = async (studentId: string) => {
     const response = await api.get(`/security/student-status/${encodeURIComponent(studentId.trim())}`);
-    setStudentStatus(response.data);
+    return response.data;
   };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+      setCountdown(null);
+    }
+
     setLoading(true);
     setError("");
     setSuccess("");
+    setStudentStatus(null);
 
     try {
-      await loadStudentStatus(searchQuery);
+      const data = await loadStudentStatus(searchQuery);
+      setStudentStatus(data);
+
+      // Automated check-out / check-in logic for Daily Outings (no active approved leave)
+      if (!data.activeLeave) {
+        setLoading(false); // turn off loading spinner early
+        if (data.currentGateStatus === "INSIDE") {
+          setSuccess("Daily Outing detected. Automatically checking student OUT...");
+          setTimeout(async () => {
+            try {
+              const res = await api.post("/security/mark-exit", {
+                studentId: data.student.studentId
+              });
+              setSuccess(res.data?.message || "Student checked OUT successfully!");
+              // Refresh status to reflect OUTSIDE
+              const updatedData = await loadStudentStatus(data.student.studentId);
+              setStudentStatus(updatedData);
+              startAutoClearCountdown();
+            } catch (err: any) {
+              setError(err.response?.data?.message || "Failed to automatically mark exit");
+            }
+          }, 800);
+        } else {
+          setSuccess("Daily Return detected. Automatically checking student IN...");
+          setTimeout(async () => {
+            try {
+              const res = await api.post("/security/mark-entry", {
+                studentId: data.student.studentId
+              });
+              setSuccess(res.data?.message || "Student checked IN successfully!");
+              // Refresh status to reflect INSIDE
+              const updatedData = await loadStudentStatus(data.student.studentId);
+              setStudentStatus(updatedData);
+              startAutoClearCountdown();
+            } catch (err: any) {
+              setError(err.response?.data?.message || "Failed to automatically mark entry");
+            }
+          }, 800);
+        }
+      }
     } catch (err: any) {
       setStudentStatus(null);
       setError(err.response?.data?.message || "Failed to fetch student status");
@@ -80,7 +167,8 @@ export function GateEntryExit() {
       });
       setSuccess(response.data?.message || "Student exit marked successfully");
       setRemarks("");
-      await loadStudentStatus(studentStatus.student.studentId);
+      const updatedData = await loadStudentStatus(studentStatus.student.studentId);
+      setStudentStatus(updatedData);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to mark exit");
     } finally {
@@ -102,7 +190,8 @@ export function GateEntryExit() {
       });
       setSuccess(response.data?.message || "Student entry marked successfully");
       setRemarks("");
-      await loadStudentStatus(studentStatus.student.studentId);
+      const updatedData = await loadStudentStatus(studentStatus.student.studentId);
+      setStudentStatus(updatedData);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to mark entry");
     } finally {
@@ -110,16 +199,8 @@ export function GateEntryExit() {
     }
   };
 
-  const clearState = () => {
-    setStudentStatus(null);
-    setSearchQuery("");
-    setRemarks("");
-    setError("");
-    setSuccess("");
-  };
-
   const student = studentStatus?.student;
-  const canExit = studentStatus?.currentGateStatus === "INSIDE" && !!studentStatus.activeLeave;
+  const canExit = studentStatus?.currentGateStatus === "INSIDE";
   const isOutside = studentStatus?.currentGateStatus === "OUTSIDE";
 
   return (
@@ -218,55 +299,87 @@ export function GateEntryExit() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center p-4 bg-red-50 text-red-700 rounded-xl border border-red-100">
-                  <div className="bg-red-100 p-2 rounded-lg mr-4">
-                    <ShieldAlert size={24} />
+                <div className="flex items-center p-4 bg-slate-50 text-slate-700 rounded-xl border border-slate-100">
+                  <div className="bg-slate-100 p-2 rounded-lg mr-4">
+                    <UserCheck size={24} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-lg">Exit Denied</h4>
-                    <p className="text-sm">No approved leave found for this student on {studentStatus.referenceDate}.</p>
+                    <h4 className="font-bold text-lg">Daily Outing</h4>
+                    <p className="text-sm">Student is inside and can be checked out for a daily outing.</p>
                   </div>
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Remarks</label>
-                <textarea
-                  rows={3}
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  placeholder={isOutside ? "Optional entry remarks" : "Optional exit remarks"}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
-                />
-              </div>
+              {!studentStatus.activeLeave ? (
+                <div className="text-center py-6 space-y-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mb-2 animate-bounce">
+                    <UserCheck size={32} />
+                  </div>
+                  <h4 className="text-xl font-bold text-slate-800">
+                    {isOutside ? "Checked OUT Successfully!" : "Checked IN Successfully!"}
+                  </h4>
+                  <p className="text-slate-500 text-sm">
+                    Routine daily outing recorded. The screen will clear automatically to allow the next scan.
+                  </p>
+                  
+                  {countdown !== null && (
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-100 rounded-full text-slate-700 text-sm font-bold shadow-inner">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                      <span>Next scan in {countdown}s...</span>
+                    </div>
+                  )}
 
-              <div className="flex flex-col md:flex-row gap-4">
-                {isOutside ? (
-                  <button
-                    onClick={handleMarkEntry}
-                    disabled={submitting !== null}
-                    className="flex-1 flex items-center justify-center gap-2 py-4 bg-slate-600 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors disabled:opacity-60 shadow-lg shadow-slate-200 text-lg"
-                  >
-                    <LogIn size={24} />
-                    <span>{submitting === "entry" ? "Marking Entry..." : "Mark Entry"}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleMarkExit}
-                    disabled={!canExit || submitting !== null}
-                    className="flex-1 flex items-center justify-center gap-2 py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-orange-200 text-lg"
-                  >
-                    <LogOut size={24} />
-                    <span>{submitting === "exit" ? "Marking Exit..." : "Mark Exit"}</span>
-                  </button>
-                )}
-                <button
-                  onClick={clearState}
-                  className="px-6 py-4 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
-                >
-                  Clear
-                </button>
-              </div>
+                  <div className="pt-4">
+                    <button
+                      onClick={clearState}
+                      className="px-6 py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors shadow-md shadow-slate-200 text-sm"
+                    >
+                      Clear Now
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Remarks</label>
+                    <textarea
+                      rows={3}
+                      value={remarks}
+                      onChange={(e) => setRemarks(e.target.value)}
+                      placeholder={isOutside ? "Optional entry remarks" : "Optional exit remarks"}
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {isOutside ? (
+                      <button
+                        onClick={handleMarkEntry}
+                        disabled={submitting !== null}
+                        className="flex-1 flex items-center justify-center gap-2 py-4 bg-slate-600 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors disabled:opacity-60 shadow-lg shadow-slate-200 text-lg"
+                      >
+                        <LogIn size={24} />
+                        <span>{submitting === "entry" ? "Marking Entry..." : "Mark Entry"}</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleMarkExit}
+                        disabled={!canExit || submitting !== null}
+                        className="flex-1 flex items-center justify-center gap-2 py-4 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-orange-200 text-lg"
+                      >
+                        <LogOut size={24} />
+                        <span>{submitting === "exit" ? "Marking Exit..." : "Mark Exit"}</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={clearState}
+                      className="px-6 py-4 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </motion.div>
         )}
