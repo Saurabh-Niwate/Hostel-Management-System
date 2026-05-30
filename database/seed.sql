@@ -33,14 +33,14 @@ INSERT INTO students (user_id, full_name, phone, aadhar_no, guardian_name, guard
 INSERT INTO students (user_id, full_name, phone, aadhar_no, guardian_name, guardian_email, guardian_phone, address, room_no) VALUES (10, 'Student Five', '9000000005', '123456789005', 'Sample Guardian 5', 'guardian5@example.com', '9123456784', 'Hostel Block A', null);
 
 -- 5. Insert Leave Requests
-INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (2, 'Event', CURRENT_DATE - INTERVAL '20 days', CURRENT_DATE - INTERVAL '18 days', 'Hackathon', 'Approved');
-INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (2, 'Home Visit', CURRENT_DATE + INTERVAL '10 days', CURRENT_DATE + INTERVAL '15 days', 'Vacation', 'Pending');
-INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (7, 'Home Visit', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '2 days', 'Visiting parents', 'Approved');
-INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (7, 'Medical', CURRENT_DATE + INTERVAL '5 days', CURRENT_DATE + INTERVAL '10 days', 'Health checkup', 'Pending');
-INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (8, 'Personal', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '8 days', 'Personal work', 'Approved');
-INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (8, 'Home Visit', CURRENT_DATE + INTERVAL '2 days', CURRENT_DATE + INTERVAL '5 days', 'Sibling marriage', 'Pending');
-INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (9, 'Medical', CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE - INTERVAL '10 days', 'Fever', 'Approved');
-INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (9, 'Event', CURRENT_DATE + INTERVAL '1 day', CURRENT_DATE + INTERVAL '3 days', 'Tech fest', 'Pending');
+INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (2, 'Event', CURRENT_DATE - 20, CURRENT_DATE - 18, 'Hackathon', 'Approved');
+INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (2, 'Home Visit', CURRENT_DATE + 10, CURRENT_DATE + 15, 'Vacation', 'Pending');
+INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (7, 'Home Visit', CURRENT_DATE - 5, CURRENT_DATE - 2, 'Visiting parents', 'Approved');
+INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (7, 'Medical', CURRENT_DATE + 5, CURRENT_DATE + 10, 'Health checkup', 'Pending');
+INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (8, 'Personal', CURRENT_DATE - 10, CURRENT_DATE - 8, 'Personal work', 'Approved');
+INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (8, 'Home Visit', CURRENT_DATE + 2, CURRENT_DATE + 5, 'Sibling marriage', 'Pending');
+INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (9, 'Medical', CURRENT_DATE - 15, CURRENT_DATE - 10, 'Fever', 'Approved');
+INSERT INTO leave_requests (user_id, leave_type, from_date, to_date, reason, status) VALUES (9, 'Event', CURRENT_DATE + 1, CURRENT_DATE + 3, 'Tech fest', 'Pending');
 
 -- 6. Insert Attendance Records
 INSERT INTO attendance_records (user_id, attendance_date, status, remarks) VALUES (2, CURRENT_DATE, 'Present', 'On time');
