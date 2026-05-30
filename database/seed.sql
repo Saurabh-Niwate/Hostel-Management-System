@@ -11,16 +11,16 @@ INSERT INTO roles (role_name) VALUES ('Security');
 INSERT INTO roles (role_name) VALUES ('Canteen Owner');
 
 -- 2. Insert Users
-INSERT INTO users (email, password, role_id) VALUES ('Admin@gmail.com', '$2b$10$OLYP0CjzE1ghZzwNHlKMsOJ2o2.hn3EAxERpmESX1tle0JTW6QCPm', 1);
-INSERT INTO users (student_id, password, role_id) VALUES ('STU001', '$2b$10$Rx5aXkQGvk427RUSkKbVp.IMxUbkTQLp9cxeu7IZLw8ahjrbK08US', 2);
-INSERT INTO users (emp_id, password, role_id) VALUES ('TES001', '$2b$10$fr1g93UKlCx/RmGuWsmt0esfHh11PUp2132QkKeKnxk/v4f7drZne', 3);
-INSERT INTO users (emp_id, password, role_id) VALUES ('WAR001', '$2b$10$JpGvhCDmY7x6OPm3vGXA6uHqFxeJgYBdZj3EXNAnpOZfsA0UzilF6', 4);
-INSERT INTO users (emp_id, password, role_id) VALUES ('SEC001', '$2b$10$5vD75.1TpTYfxyzJFxwiPOpdGzpEe8WGZE7yVxbBMWCM3/SyenJ8y', 5);
-INSERT INTO users (emp_id, password, role_id) VALUES ('CAN001', '$2b$10$6l.Y1ydjVW5TlE7i4z8lBeeawuVrHJ5dJyVPJc8o.dZ5wTW4hloVG', 6);
-INSERT INTO users (student_id, emp_id, email, password, role_id) VALUES ('STU002', NULL, 'stu2@hostel.com', '$2b$10$8sSjODD1wbhraCp779fRpeBUfb1fKHaA8lmp0yl6XakJ70c3hKwRG', 2);
-INSERT INTO users (student_id, emp_id, email, password, role_id) VALUES ('STU003', NULL, 'stu3@hostel.com', '$2b$10$8sSjODD1wbhraCp779fRpeBUfb1fKHaA8lmp0yl6XakJ70c3hKwRG', 2);
-INSERT INTO users (student_id, emp_id, email, password, role_id) VALUES ('STU004', NULL, 'stu4@hostel.com', '$2b$10$8sSjODD1wbhraCp779fRpeBUfb1fKHaA8lmp0yl6XakJ70c3hKwRG', 2);
-INSERT INTO users (student_id, emp_id, email, password, role_id) VALUES ('STU005', NULL, 'stu5@hostel.com', '$2b$10$8sSjODD1wbhraCp779fRpeBUfb1fKHaA8lmp0yl6XakJ70c3hKwRG', 2);
+INSERT INTO users (email, password, role_id) VALUES ('Admin@gmail.com', '$2b$10$uWc6WerqfNqHT915HLKH7O4d29ewygUFGvlM4DhJHXOQM4eRjEl5W', 1); -- password: admin123
+INSERT INTO users (student_id, password, role_id) VALUES ('STU001', '$2b$10$mrm2D80n/49zXy7XW4XCZ.rEqUxmeofhusLmqzBH1N4Zv2bV2YVyO', 2); -- password: student123
+INSERT INTO users (emp_id, password, role_id) VALUES ('TES001', '$2b$10$HztE6zvptFE3E5LKv6KjTOZvdjOVvnBrOpDff/emWouWn62bIdVVK', 3); -- password: technical123
+INSERT INTO users (emp_id, password, role_id) VALUES ('WAR001', '$2b$10$w8oj9v35sa7nimQiZc9uSOjrVB5.Yl0ZKWC55.g67MR2iE.9VtTIu', 4); -- password: warden123
+INSERT INTO users (emp_id, password, role_id) VALUES ('SEC001', '$2b$10$DCooFgZomBnC5X0t9HSnIOhmo3oG2NI5CQteYlWliazCFN1eFWoGW', 5); -- password: security123
+INSERT INTO users (emp_id, password, role_id) VALUES ('CAN001', '$2b$10$niGKxpJ6cGKxIubXoN5UlOOiwF6PeIFVn9MCIgWwDDz.wgsqDs75O', 6); -- password: canteen123
+INSERT INTO users (student_id, emp_id, email, password, role_id) VALUES ('STU002', NULL, 'stu2@hostel.com', '$2b$10$mrm2D80n/49zXy7XW4XCZ.rEqUxmeofhusLmqzBH1N4Zv2bV2YVyO', 2); -- password: student123
+INSERT INTO users (student_id, emp_id, email, password, role_id) VALUES ('STU003', NULL, 'stu3@hostel.com', '$2b$10$mrm2D80n/49zXy7XW4XCZ.rEqUxmeofhusLmqzBH1N4Zv2bV2YVyO', 2); -- password: student123
+INSERT INTO users (student_id, emp_id, email, password, role_id) VALUES ('STU004', NULL, 'stu4@hostel.com', '$2b$10$mrm2D80n/49zXy7XW4XCZ.rEqUxmeofhusLmqzBH1N4Zv2bV2YVyO', 2); -- password: student123
+INSERT INTO users (student_id, emp_id, email, password, role_id) VALUES ('STU005', NULL, 'stu5@hostel.com', '$2b$10$mrm2D80n/49zXy7XW4XCZ.rEqUxmeofhusLmqzBH1N4Zv2bV2YVyO', 2); -- password: student123
 
 -- 3. Insert Rooms
 INSERT INTO rooms (room_no, block_name, floor_no, capacity, room_type, is_active) VALUES ('A-101', 'Block A', 1, 4, 'Regular', 1);

@@ -1,24 +1,24 @@
 -- PostgreSQL Database Schema for Hostel Management System
 
 -- Drop tables if they exist (for easy re-running/seeding)
-DROP TABLE IF EXISTS system_logs CASCADE constraints;
-DROP TABLE IF EXISTS dinner_poll_votes CASCADE constraints;
-DROP TABLE IF EXISTS dinner_poll_options CASCADE constraints;
-DROP TABLE IF EXISTS dinner_polls CASCADE constraints;
-DROP TABLE IF EXISTS revoked_tokens CASCADE constraints;
-DROP TABLE IF EXISTS room_allocation_requests CASCADE constraints;
-DROP TABLE IF EXISTS canteen_menu CASCADE constraints;
-DROP TABLE IF EXISTS student_feedback CASCADE constraints;
-DROP TABLE IF EXISTS student_fees CASCADE constraints;
-DROP TABLE IF EXISTS entry_exit_logs CASCADE constraints;
-DROP TABLE IF EXISTS attendance_records CASCADE constraints;
-DROP TABLE IF EXISTS leave_requests CASCADE constraints;
-DROP TABLE IF EXISTS external_accommodations CASCADE constraints;
-DROP TABLE IF EXISTS staff_profiles CASCADE constraints;
-DROP TABLE IF EXISTS students CASCADE constraints;
-DROP TABLE IF EXISTS rooms CASCADE constraints;
-DROP TABLE IF EXISTS users CASCADE constraints;
-DROP TABLE IF EXISTS roles CASCADE constraints;
+DROP TABLE IF EXISTS system_logs CASCADE;
+DROP TABLE IF EXISTS dinner_poll_votes CASCADE;
+DROP TABLE IF EXISTS dinner_poll_options CASCADE;
+DROP TABLE IF EXISTS dinner_polls CASCADE;
+DROP TABLE IF EXISTS revoked_tokens CASCADE;
+DROP TABLE IF EXISTS room_allocation_requests CASCADE;
+DROP TABLE IF EXISTS canteen_menu CASCADE;
+DROP TABLE IF EXISTS student_feedback CASCADE;
+DROP TABLE IF EXISTS student_fees CASCADE;
+DROP TABLE IF EXISTS entry_exit_logs CASCADE;
+DROP TABLE IF EXISTS attendance_records CASCADE;
+DROP TABLE IF EXISTS leave_requests CASCADE;
+DROP TABLE IF EXISTS external_accommodations CASCADE;
+DROP TABLE IF EXISTS staff_profiles CASCADE;
+DROP TABLE IF EXISTS students CASCADE;
+DROP TABLE IF EXISTS rooms CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS roles CASCADE;
 
 -- 1. Roles table
 CREATE TABLE roles (
