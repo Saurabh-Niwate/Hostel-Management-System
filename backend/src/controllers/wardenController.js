@@ -660,3 +660,170 @@ exports.updateFeedbackStatus = async (req, res) => {
     }
   }
 };
+
+exports.getSecurityAnomalies = async (req, res) => {
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const result = await conn.execute(
+      `
+      SELECT 
+        log.log_id,
+        log.user_id,
+        u.student_id,
+        s.full_name,
+        s.room_no,
+        s.phone,
+        s.guardian_phone,
+        TO_CHAR(log.exit_time, 'YYYY-MM-DD HH24:MI:SS') AS exit_time,
+        TO_CHAR(log.entry_time, 'YYYY-MM-DD HH24:MI:SS') AS entry_time,
+        log.status,
+        log.leave_id,
+        log.exit_remarks,
+        log.entry_remarks
+      FROM entry_exit_logs log
+      JOIN users u ON u.user_id = log.user_id
+      LEFT JOIN students s ON s.user_id = log.user_id
+      WHERE log.exit_time >= CURRENT_TIMESTAMP - INTERVAL '14 days'
+         OR (log.status = 'OUT' AND log.entry_time IS NULL)
+      ORDER BY log.exit_time DESC
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const logs = result.rows || [];
+    const anomalies = [];
+    
+    // Group logs by student to run frequency-based near-curfew return checks
+    const studentReturns = {}; // studentId -> list of entry times in the past 7 days
+
+    const now = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(now.getDate() - 7);
+
+    logs.forEach(log => {
+      const studentId = log.STUDENT_ID ? String(log.STUDENT_ID).trim() : null;
+      if (!studentId || !log.ENTRY_TIME) return;
+      const entryTime = new Date(log.ENTRY_TIME);
+      if (entryTime >= sevenDaysAgo) {
+        if (!studentReturns[studentId]) {
+          studentReturns[studentId] = [];
+        }
+        studentReturns[studentId].push(entryTime);
+      }
+    });
+
+    logs.forEach(log => {
+      const studentId = log.STUDENT_ID ? String(log.STUDENT_ID).trim() : null;
+      if (!studentId) return;
+
+      const exitTimeStr = log.EXIT_TIME;
+      const entryTimeStr = log.ENTRY_TIME;
+      const status = log.STATUS;
+      const leaveId = log.LEAVE_ID;
+
+      const exitTime = new Date(exitTimeStr);
+
+      // --- RULE 1: Overstaying Daily Outing ---
+      if (status === "OUT" && !entryTimeStr && !leaveId) {
+        // Calculate hours out
+        const hoursOut = Math.abs(now.getTime() - exitTime.getTime()) / 36e5;
+        
+        // Curfew condition: past 9:00 PM (21:00) on exit date OR out for > 6 hours
+        const exitDateStr = exitTimeStr.substring(0, 10);
+        const curfewTime = new Date(`${exitDateStr}T21:00:00`);
+        const curfewExceeded = now > curfewTime;
+
+        if (hoursOut > 6 || curfewExceeded) {
+          anomalies.push({
+            id: `anomaly-overstay-${log.LOG_ID}`,
+            studentId,
+            fullName: log.FULL_NAME || "Student",
+            roomNo: log.ROOM_NO || "N/A",
+            phone: log.PHONE || "",
+            guardianPhone: log.GUARDIAN_PHONE || "",
+            type: "Overstaying Daily Outing",
+            severity: "HIGH",
+            reason: `Student checked out at ${exitTimeStr.substring(11, 16)} but has been out for ${hoursOut.toFixed(1)} hours (Daily Curfew Exceeded).`,
+            time: exitTimeStr
+          });
+        }
+      }
+
+      // --- RULE 2: Unusual Late Return (Frequent near curfew returns) ---
+      if (entryTimeStr && !leaveId) {
+        const entryTime = new Date(entryTimeStr);
+        const hours = entryTime.getHours();
+        const minutes = entryTime.getMinutes();
+        
+        // Curfew threshold: 8:30 PM (20:30) to 9:00 PM (21:00)
+        const isNearCurfew = (hours === 20 && minutes >= 30) || (hours === 21 && minutes === 0);
+        if (isNearCurfew) {
+          // Check frequency in past 7 days
+          const recentReturns = studentReturns[studentId] || [];
+          const nearCurfewCount = recentReturns.filter(ret => {
+            const h = ret.getHours();
+            const m = ret.getMinutes();
+            return (h === 20 && m >= 30) || (h === 21 && m === 0);
+          }).length;
+
+          if (nearCurfewCount >= 3) {
+            // Check if this anomaly is already added (only add once per student from their latest log)
+            const exists = anomalies.some(a => a.studentId === studentId && a.type === "Frequent Near-Curfew Returns");
+            if (!exists) {
+              anomalies.push({
+                id: `anomaly-curfew-${log.LOG_ID}`,
+                studentId,
+                fullName: log.FULL_NAME || "Student",
+                roomNo: log.ROOM_NO || "N/A",
+                phone: log.PHONE || "",
+                guardianPhone: log.GUARDIAN_PHONE || "",
+                type: "Frequent Near-Curfew Returns",
+                severity: "MEDIUM",
+                reason: `Returned near curfew ${nearCurfewCount} times in the last 7 days. Latest: ${entryTimeStr.substring(11, 16)}.`,
+                time: entryTimeStr
+              });
+            }
+          }
+        }
+      }
+
+      // --- RULE 3: Late Night Outing ---
+      const exitHour = exitTime.getHours();
+      // Abnormal hours: between 10:00 PM and 5:00 AM (22:00 to 05:00)
+      const isAbnormalHours = exitHour >= 22 || exitHour < 5;
+      if (isAbnormalHours && !leaveId) {
+        const exists = anomalies.some(a => a.id === `anomaly-latenight-${log.LOG_ID}`);
+        if (!exists) {
+          anomalies.push({
+            id: `anomaly-latenight-${log.LOG_ID}`,
+            studentId,
+            fullName: log.FULL_NAME || "Student",
+            roomNo: log.ROOM_NO || "N/A",
+            phone: log.PHONE || "",
+            guardianPhone: log.GUARDIAN_PHONE || "",
+            type: "Late Night Outing",
+            severity: "MEDIUM",
+            reason: `Daily outing checked out at abnormal late night hour: ${exitTimeStr.substring(11, 16)}.`,
+            time: exitTimeStr
+          });
+        }
+      }
+    });
+
+    return res.json({ anomalies });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to load security anomalies" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing connection:", closeErr);
+      }
+    }
+  }
+};
+

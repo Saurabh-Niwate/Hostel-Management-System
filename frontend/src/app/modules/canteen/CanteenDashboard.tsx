@@ -14,6 +14,7 @@ type SidebarItemProps = {
   label: string;
   active: boolean;
   onClick: () => void;
+  isOpen: boolean;
   theme: {
     color: string;
     activeColor: string;
@@ -32,7 +33,9 @@ export function CanteenDashboard() {
     text: "text-white",
     muted: "text-white/80",
   };
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 768 : true
+  );
   const [activeTab, setActiveTab] = useState<"overview" | "menu" | "dinnerPolls" | "profile">("overview");
 
   useEffect(() => {
@@ -87,81 +90,113 @@ export function CanteenDashboard() {
   }
 
   return (
-    <div className={`min-h-screen ${theme.bg} flex`}>
+    <div className={`min-h-screen ${theme.bg} flex flex-col md:flex-row`}>
+      {/* Mobile Top Navbar */}
+      <header className="md:hidden flex h-16 items-center justify-between px-6 text-white z-20 shadow-md w-full shrink-0" style={{ backgroundColor: theme.color }}>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-white/10 rounded-lg">
+            <MenuIcon className="h-6 w-6" />
+          </button>
+          <h1 className="text-lg font-bold tracking-wide">Canteen Portal</h1>
+        </div>
+        <div className="text-xs text-white/80 font-medium">{getStoredIdentifier() || "CANTEEN OWNER"}</div>
+      </header>
+
+      {/* Mobile Sidebar Backdrop Overlay */}
+      <AnimatePresence>
+        {isSidebarOpen && typeof window !== "undefined" && window.innerWidth < 768 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-slate-900/50 z-20 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
       <motion.aside
-        initial={{ width: 280 }}
-        animate={{ width: 280 }}
-        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 text-white z-30 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
-        style={{ backgroundColor: theme.color, borderRight: "1px solid rgba(255,255,255,0.18)" }}
+        initial={false}
+        animate={{
+          width: isSidebarOpen ? 280 : 80,
+          x: typeof window !== "undefined" && window.innerWidth < 768 ? (isSidebarOpen ? 0 : -280) : 0
+        }}
+        transition={{ type: "tween", duration: 0.25 }}
+        className="text-white fixed md:sticky top-0 left-0 h-full md:h-screen z-30 flex flex-col shrink-0"
+        style={{
+          backgroundColor: theme.color,
+          borderRight: "1px solid rgba(255,255,255,0.18)",
+          width: isSidebarOpen ? 280 : 80
+        }}
       >
-        <div className="flex flex-col h-full">
-          <div className="p-6 flex items-center justify-between border-b border-white/20">
-            <div className="flex items-center gap-3">
-              <ChefHat className={`h-5 w-5 ${theme.text}`} />
-              <div>
-                <h1 className={`text-xl font-bold tracking-wide truncate ${theme.text}`}>Canteen Portal</h1>
-                  <p className={`text-xs ${theme.muted}`}>{getStoredIdentifier() || "CANTEEN OWNER"}</p>
-              </div>
+        <div className="p-6 flex items-center justify-between border-b border-white/20 h-16 md:h-auto">
+          {isSidebarOpen ? (
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl font-bold tracking-wide truncate">Canteen Portal</h1>
+              <p className="text-xs text-white/80 truncate">{getStoredIdentifier() || "CANTEEN OWNER"}</p>
             </div>
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`p-2 rounded-lg lg:hidden ${theme.text} hover:bg-white/10`}
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
-            </button>
-          </div>
+          ) : (
+            <div className="w-8 h-8 rounded-lg mx-auto flex items-center justify-center bg-white/15">
+              <ChefHat className="h-5 w-5 text-white" />
+            </div>
+          )}
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg md:inline-block hidden">
+            <MenuIcon className="h-5 w-5" />
+          </button>
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg md:hidden">
+            <MenuIcon className="h-5 w-5" />
+          </button>
+        </div>
 
-          <nav className="flex-1 p-4 space-y-1">
-            <SidebarItem
-              icon={<LayoutDashboard className="w-5 h-5" />}
-              label="Overview"
-              active={activeTab === "overview"}
-              onClick={() => { setActiveTab("overview"); setIsMobileMenuOpen(false); }}
-              theme={theme}
-            />
-            <SidebarItem
-              icon={<UtensilsCrossed className="w-5 h-5" />}
-              label="Menu Management"
-              active={activeTab === "menu"}
-              onClick={() => { setActiveTab("menu"); setIsMobileMenuOpen(false); }}
-              theme={theme}
-            />
-            <SidebarItem
-              icon={<Vote className="w-5 h-5" />}
-              label="Dinner Polls"
-              active={activeTab === "dinnerPolls"}
-              onClick={() => { setActiveTab("dinnerPolls"); setIsMobileMenuOpen(false); }}
-              theme={theme}
-            />
-            <SidebarItem
-              icon={<User className="w-5 h-5" />}
-              label="Profile"
-              active={activeTab === "profile"}
-              onClick={() => { setActiveTab("profile"); setIsMobileMenuOpen(false); }}
-              theme={theme}
-            />
-          </nav>
+        <nav className="flex-1 px-4 space-y-2 mt-6 overflow-y-auto">
+          <SidebarItem
+            icon={<LayoutDashboard className="w-5 h-5 shrink-0" />}
+            label="Overview"
+            active={activeTab === "overview"}
+            onClick={() => { setActiveTab("overview"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
+            isOpen={isSidebarOpen}
+            theme={theme}
+          />
+          <SidebarItem
+            icon={<UtensilsCrossed className="w-5 h-5 shrink-0" />}
+            label="Menu Management"
+            active={activeTab === "menu"}
+            onClick={() => { setActiveTab("menu"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
+            isOpen={isSidebarOpen}
+            theme={theme}
+          />
+          <SidebarItem
+            icon={<Vote className="w-5 h-5 shrink-0" />}
+            label="Dinner Polls"
+            active={activeTab === "dinnerPolls"}
+            onClick={() => { setActiveTab("dinnerPolls"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
+            isOpen={isSidebarOpen}
+            theme={theme}
+          />
+          <SidebarItem
+            icon={<User className="w-5 h-5 shrink-0" />}
+            label="Profile"
+            active={activeTab === "profile"}
+            onClick={() => { setActiveTab("profile"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
+            isOpen={isSidebarOpen}
+            theme={theme}
+          />
+        </nav>
 
-          <div className="p-4 border-t border-white/20">
-            <button
-              onClick={() => { api.post("/auth/logout").catch(() => undefined).finally(() => { clearAuthSession(); navigate("/"); }); }}
-              className="flex items-center w-full gap-3 px-4 py-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl font-medium transition-colors border border-slate-200 shadow-sm"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
-          </div>
+        <div className="p-4 border-t border-white/20">
+          <button
+            onClick={() => { api.post("/auth/logout").catch(() => undefined).finally(() => { clearAuthSession(); navigate("/"); }); }}
+            className={`flex items-center w-full p-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200 shadow-sm ${!isSidebarOpen && 'justify-center'}`}
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            {isSidebarOpen && <span className="ml-3 font-medium truncate">Logout</span>}
+          </button>
         </div>
       </motion.aside>
 
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
-      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300 min-h-[101vh]">
+      {/* Main Content */}
+      <main className="flex-1 p-4 md:p-8 transition-all duration-300 min-h-[101vh] overflow-x-hidden">
         <div className="max-w-5xl mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
@@ -174,14 +209,8 @@ export function CanteenDashboard() {
             >
               <div className="mb-6 flex items-center justify-between gap-4 min-h-[44px]">
                 <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setIsMobileMenuOpen(true)}
-                    className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
-                  >
-                    <MenuIcon className="h-5 w-5" />
-                  </button>
                   <div>
-                    <h2 className="text-3xl font-bold text-slate-900 leading-none">
+                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-none">
                       {activeTab === "overview"
                         ? "Canteen Dashboard"
                         : activeTab === "menu"
@@ -204,19 +233,17 @@ export function CanteenDashboard() {
   );
 }
 
-function SidebarItem({ icon, label, active, onClick, theme }: SidebarItemProps) {
+function SidebarItem({ icon, label, active, onClick, isOpen, theme }: SidebarItemProps) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
-        active
-          ? "text-white shadow-lg"
-          : `${theme.text} hover:bg-white/10`
-      }`}
+      className={`w-full flex items-center p-3 rounded-xl transition-colors font-medium ${
+        active ? "text-white" : "text-white/80 hover:bg-white/5"
+      } ${!isOpen && "justify-center"}`}
       style={active ? { backgroundColor: theme.activeColor } : undefined}
     >
       {icon}
-      <span>{label}</span>
+      {isOpen && <span className="ml-3 truncate">{label}</span>}
     </button>
   );
 }

@@ -21,7 +21,9 @@ export function AdminDashboard() {
         bg: "bg-blue-50"
     };
     const [activeTab, setActiveTab] = useState<Tab>("dashboard");
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(
+        typeof window !== "undefined" ? window.innerWidth >= 768 : true
+    );
     const [isAuthChecking, setIsAuthChecking] = useState(true);
     const navigate = useNavigate();
 
@@ -79,36 +81,71 @@ export function AdminDashboard() {
     }
 
     return (
-        <div className={`min-h-screen ${theme.bg} flex`}>
+        <div className={`min-h-screen ${theme.bg} flex flex-col md:flex-row`}>
+            {/* Mobile Top Navbar */}
+            <header className="md:hidden flex h-16 items-center justify-between px-6 text-white z-20 shadow-md w-full shrink-0" style={{ backgroundColor: theme.color }}>
+                <div className="flex items-center gap-3">
+                    <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-white/10 rounded-lg">
+                        <Menu className="h-6 w-6" />
+                    </button>
+                    <h1 className="text-lg font-bold tracking-wide">Admin Portal</h1>
+                </div>
+                <div className="text-xs text-white/80 font-medium">{getStoredIdentifier() || "ADMIN"}</div>
+            </header>
+
+            {/* Mobile Sidebar Backdrop Overlay */}
+            <AnimatePresence>
+                {isSidebarOpen && typeof window !== "undefined" && window.innerWidth < 768 && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="fixed inset-0 bg-slate-900/50 z-20 md:hidden"
+                    />
+                )}
+            </AnimatePresence>
+
             {/* Sidebar */}
             <motion.aside
-                initial={{ width: 280 }}
-                animate={{ width: isSidebarOpen ? 280 : 80 }}
-                className="text-white fixed h-full z-20 flex flex-col transition-all duration-300"
-                style={{ backgroundColor: theme.color, borderRight: "1px solid rgba(255,255,255,0.18)" }}
+                initial={false}
+                animate={{
+                    width: isSidebarOpen ? 280 : 80,
+                    x: typeof window !== "undefined" && window.innerWidth < 768 ? (isSidebarOpen ? 0 : -280) : 0
+                }}
+                transition={{ type: "tween", duration: 0.25 }}
+                className="text-white fixed md:sticky top-0 left-0 h-full md:h-screen z-30 flex flex-col shrink-0"
+                style={{
+                    backgroundColor: theme.color,
+                    borderRight: "1px solid rgba(255,255,255,0.18)",
+                    width: isSidebarOpen ? 280 : 80
+                }}
             >
-                <div className="p-6 flex items-center justify-between border-b border-white/20">
+                <div className="p-6 flex items-center justify-between border-b border-white/20 h-16 md:h-auto">
                     {isSidebarOpen ? (
-                        <div>
+                        <div className="min-w-0 flex-1">
                             <h1 className="text-xl font-bold tracking-wide truncate">Admin Portal</h1>
-                            <p className="text-xs text-white/80">{getStoredIdentifier() || "ADMIN"}</p>
+                            <p className="text-xs text-white/80 truncate">{getStoredIdentifier() || "ADMIN"}</p>
                         </div>
                     ) : (
                         <div className="w-8 h-8 rounded-lg mx-auto flex items-center justify-center bg-white/15">
                             <span className="font-bold text-sm">A</span>
                         </div>
                     )}
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg md:inline-block hidden">
+                        <Menu className="h-5 w-5" />
+                    </button>
                     <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg md:hidden">
                         <Menu className="h-5 w-5" />
                     </button>
                 </div>
 
-                <nav className="flex-1 px-4 space-y-2 mt-6">
+                <nav className="flex-1 px-4 space-y-2 mt-6 overflow-y-auto">
                     <SidebarItem
                         icon={<LayoutDashboard size={20} />}
                         label="Overview"
                         active={activeTab === "dashboard"}
-                        onClick={() => setActiveTab("dashboard")}
+                        onClick={() => { setActiveTab("dashboard"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
                         isOpen={isSidebarOpen}
                         activeColor={theme.activeColor}
                     />
@@ -116,7 +153,7 @@ export function AdminDashboard() {
                         icon={<FileText size={20} />}
                         label="Leave Management"
                         active={activeTab === "leaves"}
-                        onClick={() => setActiveTab("leaves")}
+                        onClick={() => { setActiveTab("leaves"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
                         isOpen={isSidebarOpen}
                         activeColor={theme.activeColor}
                     />
@@ -124,7 +161,7 @@ export function AdminDashboard() {
                         icon={<CalendarCheck size={20} />}
                         label="Attendance"
                         active={activeTab === "attendance"}
-                        onClick={() => setActiveTab("attendance")}
+                        onClick={() => { setActiveTab("attendance"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
                         isOpen={isSidebarOpen}
                         activeColor={theme.activeColor}
                     />
@@ -132,7 +169,7 @@ export function AdminDashboard() {
                         icon={<User size={20} />}
                         label="Student View"
                         active={activeTab === "studentView"}
-                        onClick={() => setActiveTab("studentView")}
+                        onClick={() => { setActiveTab("studentView"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
                         isOpen={isSidebarOpen}
                         activeColor={theme.activeColor}
                     />
@@ -140,7 +177,7 @@ export function AdminDashboard() {
                         icon={<User size={20} />}
                         label="Profile"
                         active={activeTab === "profile"}
-                        onClick={() => setActiveTab("profile")}
+                        onClick={() => { setActiveTab("profile"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
                         isOpen={isSidebarOpen}
                         activeColor={theme.activeColor}
                     />
@@ -156,9 +193,8 @@ export function AdminDashboard() {
                     </button>
                 </div>
             </motion.aside>
-
             {/* Main Content */}
-            <main className={`flex-1 p-8 transition-all duration-300 min-h-[101vh] ${isSidebarOpen ? 'ml-[280px]' : 'ml-[80px]'}`}>
+            <main className="flex-1 p-4 md:p-8 transition-all duration-300 min-h-[101vh] overflow-x-hidden">
                 <div className="max-w-6xl mx-auto">
                     <AnimatePresence mode="wait">
                         <motion.div

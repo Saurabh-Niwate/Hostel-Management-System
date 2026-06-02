@@ -81,56 +81,56 @@ export function CanteenOverview({ onNavigate }: CanteenOverviewProps) {
     <div className="space-y-6">
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Menu Items</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalMenuItems}</p>
+          <CardContent className="p-4 sm:p-5 md:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Menu Items</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-1">{stats.totalMenuItems}</p>
               </div>
-              <div className="bg-teal-100 p-3 rounded-lg">
-                <UtensilsCrossed className="h-6 w-6 text-teal-600" />
+              <div className="bg-teal-100 p-2 sm:p-3 rounded-lg shrink-0">
+                <UtensilsCrossed className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600" />
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Available Today</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.availableItems}</p>
+          <CardContent className="p-4 sm:p-5 md:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Available Today</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-1">{stats.availableItems}</p>
               </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Dinner Polls</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalPolls}</p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Vote className="h-6 w-6 text-blue-600" />
+              <div className="bg-green-100 p-2 sm:p-3 rounded-lg shrink-0">
+                <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Active Polls</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.activePolls}</p>
-                <p className="text-sm text-amber-600 mt-1">Scheduled: {stats.scheduledPolls}</p>
+          <CardContent className="p-4 sm:p-5 md:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Dinner Polls</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-1">{stats.totalPolls}</p>
               </div>
-              <div className="bg-amber-100 p-3 rounded-lg">
-                <Clock className="h-6 w-6 text-amber-600" />
+              <div className="bg-blue-100 p-2 sm:p-3 rounded-lg shrink-0">
+                <Vote className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 sm:p-5 md:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Active Polls</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-1">{stats.activePolls}</p>
+                <p className="text-[10px] sm:text-xs text-amber-600 mt-0.5 truncate">Sched: {stats.scheduledPolls}</p>
+              </div>
+              <div className="bg-amber-100 p-2 sm:p-3 rounded-lg shrink-0">
+                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
               </div>
             </div>
           </CardContent>

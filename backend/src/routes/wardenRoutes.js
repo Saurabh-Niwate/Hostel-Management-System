@@ -9,7 +9,8 @@ const {
   getStudentBasic,
   getLeaveStatus,
   getFeedbackList,
-  updateFeedbackStatus
+  updateFeedbackStatus,
+  getSecurityAnomalies
 } = require("../controllers/wardenController");
 const { verifyToken, requireRole } = require("../middlewares/authMiddleware");
 
@@ -22,5 +23,6 @@ router.get("/students/:studentId/basic", verifyToken, requireRole("Warden"), get
 router.get("/leave-status", verifyToken, requireRole("Warden"), getLeaveStatus);
 router.get("/feedback", verifyToken, requireRole("Warden"), getFeedbackList);
 router.put("/feedback/:feedbackId/status", verifyToken, requireRole("Warden"), updateFeedbackStatus);
+router.get("/anomalies", verifyToken, requireRole("Warden"), getSecurityAnomalies);
 
 module.exports = router;

@@ -162,61 +162,59 @@ export function AdminReportsOverview() {
       <h2 className="text-2xl font-bold text-slate-800">Reports Overview</h2>
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
-      <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-3 md:items-end">
-        <div>
+      <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-4 md:items-end">
+        <div className="w-full md:w-auto">
           <label htmlFor="dateFrom" className="block text-xs text-slate-500 mb-1">From Date</label>
-          <input id="dateFrom" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
+          <input id="dateFrom" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full md:w-auto px-3 py-2 border border-slate-300 rounded-lg text-sm" />
         </div>
-        <div>
+        <div className="w-full md:w-auto">
           <label htmlFor="dateTo" className="block text-xs text-slate-500 mb-1">To Date</label>
-          <input id="dateTo" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
+          <input id="dateTo" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full md:w-auto px-3 py-2 border border-slate-300 rounded-lg text-sm" />
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={load} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-600">Apply Date Filter</button>
-          <button onClick={() => handleDownload()} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500">Download Report (CSV)</button>
+        <div className="flex flex-wrap items-center gap-3 mt-2 md:mt-0">
+          <button onClick={load} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-600 text-sm font-medium transition-colors">Apply Date Filter</button>
+          <button onClick={() => handleDownload()} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 text-sm font-medium transition-colors">Download Report (CSV)</button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
-          <div className="p-4 bg-indigo-100 text-indigo-600 rounded-xl">
-            <Users size={28} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-2.5 sm:space-x-4">
+          <div className="p-2.5 sm:p-4 bg-indigo-100 text-indigo-600 rounded-xl shrink-0">
+            <Users size={20} className="sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <h3 className="text-slate-500 text-sm font-medium">Total Leave Requests</h3>
-            <p className="text-2xl font-bold text-slate-800">{cards.leaveTotal}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
-          <div className="p-4 bg-emerald-100 text-emerald-600 rounded-xl">
-            <Home size={28} />
-          </div>
-          <div>
-            <h3 className="text-slate-500 text-sm font-medium">Pending Leaves</h3>
-            <p className="text-2xl font-bold text-slate-800">{cards.pendingLeaves}</p>
-            <p className="text-xs text-slate-500 mt-1">Awaiting admin review</p>
+          <div className="min-w-0">
+            <h3 className="text-slate-500 text-xs font-medium truncate">Total Leaves</h3>
+            <p className="text-xl sm:text-2xl font-bold text-slate-800 truncate">{cards.leaveTotal}</p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
-          <div className="p-4 bg-amber-100 text-amber-600 rounded-xl">
-            <AlertCircle size={28} />
+        <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-2.5 sm:space-x-4">
+          <div className="p-2.5 sm:p-4 bg-emerald-100 text-emerald-600 rounded-xl shrink-0">
+            <Home size={20} className="sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <h3 className="text-slate-500 text-sm font-medium">Fee Due Amount</h3>
-            <p className="text-2xl font-bold text-slate-800">Rs {cards.dueAmount.toLocaleString()}</p>
+          <div className="min-w-0">
+            <h3 className="text-slate-500 text-xs font-medium truncate">Pending Leaves</h3>
+            <p className="text-xl sm:text-2xl font-bold text-slate-800 truncate">{cards.pendingLeaves}</p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
-          <div className="p-4 bg-blue-100 text-blue-600 rounded-xl">
-            <Calendar size={28} />
+        <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-2.5 sm:space-x-4">
+          <div className="p-2.5 sm:p-4 bg-amber-100 text-amber-600 rounded-xl shrink-0">
+            <AlertCircle size={20} className="sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <h3 className="text-slate-500 text-sm font-medium">Attendance Entries</h3>
-            <p className="text-2xl font-bold text-slate-800">{cards.attendanceTotal}</p>
-            <p className="text-xs text-slate-500 mt-1">Absent: {cards.absentTotal}</p>
+          <div className="min-w-0">
+            <h3 className="text-slate-500 text-xs font-medium truncate">Fee Due Amount</h3>
+            <p className="text-xl sm:text-2xl font-bold text-slate-800 truncate">Rs {cards.dueAmount.toLocaleString()}</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-2.5 sm:space-x-4">
+          <div className="p-2.5 sm:p-4 bg-blue-100 text-blue-600 rounded-xl shrink-0">
+            <Calendar size={20} className="sm:w-6 sm:h-6" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-slate-500 text-xs font-medium truncate">Attendance</h3>
+            <p className="text-xl sm:text-2xl font-bold text-slate-800 truncate">{cards.attendanceTotal}</p>
           </div>
         </div>
       </div>

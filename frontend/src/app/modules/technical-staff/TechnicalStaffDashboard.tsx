@@ -33,7 +33,9 @@ export function TechnicalStaffDashboard() {
   };
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<View>('dashboard');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 768 : true
+  );
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [stats, setStats] = useState({
     total: 0,
@@ -146,81 +148,103 @@ export function TechnicalStaffDashboard() {
     ) : null;
 
   return (
-    <div className={`min-h-screen ${theme.bg} flex`}>
+    <div className={`min-h-screen ${theme.bg} flex flex-col md:flex-row`}>
+      {/* Mobile Top Navbar */}
+      <header className="md:hidden flex h-16 items-center justify-between px-6 text-white z-20 shadow-md w-full shrink-0" style={{ backgroundColor: theme.color }}>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-white/10 rounded-lg">
+            <Menu className="h-6 w-6" />
+          </button>
+          <h1 className="text-lg font-bold tracking-wide">Technical Portal</h1>
+        </div>
+        <div className="text-xs text-white/80 font-medium">{getStoredIdentifier() || "TECHNICAL"}</div>
+      </header>
+
+      {/* Mobile Sidebar Backdrop Overlay */}
+      <AnimatePresence>
+        {isSidebarOpen && typeof window !== "undefined" && window.innerWidth < 768 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-slate-900/50 z-20 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
       <motion.aside
-        initial={{ width: 280 }}
-        animate={{ width: 280 }}
-        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 text-white ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-        style={{ backgroundColor: theme.color, borderRight: "1px solid rgba(255,255,255,0.18)" }}
+        initial={false}
+        animate={{
+          width: isSidebarOpen ? 280 : 80,
+          x: typeof window !== "undefined" && window.innerWidth < 768 ? (isSidebarOpen ? 0 : -280) : 0
+        }}
+        transition={{ type: "tween", duration: 0.25 }}
+        className="text-white fixed md:sticky top-0 left-0 h-full md:h-screen z-30 flex flex-col shrink-0"
+        style={{
+          backgroundColor: theme.color,
+          borderRight: "1px solid rgba(255,255,255,0.18)",
+          width: isSidebarOpen ? 280 : 80
+        }}
       >
-        <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-white/20">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className={`w-5 h-5 ${theme.text}`} />
-                <div>
-                  <h1 className={`text-xl font-bold tracking-wide ${theme.text}`}>Technical Portal</h1>
-                  <p className={`text-xs ${theme.muted}`}>{getStoredIdentifier() || 'TECHNICAL'}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={`lg:hidden p-2 rounded-lg transition-colors ${theme.text} hover:bg-white/10`}
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
+        <div className="p-6 flex items-center justify-between border-b border-white/20 h-16 md:h-auto">
+          {isSidebarOpen ? (
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl font-bold tracking-wide truncate">Technical Portal</h1>
+              <p className="text-xs text-white/80 truncate">{getStoredIdentifier() || "TECHNICAL"}</p>
             </div>
-          </div>
+          ) : (
+            <div className="w-8 h-8 rounded-lg mx-auto flex items-center justify-center bg-white/15">
+              <ShieldCheck className="h-5 w-5 text-white" />
+            </div>
+          )}
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg md:inline-block hidden">
+            <Menu className="h-5 w-5" />
+          </button>
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg md:hidden">
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
 
-          <nav className="flex-1 p-4 space-y-1">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentView === item.id;
+        <nav className="flex-1 px-4 space-y-2 mt-6 overflow-y-auto">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
 
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setCurrentView(item.id);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${isActive
-                      ? 'text-white shadow-lg'
-                      : `${theme.text} hover:bg-white/10`
-                    }`}
-                  style={isActive ? { backgroundColor: theme.activeColor } : undefined}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setCurrentView(item.id);
+                  if (window.innerWidth < 768) setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center p-3 rounded-xl transition-colors font-medium ${
+                  isActive ? "text-white" : "text-white/80 hover:bg-white/5"
+                } ${!isSidebarOpen && "justify-center"}`}
+                style={isActive ? { backgroundColor: theme.activeColor } : undefined}
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                {isSidebarOpen && <span className="ml-3 truncate">{item.label}</span>}
+              </button>
+            );
+          })}
+        </nav>
 
-          <div className="p-4 border-t border-white/20">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl font-medium transition-colors border border-slate-200 shadow-sm"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
-          </div>
+        <div className="p-4 border-t border-white/20">
+          <button
+            onClick={handleLogout}
+            className={`flex items-center w-full p-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200 shadow-sm ${!isSidebarOpen && 'justify-center'}`}
+          >
+            <LogOut className="h-5 w-5 shrink-0" />
+            {isSidebarOpen && <span className="ml-3 font-medium truncate">Logout</span>}
+          </button>
         </div>
       </motion.aside>
 
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300 min-h-[101vh]">
+      {/* Main Content */}
+      <main className="flex-1 p-4 md:p-8 transition-all duration-300 min-h-[101vh] overflow-x-hidden">
         <div className="max-w-6xl mx-auto">
-
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView}
@@ -232,66 +256,60 @@ export function TechnicalStaffDashboard() {
             >
               <div className="mb-6 flex items-center justify-between gap-4 min-h-[44px]">
                 <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setMobileMenuOpen(true)}
-                    className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
-                  >
-                    <Menu className="w-5 h-5" />
-                  </button>
                   <div>
-                    <h2 className="text-3xl font-bold text-slate-900 leading-none">{viewTitle}</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-none">{viewTitle}</h2>
                   </div>
                 </div>
                 {headerAction && <div className="shrink-0 flex items-center">{headerAction}</div>}
               </div>
 
-          {currentView === 'dashboard' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              {currentView === 'dashboard' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-slate-600 mb-1">Total Users</p>
-                      <p className="text-3xl font-bold text-slate-900">{stats.total}</p>
+                      <p className="text-xs sm:text-sm text-slate-600 mb-1 truncate">Total Users</p>
+                      <p className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">{stats.total}</p>
                     </div>
-                    <div className="p-3 bg-cyan-100 rounded-lg">
-                      <UsersIcon className="w-6 h-6 text-cyan-700" />
+                    <div className="p-2 sm:p-3 bg-cyan-100 rounded-lg shrink-0">
+                      <UsersIcon className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-700" />
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-slate-600 mb-1">Students</p>
-                      <p className="text-3xl font-bold text-slate-900">{stats.students}</p>
+                      <p className="text-xs sm:text-sm text-slate-600 mb-1 truncate">Students</p>
+                      <p className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">{stats.students}</p>
                     </div>
-                    <div className="p-3 bg-cyan-100 rounded-lg">
-                      <UsersIcon className="w-6 h-6 text-cyan-700" />
+                    <div className="p-2 sm:p-3 bg-cyan-100 rounded-lg shrink-0">
+                      <UsersIcon className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-700" />
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-slate-600 mb-1">Staff Members</p>
-                      <p className="text-3xl font-bold text-slate-900">{stats.staff}</p>
+                      <p className="text-xs sm:text-sm text-slate-600 mb-1 truncate">Staff</p>
+                      <p className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">{stats.staff}</p>
                     </div>
-                    <div className="p-3 bg-cyan-100 rounded-lg">
-                      <UsersIcon className="w-6 h-6 text-cyan-700" />
+                    <div className="p-2 sm:p-3 bg-cyan-100 rounded-lg shrink-0">
+                      <UsersIcon className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-700" />
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-slate-600 mb-1">Rooms</p>
-                      <p className="text-3xl font-bold text-slate-900">{stats.rooms}</p>
+                      <p className="text-xs sm:text-sm text-slate-600 mb-1 truncate">Rooms</p>
+                      <p className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">{stats.rooms}</p>
                     </div>
-                    <div className="p-3 bg-cyan-100 rounded-lg">
-                      <BedDouble className="w-6 h-6 text-cyan-700" />
+                    <div className="p-2 sm:p-3 bg-cyan-100 rounded-lg shrink-0">
+                      <BedDouble className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-700" />
                     </div>
                   </div>
                 </div>
