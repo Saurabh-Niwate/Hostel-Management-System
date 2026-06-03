@@ -9,7 +9,10 @@ const {
   createDinnerPoll,
   updateDinnerPoll,
   deleteDinnerPoll,
-  closeDinnerPoll
+  closeDinnerPoll,
+  getAiWastePrediction,
+  getAiRecipePlanner,
+  applyAiRecipePlan
 } = require("../controllers/canteenOwnerController");
 const { verifyToken, requireRole } = require("../middlewares/authMiddleware");
 
@@ -22,5 +25,10 @@ router.post("/dinner-polls", verifyToken, requireRole("Canteen Owner"), createDi
 router.put("/dinner-polls/:pollId", verifyToken, requireRole("Canteen Owner"), updateDinnerPoll);
 router.delete("/dinner-polls/:pollId", verifyToken, requireRole("Canteen Owner"), deleteDinnerPoll);
 router.put("/dinner-polls/:pollId/close", verifyToken, requireRole("Canteen Owner"), closeDinnerPoll);
+
+// AI Hub Operations
+router.get("/ai/waste-prediction", verifyToken, requireRole("Canteen Owner"), getAiWastePrediction);
+router.get("/ai/recipe-planner", verifyToken, requireRole("Canteen Owner"), getAiRecipePlanner);
+router.post("/ai/recipe-planner/apply", verifyToken, requireRole("Canteen Owner"), applyAiRecipePlan);
 
 module.exports = router;

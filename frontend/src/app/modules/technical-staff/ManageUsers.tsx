@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Trash2, Search } from "lucide-react";
 import { api } from "../../lib/api";
+import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 
 interface ManageUsersProps {
   refreshTrigger?: number;
@@ -36,6 +37,7 @@ type UserDetailsResponse = {
     FULL_NAME?: string;
     PHONE?: string;
     CREATED_AT?: string;
+    PROFILE_IMAGE_URL?: string;
   } | null;
 };
 
@@ -64,6 +66,17 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
     address: "",
     roomNo: "",
   });
+
+  const [editStaffTarget, setEditStaffTarget] = useState<UserDetailsResponse | null>(null);
+  const [editStaffImageFile, setEditStaffImageFile] = useState<File | null>(null);
+  const [updatingStaff, setUpdatingStaff] = useState(false);
+  const [removeStaffImageOnSave, setRemoveStaffImageOnSave] = useState(false);
+  const [editStaffForm, setEditStaffForm] = useState({
+    email: "",
+    fullName: "",
+    phone: "",
+  });
+
   const [newRole, setNewRole] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
@@ -142,6 +155,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
     setRoleTarget(null);
     setPasswordTarget(null);
     setEditStudentTarget(null);
+    setEditStaffTarget(null);
     try {
       const data = await fetchUserDetails(u.USER_ID);
       setSelectedDetails(data);
@@ -154,6 +168,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
     setSelectedDetails(null);
     setPasswordTarget(null);
     setEditStudentTarget(null);
+    setEditStaffTarget(null);
     setRoleTarget(u);
     setNewRole(u.ROLE_NAME || "");
     setError("");
@@ -164,6 +179,7 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
     setSelectedDetails(null);
     setRoleTarget(null);
     setEditStudentTarget(null);
+    setEditStaffTarget(null);
     setPasswordTarget(u);
     setNewPassword("");
     setError("");
@@ -221,6 +237,18 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
     setEditStudentImageFile(null);
   };
 
+  const openEditStaffFromDetails = () => {
+    if (!selectedDetails || selectedDetails.user.ROLE_NAME === "Student") return;
+    setEditStaffTarget(selectedDetails);
+    setEditStaffForm({
+      email: selectedDetails.user.EMAIL || "",
+      fullName: selectedDetails.staffProfile?.FULL_NAME || "",
+      phone: selectedDetails.staffProfile?.PHONE || "",
+    });
+    setEditStaffImageFile(null);
+    setRemoveStaffImageOnSave(false);
+  };
+
   const handleUpdateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editStudentTarget?.user.STUDENT_ID) return;
@@ -260,6 +288,45 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
       setError(err.response?.data?.message || "Failed to update student");
     } finally {
       setUpdatingStudent(false);
+    }
+  };
+
+  const handleUpdateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editStaffTarget?.user.EMP_ID) return;
+    setError("");
+    setSuccess("");
+    setUpdatingStaff(true);
+    try {
+      await api.put(`/technical-staff/staff/${editStaffTarget.user.EMP_ID}`, {
+        email: editStaffForm.email.trim() || null,
+        fullName: editStaffForm.fullName.trim() || null,
+        phone: editStaffForm.phone.trim() || null,
+      });
+
+      if (removeStaffImageOnSave) {
+        await api.delete(`/technical-staff/staff/${editStaffTarget.user.EMP_ID}/profile-image`);
+      } else if (editStaffImageFile) {
+        const formData = new FormData();
+        formData.append("image", editStaffImageFile);
+        await api.post(
+          `/technical-staff/staff/${editStaffTarget.user.EMP_ID}/profile-image`,
+          formData,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+      }
+
+      const freshDetails = await fetchUserDetails(editStaffTarget.user.USER_ID);
+      setSelectedDetails(freshDetails);
+      setSuccess(`Staff user updated: ${editStaffTarget.user.EMP_ID}`);
+      setEditStaffTarget(null);
+      setEditStaffImageFile(null);
+      setRemoveStaffImageOnSave(false);
+      await loadUsers();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to update staff user");
+    } finally {
+      setUpdatingStaff(false);
     }
   };
 
@@ -328,30 +395,57 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
       {selectedDetails && (
         <ModalShell title="User Details" onClose={() => setSelectedDetails(null)}>
           {selectedDetails.user.ROLE_NAME === "Student" && (
-            <div className="mb-4">
-              <button
-                onClick={openEditStudentFromDetails}
-                className="px-3 py-1.5 text-sm rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-              >
-                Edit Student
-              </button>
-            </div>
-          )}
-          {selectedDetails.user.ROLE_NAME === "Student" && (
-            <div className="mb-4 flex items-center gap-3">
-              <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
-                {selectedDetails.studentProfile?.PROFILE_IMAGE_URL ? (
-                  <ImageWithFallback
-                    src={selectedDetails.studentProfile.PROFILE_IMAGE_URL}
-                    alt="Student profile"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xs">No Photo</span>
-                )}
+            <div className="mb-4 flex flex-col gap-3">
+              <div>
+                <button
+                  onClick={openEditStudentFromDetails}
+                  className="px-3 py-1.5 text-sm rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                >
+                  Edit Student
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
+                  {selectedDetails.studentProfile?.PROFILE_IMAGE_URL ? (
+                    <ImageWithFallback
+                      src={selectedDetails.studentProfile.PROFILE_IMAGE_URL}
+                      alt="Student profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs">No Photo</span>
+                  )}
+                </div>
               </div>
             </div>
           )}
+
+          {selectedDetails.user.ROLE_NAME !== "Student" && (
+            <div className="mb-4 flex flex-col gap-3">
+              <div>
+                <button
+                  onClick={openEditStaffFromDetails}
+                  className="px-3 py-1.5 text-sm rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                >
+                  Edit Staff
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
+                  {selectedDetails.staffProfile?.PROFILE_IMAGE_URL ? (
+                    <ImageWithFallback
+                      src={selectedDetails.staffProfile.PROFILE_IMAGE_URL}
+                      alt="Staff profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs">No Photo</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <p><span className="font-semibold">Identifier:</span> {getIdentifier(selectedDetails.user)}</p>
             <p><span className="font-semibold">Email:</span> {selectedDetails.user.EMAIL || "-"}</p>
@@ -453,6 +547,59 @@ export function ManageUsers({ refreshTrigger }: ManageUsersProps) {
             </div>
             <button type="submit" disabled={updatingStudent} className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50">
               {updatingStudent ? "Updating..." : "Update Student"}
+            </button>
+          </form>
+        </ModalShell>
+      )}
+
+      {editStaffTarget && (
+        <ModalShell title="Edit Staff Profile" onClose={() => setEditStaffTarget(null)}>
+          <form onSubmit={handleUpdateStaff} className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Employee ID</label>
+              <input value={editStaffTarget.user.EMP_ID || ""} readOnly className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-600" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Role Name</label>
+              <input value={editStaffTarget.user.ROLE_NAME || ""} readOnly className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-600" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Email Address</label>
+              <input value={editStaffForm.email} onChange={(e) => setEditStaffForm({ ...editStaffForm, email: e.target.value })} placeholder="Email" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Full Name</label>
+              <input value={editStaffForm.fullName} onChange={(e) => setEditStaffForm({ ...editStaffForm, fullName: e.target.value })} placeholder="Full Name" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Phone Number</label>
+              <input value={editStaffForm.phone} onChange={(e) => setEditStaffForm({ ...editStaffForm, phone: e.target.value })} placeholder="Phone" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Upload New Photo (optional)</label>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => setEditStaffImageFile(e.target.files?.[0] || null)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+              />
+            </div>
+            {editStaffTarget.staffProfile?.PROFILE_IMAGE_URL && (
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="removeStaffPhotoCheckbox"
+                  checked={removeStaffImageOnSave}
+                  onChange={(e) => setRemoveStaffImageOnSave(e.target.checked)}
+                  className="rounded border-slate-300"
+                />
+                <label htmlFor="removeStaffPhotoCheckbox" className="text-sm text-red-600 cursor-pointer select-none">
+                  Remove current profile photo on save
+                </label>
+              </div>
+            )}
+            <button type="submit" disabled={updatingStaff} className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 mt-2">
+              {updatingStaff ? "Updating..." : "Update Staff"}
             </button>
           </form>
         </ModalShell>

@@ -254,13 +254,13 @@ export function TechnicalStaffDashboard() {
               transition={{ duration: 0.2 }}
               className="min-h-[60vh]"
             >
-              <div className="mb-6 flex items-center justify-between gap-4 min-h-[44px]">
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-h-[44px]">
                 <div className="flex items-center gap-4">
                   <div>
                     <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-none">{viewTitle}</h2>
                   </div>
                 </div>
-                {headerAction && <div className="shrink-0 flex items-center">{headerAction}</div>}
+                {headerAction && <div className="sm:shrink-0 flex items-center">{headerAction}</div>}
               </div>
 
               {currentView === 'dashboard' && (

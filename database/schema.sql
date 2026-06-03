@@ -76,6 +76,7 @@ CREATE TABLE staff_profiles (
   user_id INTEGER PRIMARY KEY,
   full_name VARCHAR(100),
   phone VARCHAR(20),
+  profile_image_url VARCHAR(500),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   CONSTRAINT fk_staff_profiles_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );

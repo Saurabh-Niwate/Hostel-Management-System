@@ -69,7 +69,7 @@ export function LeaveRequests() {
     <div className="space-y-6">
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Total Requests</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold">{leaveRequests.length}</div></CardContent></Card>
         <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Pending</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold text-amber-600">{pendingCount}</div></CardContent></Card>
         <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Approved</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold text-green-600">{approvedCount}</div></CardContent></Card>

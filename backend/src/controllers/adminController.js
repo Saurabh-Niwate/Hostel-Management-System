@@ -506,15 +506,47 @@ exports.getOverviewReport = async (req, res) => {
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
 
+    const leaveSummaryMapped = (leaveCounts.rows || []).map(row => ({
+      STATUS: row.STATUS,
+      TOTAL: Number(row.TOTAL || 0)
+    }));
+    const attendanceSummaryMapped = (attendanceCounts.rows || []).map(row => ({
+      STATUS: row.STATUS,
+      TOTAL: Number(row.TOTAL || 0)
+    }));
+    const feeSummaryMapped = (feeCounts.rows || []).map(row => ({
+      STATUS: row.STATUS,
+      TOTAL: Number(row.TOTAL || 0)
+    }));
+    const feedbackSummaryMapped = (feedbackCounts.rows || []).map(row => ({
+      STATUS: row.STATUS,
+      TOTAL: Number(row.TOTAL || 0)
+    }));
+    const occupancyTrendMapped = (occupancyTrendResult.rows || []).map(row => ({
+      BLOCK_NAME: row.BLOCK_NAME,
+      OCCUPIED: Number(row.OCCUPIED || 0),
+      TOTAL_CAPACITY: Number(row.TOTAL_CAPACITY || 0)
+    }));
+    const feeTrendMapped = (feeTrendResult.rows || []).map(row => ({
+      TERM_NAME: row.TERM_NAME,
+      TOTAL_AMOUNT: Number(row.TOTAL_AMOUNT || 0),
+      PAID_AMOUNT: Number(row.PAID_AMOUNT || 0),
+      DUE_AMOUNT: Number(row.DUE_AMOUNT || 0)
+    }));
+    const gatePassActivityMapped = (gatePassActivityResult.rows || []).map(row => ({
+      EXIT_TYPE: row.EXIT_TYPE,
+      TOTAL: Number(row.TOTAL || 0)
+    }));
+
     return res.json({
       range: {
         dateFrom: dateFrom || null,
         dateTo: dateTo || null
       },
-      leaveSummary: leaveCounts.rows || [],
-      attendanceSummary: attendanceCounts.rows || [],
-      feeSummary: feeCounts.rows || [],
-      feedbackSummary: feedbackCounts.rows || [],
+      leaveSummary: leaveSummaryMapped,
+      attendanceSummary: attendanceSummaryMapped,
+      feeSummary: feeSummaryMapped,
+      feedbackSummary: feedbackSummaryMapped,
       feeTotals: (revenueSummary.rows && revenueSummary.rows[0]) || {
         TOTAL_FEE_AMOUNT: 0,
         TOTAL_PAID_AMOUNT: 0,
@@ -528,9 +560,9 @@ exports.getOverviewReport = async (req, res) => {
         VACANCY: vacancy,
         IS_FULL: totalCapacity > 0 && vacancy === 0
       },
-      occupancyTrend: occupancyTrendResult.rows || [],
-      feeTrend: feeTrendResult.rows || [],
-      gatePassActivity: gatePassActivityResult.rows || []
+      occupancyTrend: occupancyTrendMapped,
+      feeTrend: feeTrendMapped,
+      gatePassActivity: gatePassActivityMapped
     });
   } catch (err) {
     console.error(err);

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { UtensilsCrossed, Vote, ChefHat, LogOut, Menu as MenuIcon, X, LayoutDashboard, User, Plus } from "lucide-react";
+import { UtensilsCrossed, Vote, ChefHat, LogOut, Menu as MenuIcon, X, LayoutDashboard, User, Plus, Sparkles } from "lucide-react";
 import { CanteenOverview } from "./CanteenOverview";
 import { MenuManagement } from "./MenuManagement";
 import { DinnerPollManagement } from "./DinnerPollManagement";
+import { AICanteenHub } from "./AICanteenHub";
 import { StaffProfileSettings } from "../../components/StaffProfileSettings";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
@@ -36,7 +37,7 @@ export function CanteenDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(
     typeof window !== "undefined" ? window.innerWidth >= 768 : true
   );
-  const [activeTab, setActiveTab] = useState<"overview" | "menu" | "dinnerPolls" | "profile">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "menu" | "dinnerPolls" | "profile" | "aiHub">("overview");
 
   useEffect(() => {
     const token = getStoredToken();
@@ -76,6 +77,9 @@ export function CanteenDashboard() {
 
       case "dinnerPolls":
         return <DinnerPollManagement />;
+
+      case "aiHub":
+        return <AICanteenHub />;
 
       case "profile":
         return (
@@ -175,6 +179,14 @@ export function CanteenDashboard() {
             theme={theme}
           />
           <SidebarItem
+            icon={<Sparkles className="w-5 h-5 shrink-0 text-amber-300 animate-pulse" />}
+            label="AI Canteen Hub"
+            active={activeTab === "aiHub"}
+            onClick={() => { setActiveTab("aiHub"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
+            isOpen={isSidebarOpen}
+            theme={theme}
+          />
+          <SidebarItem
             icon={<User className="w-5 h-5 shrink-0" />}
             label="Profile"
             active={activeTab === "profile"}
@@ -207,21 +219,28 @@ export function CanteenDashboard() {
               transition={{ duration: 0.2 }}
               className="min-h-[60vh]"
             >
-              <div className="mb-6 flex items-center justify-between gap-4 min-h-[44px]">
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-h-[44px]">
                 <div className="flex items-center gap-4">
                   <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-none">
+                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-none flex items-center gap-2">
                       {activeTab === "overview"
                         ? "Canteen Dashboard"
                         : activeTab === "menu"
                           ? "Menu Management"
                           : activeTab === "dinnerPolls"
                             ? "Dinner Polls"
-                            : "My Profile"}
+                            : activeTab === "aiHub"
+                              ? (
+                                <>
+                                  <Sparkles className="h-6 w-6 text-amber-600 animate-pulse" />
+                                  <span>AI Canteen Hub</span>
+                                </>
+                              )
+                              : "My Profile"}
                     </h2>
                   </div>
                 </div>
-                {renderHeaderAction() && <div className="shrink-0 flex items-center">{renderHeaderAction()}</div>}
+                {renderHeaderAction() && <div className="sm:shrink-0 flex items-center">{renderHeaderAction()}</div>}
               </div>
 
               {renderContent()}

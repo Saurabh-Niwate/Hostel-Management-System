@@ -184,7 +184,7 @@ export function AdminReportsOverview() {
           </div>
           <div className="min-w-0">
             <h3 className="text-slate-500 text-xs font-medium truncate">Total Leaves</h3>
-            <p className="text-xl sm:text-2xl font-bold text-slate-800 truncate">{cards.leaveTotal}</p>
+            <p className="text-base sm:text-xl md:text-2xl font-bold text-slate-800 break-words">{cards.leaveTotal}</p>
           </div>
         </div>
 
@@ -194,7 +194,7 @@ export function AdminReportsOverview() {
           </div>
           <div className="min-w-0">
             <h3 className="text-slate-500 text-xs font-medium truncate">Pending Leaves</h3>
-            <p className="text-xl sm:text-2xl font-bold text-slate-800 truncate">{cards.pendingLeaves}</p>
+            <p className="text-base sm:text-xl md:text-2xl font-bold text-slate-800 break-words">{cards.pendingLeaves}</p>
           </div>
         </div>
 
@@ -204,7 +204,7 @@ export function AdminReportsOverview() {
           </div>
           <div className="min-w-0">
             <h3 className="text-slate-500 text-xs font-medium truncate">Fee Due Amount</h3>
-            <p className="text-xl sm:text-2xl font-bold text-slate-800 truncate">Rs {cards.dueAmount.toLocaleString()}</p>
+            <p className="text-base sm:text-xl md:text-2xl font-bold text-slate-800 break-all leading-tight">Rs {cards.dueAmount.toLocaleString()}</p>
           </div>
         </div>
 
@@ -214,7 +214,7 @@ export function AdminReportsOverview() {
           </div>
           <div className="min-w-0">
             <h3 className="text-slate-500 text-xs font-medium truncate">Attendance</h3>
-            <p className="text-xl sm:text-2xl font-bold text-slate-800 truncate">{cards.attendanceTotal}</p>
+            <p className="text-base sm:text-xl md:text-2xl font-bold text-slate-800 break-words">{cards.attendanceTotal}</p>
           </div>
         </div>
       </div>

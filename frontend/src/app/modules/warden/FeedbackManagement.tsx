@@ -95,7 +95,7 @@ export function FeedbackManagement() {
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
       {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{success}</div>}
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Total</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold">{counts.total}</div></CardContent></Card>
         <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">Open</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold text-amber-600">{counts.open}</div></CardContent></Card>
         <Card className="gap-0"><CardHeader className="pb-1"><CardTitle className="text-sm font-medium text-gray-500">In Review</CardTitle></CardHeader><CardContent className="pt-0"><div className="text-2xl font-bold text-blue-600">{counts.inReview}</div></CardContent></Card>
