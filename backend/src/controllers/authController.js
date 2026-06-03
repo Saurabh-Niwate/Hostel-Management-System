@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const { clearAuthAttempts } = require("../middlewares/authSecurityMiddleware");
+const { toPublicUrl, deleteProfileImageFile, safeUnlink } = require("../utils/fileUtils");
 
 const staffRoles = new Set(["Admin", "Technical Staff", "Warden", "Security", "Canteen Owner"]);
 
@@ -94,18 +95,9 @@ exports.logout = async (req, res) => {
     conn = await oracledb.getConnection();
     await conn.execute(
       `
-      MERGE INTO revoked_tokens rt
-      USING (
-        SELECT
-          :b_jti AS jti,
-          :b_user_id AS user_id,
-          TO_DATE(:b_expires_at, 'YYYY-MM-DD HH24:MI:SS') AS expires_at
-        FROM dual
-      ) src
-      ON (rt.jti = src.jti)
-      WHEN NOT MATCHED THEN
-        INSERT (jti, user_id, expires_at)
-        VALUES (src.jti, src.user_id, src.expires_at)
+      INSERT INTO revoked_tokens (jti, user_id, expires_at)
+      VALUES (:b_jti, :b_user_id, TO_DATE(:b_expires_at, 'YYYY-MM-DD HH24:MI:SS'))
+      ON CONFLICT (jti) DO NOTHING
       `,
       {
         b_jti: String(jti),
@@ -150,6 +142,7 @@ exports.getMyProfile = async (req, res) => {
         r.role_name,
         sp.full_name,
         sp.phone,
+        sp.profile_image_url,
         TO_CHAR(sp.created_at, 'YYYY-MM-DD HH24:MI:SS') AS profile_created_at
       FROM users u
       JOIN roles r ON r.role_id = u.role_id
@@ -164,6 +157,7 @@ exports.getMyProfile = async (req, res) => {
       return res.status(404).json({ message: "Profile not found" });
     }
 
+    result.rows[0].PROFILE_IMAGE_URL = toPublicUrl(req, result.rows[0].PROFILE_IMAGE_URL);
     return res.json({ profile: result.rows[0] });
   } catch (err) {
     console.error(err);
@@ -231,16 +225,12 @@ exports.updateMyProfile = async (req, res) => {
 
     await conn.execute(
       `
-      MERGE INTO staff_profiles sp
-      USING (SELECT :b_user_id AS user_id FROM dual) src
-      ON (sp.user_id = src.user_id)
-      WHEN MATCHED THEN
-        UPDATE SET
-          full_name = :b_full_name,
-          phone = :b_phone
-      WHEN NOT MATCHED THEN
-        INSERT (user_id, full_name, phone)
-        VALUES (:b_user_id, :b_full_name, :b_phone)
+      INSERT INTO staff_profiles (user_id, full_name, phone)
+      VALUES (:b_user_id, :b_full_name, :b_phone)
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        phone = EXCLUDED.phone
       `,
       {
         b_user_id: userId,
@@ -327,6 +317,135 @@ exports.changeMyPassword = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to change password" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.uploadMyProfileImage = async (req, res) => {
+  const userId = req.user.userId;
+  const role = req.user.role;
+
+  if (!staffRoles.has(role)) {
+    return res.status(403).json({ message: "Only staff members can upload profile image" });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: "Image file is required" });
+  }
+
+  const { isValidImageSignature } = require("../middlewares/uploadMiddleware");
+
+  if (!(await isValidImageSignature(req.file.path, req.file.mimetype))) {
+    safeUnlink(req.file.path);
+    return res.status(400).json({ message: "Uploaded file content is not a valid image" });
+  }
+
+  const imagePath = `/uploads/profile-images/${req.file.filename}`;
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const previousResult = await conn.execute(
+      `
+      SELECT profile_image_url
+      FROM staff_profiles
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: userId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const previousImagePath =
+      previousResult.rows && previousResult.rows[0]
+        ? previousResult.rows[0].PROFILE_IMAGE_URL
+        : null;
+
+    await conn.execute(
+      `
+      INSERT INTO staff_profiles (user_id, profile_image_url)
+      VALUES (:b_user_id, :b_profile_image_url)
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        profile_image_url = EXCLUDED.profile_image_url
+      `,
+      {
+        b_user_id: userId,
+        b_profile_image_url: imagePath
+      },
+      { autoCommit: true }
+    );
+
+    if (previousImagePath && previousImagePath !== imagePath) {
+      deleteProfileImageFile(previousImagePath);
+    }
+
+    return res.json({
+      message: "Profile image uploaded successfully",
+      profileImageUrl: toPublicUrl(req, imagePath)
+    });
+  } catch (err) {
+    console.error(err);
+    safeUnlink(req.file && req.file.path);
+    return res.status(500).json({ message: "Failed to upload profile image" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.deleteMyProfileImage = async (req, res) => {
+  const userId = req.user.userId;
+  const role = req.user.role;
+
+  if (!staffRoles.has(role)) {
+    return res.status(403).json({ message: "Only staff members can delete profile image" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const previousResult = await conn.execute(
+      `
+      SELECT profile_image_url
+      FROM staff_profiles
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: userId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const previousImagePath =
+      previousResult.rows && previousResult.rows[0]
+        ? previousResult.rows[0].PROFILE_IMAGE_URL
+        : null;
+
+    await conn.execute(
+      `
+      UPDATE staff_profiles
+      SET profile_image_url = NULL
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: userId },
+      { autoCommit: true }
+    );
+
+    if (previousImagePath) {
+      deleteProfileImageFile(previousImagePath);
+    }
+
+    return res.json({ message: "Profile image removed successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to delete profile image" });
   } finally {
     if (conn) {
       try {

@@ -17,7 +17,7 @@ async function withTransaction(fn) {
   const conn = await oracledb.getConnection();
   try {
     // Ensure autoCommit is false for explicit transaction
-    await conn.execute(`BEGIN NULL; END;`);
+    await conn.execute(`BEGIN;`);
     try {
       const result = await fn(conn);
       try {

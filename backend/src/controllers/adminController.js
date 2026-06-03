@@ -146,6 +146,25 @@ exports.approveLeave = async (req, res) => {
       return res.status(400).json({ message: "Only pending leave can be approved" });
     }
 
+    const studentInfoResult = await conn.execute(
+      `
+      SELECT
+        lr.user_id,
+        s.full_name,
+        u.email AS student_email,
+        lr.leave_type,
+        TO_CHAR(lr.from_date, 'YYYY-MM-DD') AS from_date,
+        TO_CHAR(lr.to_date, 'YYYY-MM-DD') AS to_date
+      FROM leave_requests lr
+      JOIN users u ON u.user_id = lr.user_id
+      LEFT JOIN students s ON s.user_id = lr.user_id
+      WHERE lr.leave_id = :b_leave_id
+      `,
+      { b_leave_id: Number(leaveId) },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const studentInfo = studentInfoResult.rows && studentInfoResult.rows[0] ? studentInfoResult.rows[0] : null;
+
     await conn.execute(
       `
       UPDATE leave_requests
@@ -162,6 +181,28 @@ exports.approveLeave = async (req, res) => {
       },
       { autoCommit: true }
     );
+
+    if (studentInfo && studentInfo.STUDENT_EMAIL) {
+      const { sendStudentLeaveResponseAlert } = require("../utils/notificationService");
+      sendStudentLeaveResponseAlert({
+        studentName: studentInfo.FULL_NAME || "Student",
+        studentEmail: studentInfo.STUDENT_EMAIL,
+        leaveType: studentInfo.LEAVE_TYPE,
+        fromDate: studentInfo.FROM_DATE,
+        toDate: studentInfo.TO_DATE,
+        status: "Approved",
+        remarks: remarks ? remarks.trim() : null
+      }).catch(err => console.error("Error in background student leave response alert:", err));
+    }
+
+    const io = req.app.get("io");
+    if (io && studentInfo && studentInfo.USER_ID) {
+      io.to(`user:${studentInfo.USER_ID}`).emit("leaveStatusChanged", {
+        leaveId: Number(leaveId),
+        status: "Approved",
+        remarks: remarks ? remarks.trim() : null
+      });
+    }
 
     return res.json({ message: "Leave approved successfully" });
   } catch (err) {
@@ -208,6 +249,25 @@ exports.rejectLeave = async (req, res) => {
       return res.status(400).json({ message: "Only pending leave can be rejected" });
     }
 
+    const studentInfoResult = await conn.execute(
+      `
+      SELECT
+        lr.user_id,
+        s.full_name,
+        u.email AS student_email,
+        lr.leave_type,
+        TO_CHAR(lr.from_date, 'YYYY-MM-DD') AS from_date,
+        TO_CHAR(lr.to_date, 'YYYY-MM-DD') AS to_date
+      FROM leave_requests lr
+      JOIN users u ON u.user_id = lr.user_id
+      LEFT JOIN students s ON s.user_id = lr.user_id
+      WHERE lr.leave_id = :b_leave_id
+      `,
+      { b_leave_id: Number(leaveId) },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const studentInfo = studentInfoResult.rows && studentInfoResult.rows[0] ? studentInfoResult.rows[0] : null;
+
     await conn.execute(
       `
       UPDATE leave_requests
@@ -224,6 +284,28 @@ exports.rejectLeave = async (req, res) => {
       },
       { autoCommit: true }
     );
+
+    if (studentInfo && studentInfo.STUDENT_EMAIL) {
+      const { sendStudentLeaveResponseAlert } = require("../utils/notificationService");
+      sendStudentLeaveResponseAlert({
+        studentName: studentInfo.FULL_NAME || "Student",
+        studentEmail: studentInfo.STUDENT_EMAIL,
+        leaveType: studentInfo.LEAVE_TYPE,
+        fromDate: studentInfo.FROM_DATE,
+        toDate: studentInfo.TO_DATE,
+        status: "Rejected",
+        remarks: remarks ? remarks.trim() : null
+      }).catch(err => console.error("Error in background student leave response alert:", err));
+    }
+
+    const io = req.app.get("io");
+    if (io && studentInfo && studentInfo.USER_ID) {
+      io.to(`user:${studentInfo.USER_ID}`).emit("leaveStatusChanged", {
+        leaveId: Number(leaveId),
+        status: "Rejected",
+        remarks: remarks ? remarks.trim() : null
+      });
+    }
 
     return res.json({ message: "Leave rejected successfully" });
   } catch (err) {
@@ -380,15 +462,91 @@ exports.getOverviewReport = async (req, res) => {
     const occupiedBeds = Number(roomSummaryRow.OCCUPIED_BEDS || 0);
     const vacancy = Math.max(totalCapacity - occupiedBeds, 0);
 
+    const occupancyTrendResult = await conn.execute(
+      `
+      SELECT 
+        r.block_name, 
+        COALESCE(SUM((
+          SELECT COUNT(*) FROM students s WHERE TRIM(s.room_no) = TRIM(r.room_no)
+        )), 0) AS occupied,
+        COALESCE(SUM(r.capacity), 0) AS total_capacity
+      FROM rooms r
+      WHERE COALESCE(r.is_active, 1) = 1
+      GROUP BY r.block_name
+      ORDER BY r.block_name
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const feeTrendResult = await conn.execute(
+      `
+      SELECT 
+        term_name, 
+        COALESCE(SUM(amount_total), 0) AS total_amount, 
+        COALESCE(SUM(amount_paid), 0) AS paid_amount, 
+        COALESCE(SUM(amount_total - amount_paid), 0) AS due_amount
+      FROM student_fees
+      GROUP BY term_name
+      ORDER BY term_name
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const gatePassActivityResult = await conn.execute(
+      `
+      SELECT 
+        CASE WHEN leave_id IS NULL THEN 'Daily Exit' ELSE 'Approved Leave' END AS exit_type,
+        COUNT(*) AS total
+      FROM entry_exit_logs
+      GROUP BY CASE WHEN leave_id IS NULL THEN 'Daily Exit' ELSE 'Approved Leave' END
+      `,
+      {},
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const leaveSummaryMapped = (leaveCounts.rows || []).map(row => ({
+      STATUS: row.STATUS,
+      TOTAL: Number(row.TOTAL || 0)
+    }));
+    const attendanceSummaryMapped = (attendanceCounts.rows || []).map(row => ({
+      STATUS: row.STATUS,
+      TOTAL: Number(row.TOTAL || 0)
+    }));
+    const feeSummaryMapped = (feeCounts.rows || []).map(row => ({
+      STATUS: row.STATUS,
+      TOTAL: Number(row.TOTAL || 0)
+    }));
+    const feedbackSummaryMapped = (feedbackCounts.rows || []).map(row => ({
+      STATUS: row.STATUS,
+      TOTAL: Number(row.TOTAL || 0)
+    }));
+    const occupancyTrendMapped = (occupancyTrendResult.rows || []).map(row => ({
+      BLOCK_NAME: row.BLOCK_NAME,
+      OCCUPIED: Number(row.OCCUPIED || 0),
+      TOTAL_CAPACITY: Number(row.TOTAL_CAPACITY || 0)
+    }));
+    const feeTrendMapped = (feeTrendResult.rows || []).map(row => ({
+      TERM_NAME: row.TERM_NAME,
+      TOTAL_AMOUNT: Number(row.TOTAL_AMOUNT || 0),
+      PAID_AMOUNT: Number(row.PAID_AMOUNT || 0),
+      DUE_AMOUNT: Number(row.DUE_AMOUNT || 0)
+    }));
+    const gatePassActivityMapped = (gatePassActivityResult.rows || []).map(row => ({
+      EXIT_TYPE: row.EXIT_TYPE,
+      TOTAL: Number(row.TOTAL || 0)
+    }));
+
     return res.json({
       range: {
         dateFrom: dateFrom || null,
         dateTo: dateTo || null
       },
-      leaveSummary: leaveCounts.rows || [],
-      attendanceSummary: attendanceCounts.rows || [],
-      feeSummary: feeCounts.rows || [],
-      feedbackSummary: feedbackCounts.rows || [],
+      leaveSummary: leaveSummaryMapped,
+      attendanceSummary: attendanceSummaryMapped,
+      feeSummary: feeSummaryMapped,
+      feedbackSummary: feedbackSummaryMapped,
       feeTotals: (revenueSummary.rows && revenueSummary.rows[0]) || {
         TOTAL_FEE_AMOUNT: 0,
         TOTAL_PAID_AMOUNT: 0,
@@ -401,7 +559,10 @@ exports.getOverviewReport = async (req, res) => {
         OCCUPIED_BEDS: occupiedBeds,
         VACANCY: vacancy,
         IS_FULL: totalCapacity > 0 && vacancy === 0
-      }
+      },
+      occupancyTrend: occupancyTrendMapped,
+      feeTrend: feeTrendMapped,
+      gatePassActivity: gatePassActivityMapped
     });
   } catch (err) {
     console.error(err);

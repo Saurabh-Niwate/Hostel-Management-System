@@ -4,10 +4,10 @@ const syncOverdueFeeStatuses = async (conn) => {
     `
     UPDATE student_fees
     SET status = 'Overdue',
-        updated_at = SYSDATE
+        updated_at = CURRENT_TIMESTAMP
     WHERE due_date IS NOT NULL
-      AND TRUNC(due_date) < TRUNC(SYSDATE)
-      AND NVL(amount_paid, 0) < NVL(amount_total, 0)
+      AND due_date < CURRENT_DATE
+      AND COALESCE(amount_paid, 0) < COALESCE(amount_total, 0)
       AND status IN ('Pending', 'Partially Paid')
     `,
     {},
@@ -19,8 +19,8 @@ const syncOverdueFeeStatuses = async (conn) => {
     `
     UPDATE student_fees
     SET status = 'Paid',
-        updated_at = SYSDATE
-    WHERE NVL(amount_paid, 0) >= NVL(amount_total, 0)
+        updated_at = CURRENT_TIMESTAMP
+    WHERE COALESCE(amount_paid, 0) >= COALESCE(amount_total, 0)
       AND status <> 'Paid'
     `,
     {},
@@ -33,12 +33,12 @@ const syncOverdueFeeStatuses = async (conn) => {
     UPDATE student_fees
     SET status =
       CASE
-        WHEN NVL(amount_paid, 0) = 0 THEN 'Pending'
+        WHEN COALESCE(amount_paid, 0) = 0 THEN 'Pending'
         ELSE 'Partially Paid'
       END,
-      updated_at = SYSDATE
-    WHERE (due_date IS NULL OR TRUNC(due_date) >= TRUNC(SYSDATE))
-      AND NVL(amount_paid, 0) < NVL(amount_total, 0)
+      updated_at = CURRENT_TIMESTAMP
+    WHERE (due_date IS NULL OR due_date >= CURRENT_DATE)
+      AND COALESCE(amount_paid, 0) < COALESCE(amount_total, 0)
       AND status = 'Overdue'
     `,
     {},

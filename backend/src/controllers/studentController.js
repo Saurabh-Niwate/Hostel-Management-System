@@ -91,14 +91,11 @@ exports.uploadMyProfileImage = async (req, res) => {
 
     await conn.execute(
       `
-      MERGE INTO students s
-      USING (SELECT :b_user_id AS user_id FROM dual) src
-      ON (s.user_id = src.user_id)
-      WHEN MATCHED THEN
-        UPDATE SET profile_image_url = :b_profile_image_url
-      WHEN NOT MATCHED THEN
-        INSERT (user_id, profile_image_url)
-        VALUES (:b_user_id, :b_profile_image_url)
+      INSERT INTO students (user_id, profile_image_url)
+      VALUES (:b_user_id, :b_profile_image_url)
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        profile_image_url = EXCLUDED.profile_image_url
       `,
       {
         b_user_id: userId,
@@ -227,27 +224,13 @@ exports.updateMyProfile = async (req, res) => {
 
       await conn.execute(
         `
-        MERGE INTO students s
-        USING (SELECT :b_user_id AS user_id FROM dual) src
-        ON (s.user_id = src.user_id)
-        WHEN MATCHED THEN
-          UPDATE SET
-            full_name = :b_full_name,
-            phone = :b_phone,
-            guardian_name = :b_guardian_name
-        WHEN NOT MATCHED THEN
-          INSERT (
-            user_id,
-            full_name,
-            phone,
-            guardian_name
-          )
-          VALUES (
-            :b_user_id,
-            :b_full_name,
-            :b_phone,
-            :b_guardian_name
-          )
+        INSERT INTO students (user_id, full_name, phone, guardian_name)
+        VALUES (:b_user_id, :b_full_name, :b_phone, :b_guardian_name)
+        ON CONFLICT (user_id)
+        DO UPDATE SET
+          full_name = EXCLUDED.full_name,
+          phone = EXCLUDED.phone,
+          guardian_name = EXCLUDED.guardian_name
         `,
         {
           b_user_id: userId,
@@ -610,20 +593,17 @@ exports.getRoomAllocationStatus = async (req, res) => {
 
     const requestResult = await conn.execute(
       `
-      SELECT *
-      FROM (
-        SELECT
-          request_id,
-          status,
-          assigned_room_no,
-          remarks,
-          TO_CHAR(requested_at, 'YYYY-MM-DD HH24:MI:SS') AS requested_at,
-          TO_CHAR(reviewed_at, 'YYYY-MM-DD HH24:MI:SS') AS reviewed_at
-        FROM room_allocation_requests
-        WHERE user_id = :b_user_id
-        ORDER BY requested_at DESC, request_id DESC
-      )
-      WHERE ROWNUM = 1
+      SELECT
+        request_id,
+        status,
+        assigned_room_no,
+        remarks,
+        TO_CHAR(requested_at, 'YYYY-MM-DD HH24:MI:SS') AS requested_at,
+        TO_CHAR(reviewed_at, 'YYYY-MM-DD HH24:MI:SS') AS reviewed_at
+      FROM room_allocation_requests
+      WHERE user_id = :b_user_id
+      ORDER BY requested_at DESC, request_id DESC
+      LIMIT 1
       `,
       { b_user_id: userId },
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
@@ -733,11 +713,10 @@ exports.createRoomAllocationRequest = async (req, res) => {
       `
       INSERT INTO room_allocation_requests (user_id, status)
       VALUES (:b_user_id, 'Pending')
-      RETURNING request_id INTO :b_request_id
+      RETURNING request_id
       `,
       {
-        b_user_id: userId,
-        b_request_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
+        b_user_id: userId
       },
       { autoCommit: false }
     );
@@ -745,7 +724,7 @@ exports.createRoomAllocationRequest = async (req, res) => {
     await conn.commit();
     return res.status(201).json({
       message: "Room allocation request submitted successfully",
-      requestId: insertResult.outBinds.b_request_id[0]
+      requestId: insertResult.rows[0][0]
     });
   } catch (err) {
     console.error(err);
@@ -937,19 +916,12 @@ exports.voteDinnerPoll = async (req, res) => {
 
     await conn.execute(
       `
-      MERGE INTO dinner_poll_votes v
-      USING (
-        SELECT :b_poll_id AS poll_id, :b_user_id AS user_id, :b_option_id AS option_id
-        FROM dual
-      ) src
-      ON (v.poll_id = src.poll_id AND v.user_id = src.user_id)
-      WHEN MATCHED THEN
-        UPDATE SET
-          v.option_id = src.option_id,
-          v.voted_at = SYSDATE
-      WHEN NOT MATCHED THEN
-        INSERT (poll_id, option_id, user_id, voted_at)
-        VALUES (src.poll_id, src.option_id, src.user_id, SYSDATE)
+      INSERT INTO dinner_poll_votes (poll_id, option_id, user_id, voted_at)
+      VALUES (:b_poll_id, :b_option_id, :b_user_id, CURRENT_TIMESTAMP)
+      ON CONFLICT (poll_id, user_id)
+      DO UPDATE SET
+        option_id = EXCLUDED.option_id,
+        voted_at = EXCLUDED.voted_at
       `,
       {
         b_poll_id: Number(pollId),

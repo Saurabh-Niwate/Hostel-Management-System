@@ -9,6 +9,9 @@ const {
   getUserById,
   updateStudentByStudentId,
   uploadStudentProfileImageByStudentId,
+  updateStaffByEmpId,
+  uploadStaffProfileImageByEmpId,
+  deleteStaffProfileImageByEmpId,
   getStudents,
   getStaff,
   getRooms,
@@ -36,6 +39,9 @@ router.get("/users", verifyToken, requireRole("Technical Staff"), getAllUsers);
 router.get("/users/:userId", verifyToken, requireRole("Technical Staff"), getUserById);
 router.put("/students/:studentId", verifyToken, requireRole("Technical Staff"), updateStudentByStudentId);
 router.post("/students/:studentId/profile-image", verifyToken, requireRole("Technical Staff"), uploadProfileImage.single("image"), uploadStudentProfileImageByStudentId);
+router.put("/staff/:empId", verifyToken, requireRole("Technical Staff"), updateStaffByEmpId);
+router.post("/staff/:empId/profile-image", verifyToken, requireRole("Technical Staff"), uploadProfileImage.single("image"), uploadStaffProfileImageByEmpId);
+router.delete("/staff/:empId/profile-image", verifyToken, requireRole("Technical Staff"), deleteStaffProfileImageByEmpId);
 router.get("/students", verifyToken, requireRole("Technical Staff"), getStudents);
 router.get("/staff", verifyToken, requireRole("Technical Staff"), getStaff);
 router.get("/rooms", verifyToken, requireRole("Technical Staff"), getRooms);

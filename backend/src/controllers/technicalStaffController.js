@@ -103,7 +103,7 @@ const ensureRoomHasVacancy = async (conn, roomNo, excludedUserId = null) => {
         SELECT COUNT(*)
         FROM students s
         WHERE TRIM(s.room_no) = TRIM(r.room_no)
-          AND (:b_excluded_user_id IS NULL OR s.user_id <> :b_excluded_user_id)
+          AND (:b_excluded_user_id IS NULL OR s.user_id <> CAST(:b_excluded_user_id AS INTEGER))
       ) AS occupied
     FROM rooms r
     WHERE TRIM(r.room_no) = :b_room_no
@@ -196,7 +196,7 @@ const lockRoomAndGetOccupancy = async (conn, roomNo, excludedUserId = null) => {
     SELECT COUNT(*) AS occupied_count
     FROM students
     WHERE TRIM(room_no) = :b_room_no
-      AND (:b_excluded_user_id IS NULL OR user_id <> :b_excluded_user_id)
+      AND (:b_excluded_user_id IS NULL OR user_id <> CAST(:b_excluded_user_id AS INTEGER))
     `,
     {
       b_room_no: normalizedRoomNo,
@@ -765,6 +765,7 @@ exports.getUserById = async (req, res) => {
       SELECT
         full_name,
         phone,
+        profile_image_url,
         TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
       FROM staff_profiles
       WHERE user_id = :b_user_id
@@ -783,7 +784,14 @@ exports.getUserById = async (req, res) => {
           PROFILE_IMAGE_URL: toPublicUrl(req, row.PROFILE_IMAGE_URL)
         };
       })(),
-      staffProfile: (staffProfile.rows && staffProfile.rows[0]) || null
+      staffProfile: (() => {
+        const row = (staffProfile.rows && staffProfile.rows[0]) || null;
+        if (!row) return null;
+        return {
+          ...row,
+          PROFILE_IMAGE_URL: toPublicUrl(req, row.PROFILE_IMAGE_URL)
+        };
+      })()
     });
   } catch (err) {
     console.error(err);
@@ -901,42 +909,38 @@ exports.updateStudentByStudentId = async (req, res) => {
 
     await conn.execute(
       `
-      MERGE INTO students s
-      USING (SELECT :b_user_id AS user_id FROM dual) src
-      ON (s.user_id = src.user_id)
-      WHEN MATCHED THEN
-        UPDATE SET
-          full_name = :b_full_name,
-          phone = :b_phone,
-          aadhar_no = :b_aadhar_no,
-          guardian_name = :b_guardian_name,
-          guardian_email = :b_guardian_email,
-          guardian_phone = :b_guardian_phone,
-          address = :b_address,
-          room_no = :b_room_no
-      WHEN NOT MATCHED THEN
-        INSERT (
-          user_id,
-          full_name,
-          phone,
-          aadhar_no,
-          guardian_name,
-          guardian_email,
-          guardian_phone,
-          address,
-          room_no
-        )
-        VALUES (
-          :b_user_id,
-          :b_full_name,
-          :b_phone,
-          :b_aadhar_no,
-          :b_guardian_name,
-          :b_guardian_email,
-          :b_guardian_phone,
-          :b_address,
-          :b_room_no
-        )
+      INSERT INTO students (
+        user_id,
+        full_name,
+        phone,
+        aadhar_no,
+        guardian_name,
+        guardian_email,
+        guardian_phone,
+        address,
+        room_no
+      )
+      VALUES (
+        :b_user_id,
+        :b_full_name,
+        :b_phone,
+        :b_aadhar_no,
+        :b_guardian_name,
+        :b_guardian_email,
+        :b_guardian_phone,
+        :b_address,
+        :b_room_no
+      )
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        phone = EXCLUDED.phone,
+        aadhar_no = EXCLUDED.aadhar_no,
+        guardian_name = EXCLUDED.guardian_name,
+        guardian_email = EXCLUDED.guardian_email,
+        guardian_phone = EXCLUDED.guardian_phone,
+        address = EXCLUDED.address,
+        room_no = EXCLUDED.room_no
       `,
       {
         b_user_id: targetUserId,
@@ -1047,14 +1051,11 @@ exports.uploadStudentProfileImageByStudentId = async (req, res) => {
 
     await conn.execute(
       `
-      MERGE INTO students s
-      USING (SELECT :b_user_id AS user_id FROM dual) src
-      ON (s.user_id = src.user_id)
-      WHEN MATCHED THEN
-        UPDATE SET profile_image_url = :b_profile_image_url
-      WHEN NOT MATCHED THEN
-        INSERT (user_id, profile_image_url)
-        VALUES (:b_user_id, :b_profile_image_url)
+      INSERT INTO students (user_id, profile_image_url)
+      VALUES (:b_user_id, :b_profile_image_url)
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        profile_image_url = EXCLUDED.profile_image_url
       `,
       {
         b_user_id: targetUserId,
@@ -1659,9 +1660,9 @@ exports.createExternalAccommodation = async (req, res) => {
         :b_availability_status,
         :b_notes,
         :b_created_by,
-        SYSDATE
+        CURRENT_TIMESTAMP
       )
-      RETURNING accommodation_id INTO :b_accommodation_id
+      RETURNING accommodation_id
       `,
       {
         b_name: String(name).trim(),
@@ -1675,13 +1676,12 @@ exports.createExternalAccommodation = async (req, res) => {
         b_gender_allowed: normalizedGender,
         b_availability_status: normalizedStatus,
         b_notes: notes ? String(notes).trim() : null,
-        b_created_by: req.user.userId,
-        b_accommodation_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
+        b_created_by: req.user.userId
       },
       { autoCommit: false }
     );
 
-    const accommodationId = insertResult.outBinds.b_accommodation_id[0];
+    const accommodationId = insertResult.rows[0][0];
     await insertSystemLog(conn, {
       actorUserId: req.user.userId,
       actorRole: req.user.role,
@@ -2612,25 +2612,22 @@ exports.getSystemLogs = async (req, res) => {
     conn = await oracledb.getConnection();
     const result = await conn.execute(
       `
-      SELECT *
-      FROM (
-        SELECT
-          log_id,
-          actor_user_id,
-          actor_role,
-          action,
-          entity_type,
-          entity_id,
-          details,
-          TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
-        FROM system_logs
-        WHERE (:b_action IS NULL OR action = :b_action)
-          AND (:b_actor_user_id IS NULL OR actor_user_id = :b_actor_user_id)
-          AND (:b_date_from IS NULL OR created_at >= TO_DATE(:b_date_from, 'YYYY-MM-DD'))
-          AND (:b_date_to IS NULL OR created_at < TO_DATE(:b_date_to, 'YYYY-MM-DD') + 1)
-        ORDER BY created_at DESC, log_id DESC
-      )
-      WHERE ROWNUM <= :b_row_limit
+      SELECT
+        log_id,
+        actor_user_id,
+        actor_role,
+        action,
+        entity_type,
+        entity_id,
+        details,
+        TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS created_at
+      FROM system_logs
+      WHERE (:b_action IS NULL OR action = :b_action)
+        AND (:b_actor_user_id IS NULL OR actor_user_id = CAST(:b_actor_user_id AS INTEGER))
+        AND (:b_date_from IS NULL OR created_at >= TO_DATE(:b_date_from, 'YYYY-MM-DD'))
+        AND (:b_date_to IS NULL OR created_at < TO_DATE(:b_date_to, 'YYYY-MM-DD') + 1)
+      ORDER BY created_at DESC, log_id DESC
+      LIMIT :b_row_limit
       `,
       {
         b_action: action ? action.trim() : null,
@@ -2645,6 +2642,321 @@ exports.getSystemLogs = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to fetch system logs" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.updateStaffByEmpId = async (req, res) => {
+  const { empId } = req.params;
+  const { email, fullName, phone } = req.body;
+
+  if (!empId || !empId.trim()) {
+    return res.status(400).json({ message: "empId parameter is required" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+
+    const staffUserResult = await conn.execute(
+      `
+      SELECT u.user_id
+      FROM users u
+      JOIN roles r ON r.role_id = u.role_id
+      WHERE TRIM(u.emp_id) = :b_emp_id
+        AND r.role_name <> 'Student'
+      `,
+      { b_emp_id: empId.trim() }
+    );
+
+    if (staffUserResult.rows.length === 0) {
+      return res.status(404).json({ message: "Staff user not found" });
+    }
+
+    const targetUserId = staffUserResult.rows[0][0];
+
+    const trimmedEmail = email ? email.trim().toLowerCase() : null;
+    if (trimmedEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+      const duplicateEmailCheck = await conn.execute(
+        `
+        SELECT user_id
+        FROM users
+        WHERE LOWER(TRIM(email)) = :b_email
+          AND user_id <> :b_user_id
+        `,
+        {
+          b_email: trimmedEmail,
+          b_user_id: targetUserId
+        }
+      );
+      if (duplicateEmailCheck.rows.length > 0) {
+        return res.status(409).json({ message: "Email already in use" });
+      }
+    }
+
+    await conn.execute(
+      `
+      UPDATE users
+      SET email = :b_email
+      WHERE user_id = :b_user_id
+      `,
+      {
+        b_email: trimmedEmail,
+        b_user_id: targetUserId
+      },
+      { autoCommit: false }
+    );
+
+    await conn.execute(
+      `
+      INSERT INTO staff_profiles (user_id, full_name, phone)
+      VALUES (:b_user_id, :b_full_name, :b_phone)
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        phone = EXCLUDED.phone
+      `,
+      {
+        b_user_id: targetUserId,
+        b_full_name: fullName ? fullName.trim() : null,
+        b_phone: phone ? phone.trim() : null
+      },
+      { autoCommit: false }
+    );
+
+    await insertSystemLog(conn, {
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: "UPDATE_STAFF_DETAILS",
+      entityType: "USER",
+      entityId: targetUserId,
+      details: `empId=${empId.trim()}`
+    });
+
+    await conn.commit();
+    return res.json({ message: "Staff user updated successfully" });
+  } catch (err) {
+    console.error(err);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Error rolling back transaction:", rollbackErr);
+      }
+    }
+    return res.status(500).json({ message: "Failed to update staff user" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.uploadStaffProfileImageByEmpId = async (req, res) => {
+  const { empId } = req.params;
+
+  if (!empId || !empId.trim()) {
+    safeUnlink(req.file && req.file.path);
+    return res.status(400).json({ message: "empId parameter is required" });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: "Image file is required" });
+  }
+
+  const { isValidImageSignature } = require("../middlewares/uploadMiddleware");
+
+  if (!(await isValidImageSignature(req.file.path, req.file.mimetype))) {
+    safeUnlink(req.file.path);
+    return res.status(400).json({ message: "Uploaded file content is not a valid image" });
+  }
+
+  const imagePath = `/uploads/profile-images/${req.file.filename}`;
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const staffUserResult = await conn.execute(
+      `
+      SELECT u.user_id
+      FROM users u
+      JOIN roles r ON r.role_id = u.role_id
+      WHERE TRIM(u.emp_id) = :b_emp_id
+        AND r.role_name <> 'Student'
+      `,
+      { b_emp_id: empId.trim() },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    if (!staffUserResult.rows || staffUserResult.rows.length === 0) {
+      safeUnlink(req.file.path);
+      return res.status(404).json({ message: "Staff user not found" });
+    }
+
+    const targetUserId = staffUserResult.rows[0].USER_ID;
+
+    const previousResult = await conn.execute(
+      `
+      SELECT profile_image_url
+      FROM staff_profiles
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: targetUserId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const previousImagePath =
+      previousResult.rows && previousResult.rows[0]
+        ? previousResult.rows[0].PROFILE_IMAGE_URL
+        : null;
+
+    await conn.execute(
+      `
+      INSERT INTO staff_profiles (user_id, profile_image_url)
+      VALUES (:b_user_id, :b_profile_image_url)
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        profile_image_url = EXCLUDED.profile_image_url
+      `,
+      {
+        b_user_id: targetUserId,
+        b_profile_image_url: imagePath
+      },
+      { autoCommit: false }
+    );
+
+    await insertSystemLog(conn, {
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: "UPLOAD_STAFF_PROFILE_IMAGE",
+      entityType: "USER",
+      entityId: targetUserId,
+      details: `empId=${empId.trim()}`
+    });
+
+    await conn.commit();
+
+    if (previousImagePath && previousImagePath !== imagePath) {
+      deleteProfileImageFile(previousImagePath);
+    }
+
+    return res.json({
+      message: "Staff profile image uploaded successfully",
+      profileImageUrl: toPublicUrl(req, imagePath)
+    });
+  } catch (err) {
+    console.error(err);
+    safeUnlink(req.file && req.file.path);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Rollback error:", rollbackErr);
+      }
+    }
+    return res.status(500).json({ message: "Failed to upload staff profile image" });
+  } finally {
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (closeErr) {
+        console.error("Error closing database connection:", closeErr);
+      }
+    }
+  }
+};
+
+exports.deleteStaffProfileImageByEmpId = async (req, res) => {
+  const { empId } = req.params;
+
+  if (!empId || !empId.trim()) {
+    return res.status(400).json({ message: "empId parameter is required" });
+  }
+
+  let conn;
+  try {
+    conn = await oracledb.getConnection();
+    const staffUserResult = await conn.execute(
+      `
+      SELECT u.user_id
+      FROM users u
+      JOIN roles r ON r.role_id = u.role_id
+      WHERE TRIM(u.emp_id) = :b_emp_id
+        AND r.role_name <> 'Student'
+      `,
+      { b_emp_id: empId.trim() },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    if (!staffUserResult.rows || staffUserResult.rows.length === 0) {
+      return res.status(404).json({ message: "Staff user not found" });
+    }
+
+    const targetUserId = staffUserResult.rows[0].USER_ID;
+
+    const previousResult = await conn.execute(
+      `
+      SELECT profile_image_url
+      FROM staff_profiles
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: targetUserId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const previousImagePath =
+      previousResult.rows && previousResult.rows[0]
+        ? previousResult.rows[0].PROFILE_IMAGE_URL
+        : null;
+
+    await conn.execute(
+      `
+      UPDATE staff_profiles
+      SET profile_image_url = NULL
+      WHERE user_id = :b_user_id
+      `,
+      { b_user_id: targetUserId },
+      { autoCommit: false }
+    );
+
+    await insertSystemLog(conn, {
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: "DELETE_STAFF_PROFILE_IMAGE",
+      entityType: "USER",
+      entityId: targetUserId,
+      details: `empId=${empId.trim()}`
+    });
+
+    await conn.commit();
+
+    if (previousImagePath) {
+      deleteProfileImageFile(previousImagePath);
+    }
+
+    return res.json({ message: "Staff profile image removed successfully" });
+  } catch (err) {
+    console.error(err);
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Rollback error:", rollbackErr);
+      }
+    }
+    return res.status(500).json({ message: "Failed to delete staff profile image" });
   } finally {
     if (conn) {
       try {

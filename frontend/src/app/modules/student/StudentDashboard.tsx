@@ -25,6 +25,8 @@ import { FeedbackView } from "./FeedbackView";
 import { CanteenMenuView } from "./CanteenMenuView";
 import { api } from "../../lib/api";
 import { clearAuthSession, getStoredIdentifier, getStoredRole, getStoredToken } from "../../lib/authStorage";
+import { socket } from "../../lib/socket";
+import { toast } from "sonner";
 
 type Tab = "dashboard" | "profile" | "leave" | "attendance" | "fees" | "feedback" | "canteen";
 type LeaveStatus = "Pending" | "Approved" | "Rejected";
@@ -88,6 +90,7 @@ type SidebarItemProps = {
   label: string;
   active: boolean;
   onClick: () => void;
+  isOpen: boolean;
   theme: {
     color: string;
     activeColor: string;
@@ -108,7 +111,9 @@ export function StudentDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [leaveInitialTab, setLeaveInitialTab] = useState<"list" | "apply">("list");
   const [leaveViewTab, setLeaveViewTab] = useState<"list" | "apply">("list");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 768 : true
+  );
   const [leaves, setLeaves] = useState<LeaveItem[]>([]);
   const [profile, setProfile] = useState<ProfileSnapshot>({ roomNo: "" });
   const [attendance, setAttendance] = useState<AttendanceItem[]>([]);
@@ -137,64 +142,80 @@ export function StudentDashboard() {
     }
   }, [navigate]);
 
+  const loadDashboardData = async () => {
+    try {
+      const [leavesRes, profileRes, attendanceRes, feesRes, menuRes, staysRes, roomAllocationRes] = await Promise.allSettled([
+        api.get("/leave/my-leaves"),
+        api.get("/student/profile"),
+        api.get("/student/attendance"),
+        api.get("/student/fees"),
+        api.get("/student/canteen-menu"),
+        api.get("/student/nearby-stays"),
+        api.get("/student/room-allocation-status"),
+      ]);
+
+      const leaveRows = leavesRes.status === "fulfilled" ? leavesRes.value.data?.leaves || [] : [];
+      const mappedLeaves = leaveRows.map((row: any) => ({
+        id: String(row.LEAVE_ID),
+        type: row.LEAVE_TYPE || "General",
+        fromDate: row.FROM_DATE || "",
+        toDate: row.TO_DATE || "",
+        status: row.STATUS as LeaveStatus,
+      }));
+      setLeaves(mappedLeaves);
+
+      const roomNo = profileRes.status === "fulfilled" ? profileRes.value.data?.profile?.ROOM_NO || "" : "";
+      setProfile({ roomNo });
+      setAttendance(attendanceRes.status === "fulfilled" ? attendanceRes.value.data?.attendance || [] : []);
+      setFees(feesRes.status === "fulfilled" ? feesRes.value.data?.fees || [] : []);
+      setMenu(menuRes.status === "fulfilled" ? menuRes.value.data?.menu || [] : []);
+      setNearbyStays(staysRes.status === "fulfilled" ? staysRes.value.data?.accommodations || [] : []);
+      setRoomAllocation(
+        roomAllocationRes.status === "fulfilled"
+          ? {
+              hasAssignedRoom: Boolean(roomAllocationRes.value.data?.hasAssignedRoom),
+              roomNo: roomAllocationRes.value.data?.roomNo || null,
+              totalVacancy: Number(roomAllocationRes.value.data?.totalVacancy || 0),
+              hasPendingRequest: Boolean(roomAllocationRes.value.data?.hasPendingRequest),
+              canRequestRoom: Boolean(roomAllocationRes.value.data?.canRequestRoom),
+              latestRequest: roomAllocationRes.value.data?.latestRequest || null,
+            }
+          : {
+              hasAssignedRoom: false,
+              totalVacancy: 0,
+              hasPendingRequest: false,
+              canRequestRoom: false,
+              latestRequest: null,
+            }
+      );
+
+      const userId = profileRes.status === "fulfilled" ? profileRes.value.data?.profile?.USER_ID : null;
+      if (userId) {
+        socket.connect();
+        socket.emit("join", userId);
+      }
+    } catch (err) {
+      // Keep dashboard lightweight
+    } finally {
+      setDashboardLoaded(true);
+    }
+  };
+
   useEffect(() => {
     if (isAuthChecking) return;
-    const loadDashboardData = async () => {
-      try {
-        const [leavesRes, profileRes, attendanceRes, feesRes, menuRes, staysRes, roomAllocationRes] = await Promise.allSettled([
-          api.get("/leave/my-leaves"),
-          api.get("/student/profile"),
-          api.get("/student/attendance"),
-          api.get("/student/fees"),
-          api.get("/student/canteen-menu"),
-          api.get("/student/nearby-stays"),
-          api.get("/student/room-allocation-status"),
-        ]);
-
-        const leaveRows = leavesRes.status === "fulfilled" ? leavesRes.value.data?.leaves || [] : [];
-        const mappedLeaves = leaveRows.map((row: any) => ({
-          id: String(row.LEAVE_ID),
-          type: row.LEAVE_TYPE || "General",
-          fromDate: row.FROM_DATE || "",
-          toDate: row.TO_DATE || "",
-          status: row.STATUS as LeaveStatus,
-        }));
-        setLeaves(mappedLeaves);
-
-        const roomNo = profileRes.status === "fulfilled" ? profileRes.value.data?.profile?.ROOM_NO || "" : "";
-        setProfile({ roomNo });
-        setAttendance(attendanceRes.status === "fulfilled" ? attendanceRes.value.data?.attendance || [] : []);
-        setFees(feesRes.status === "fulfilled" ? feesRes.value.data?.fees || [] : []);
-        setMenu(menuRes.status === "fulfilled" ? menuRes.value.data?.menu || [] : []);
-        setNearbyStays(staysRes.status === "fulfilled" ? staysRes.value.data?.accommodations || [] : []);
-        setRoomAllocation(
-          roomAllocationRes.status === "fulfilled"
-            ? {
-                hasAssignedRoom: Boolean(roomAllocationRes.value.data?.hasAssignedRoom),
-                roomNo: roomAllocationRes.value.data?.roomNo || null,
-                totalVacancy: Number(roomAllocationRes.value.data?.totalVacancy || 0),
-                hasPendingRequest: Boolean(roomAllocationRes.value.data?.hasPendingRequest),
-                canRequestRoom: Boolean(roomAllocationRes.value.data?.canRequestRoom),
-                latestRequest: roomAllocationRes.value.data?.latestRequest || null,
-              }
-            : {
-                hasAssignedRoom: false,
-                totalVacancy: 0,
-                hasPendingRequest: false,
-                canRequestRoom: false,
-                latestRequest: null,
-              }
-        );
-      } catch (err) {
-        // Keep dashboard lightweight; dedicated pages handle detailed errors.
-      } finally {
-        setDashboardLoaded(true);
-      }
-    };
-
     loadDashboardData();
     const pollingWindow = window.setInterval(loadDashboardData, 30000);
-    return () => window.clearInterval(pollingWindow);
+
+    socket.on("leaveStatusChanged", (data: any) => {
+      toast.success(`Your leave request was reviewed: status is ${data.status}! Remarks: ${data.remarks || 'None'}`);
+      loadDashboardData();
+    });
+
+    return () => {
+      window.clearInterval(pollingWindow);
+      socket.off("leaveStatusChanged");
+      socket.disconnect();
+    };
   }, [isAuthChecking]);
 
   const hasAssignedRoom = dashboardLoaded && Boolean(profile.roomNo || roomAllocation.roomNo || roomAllocation.hasAssignedRoom);
@@ -279,9 +300,9 @@ export function StudentDashboard() {
         if (!dashboardLoaded) {
           return (
             <div className="space-y-6 animate-pulse">
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="bg-emerald-50 p-6 rounded-2xl shadow-sm border border-emerald-100 h-28"></div>
+                  <div key={i} className="bg-emerald-50 p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100 h-24 sm:h-28"></div>
                 ))}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -392,22 +413,22 @@ export function StudentDashboard() {
 
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100">
-                <h3 className="text-slate-500 text-sm font-medium">Total Leaves</h3>
-                <p className="text-3xl font-bold text-emerald-700 mt-2">{leaveStats.total}</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100">
+                <h3 className="text-slate-500 text-xs sm:text-sm font-medium truncate">Total Leaves</h3>
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-emerald-700 mt-2">{leaveStats.total}</p>
               </div>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100">
-                <h3 className="text-slate-500 text-sm font-medium">Pending Approvals</h3>
-                <p className="text-3xl font-bold text-amber-500 mt-2">{leaveStats.pending}</p>
+              <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100">
+                <h3 className="text-slate-500 text-xs sm:text-sm font-medium truncate">Pending Approvals</h3>
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-500 mt-2">{leaveStats.pending}</p>
               </div>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100">
-                <h3 className="text-slate-500 text-sm font-medium">Approved Leaves</h3>
-                <p className="text-3xl font-bold text-emerald-500 mt-2">{leaveStats.approved}</p>
+              <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100">
+                <h3 className="text-slate-500 text-xs sm:text-sm font-medium truncate">Approved Leaves</h3>
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-emerald-500 mt-2">{leaveStats.approved}</p>
               </div>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100">
-                <h3 className="text-slate-500 text-sm font-medium">Room Number</h3>
-                <p className="text-3xl font-bold text-emerald-600 mt-2">{profile.roomNo || "N/A"}</p>
+              <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100">
+                <h3 className="text-slate-500 text-xs sm:text-sm font-medium truncate">Room Number</h3>
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-emerald-600 mt-2">{profile.roomNo || "N/A"}</p>
               </div>
             </div>
 
@@ -617,109 +638,145 @@ export function StudentDashboard() {
     ) : null;
 
   return (
-    <div className={`min-h-screen ${theme.bg} flex`}>
+    <div className={`min-h-screen ${theme.bg} flex flex-col md:flex-row`}>
+      {/* Mobile Top Navbar */}
+      <header className="md:hidden flex h-16 items-center justify-between px-6 text-white z-20 shadow-md w-full shrink-0" style={{ backgroundColor: theme.color }}>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-white/10 rounded-lg">
+            <Menu className="h-6 w-6" />
+          </button>
+          <h1 className="text-lg font-bold tracking-wide">Student Portal</h1>
+        </div>
+        <div className="text-xs text-white/80 font-medium">{getStoredIdentifier() || "STUDENT"}</div>
+      </header>
+
+      {/* Mobile Sidebar Backdrop Overlay */}
+      <AnimatePresence>
+        {isSidebarOpen && typeof window !== "undefined" && window.innerWidth < 768 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-slate-900/50 z-20 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
       <motion.aside
-        initial={{ width: 280 }}
-        animate={{ width: 280 }}
-        className={`fixed top-0 left-0 h-full w-[280px] flex flex-col transition-transform duration-300 text-white z-30 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
-        style={{ backgroundColor: theme.color, borderRight: "1px solid rgba(255,255,255,0.18)" }}
+        initial={false}
+        animate={{
+          width: isSidebarOpen ? 280 : 80,
+          x: typeof window !== "undefined" && window.innerWidth < 768 ? (isSidebarOpen ? 0 : -280) : 0
+        }}
+        transition={{ type: "tween", duration: 0.25 }}
+        className="text-white fixed md:sticky top-0 left-0 h-full md:h-screen z-30 flex flex-col shrink-0"
+        style={{
+          backgroundColor: theme.color,
+          borderRight: "1px solid rgba(255,255,255,0.18)",
+          width: isSidebarOpen ? 280 : 80
+        }}
       >
-        <div className="flex flex-col h-full">
-          <div className="p-6 flex items-center justify-between border-b border-white/20">
-            <div className="flex items-center gap-3">
-              <GraduationCap className={`h-5 w-5 ${theme.text}`} />
-              <div>
-                <h1 className={`text-xl font-bold tracking-wide truncate ${theme.text}`}>Student Portal</h1>
-                <p className={`text-xs ${theme.muted}`}>{getStoredIdentifier() || "STUDENT"}</p>
-              </div>
+        <div className="p-6 flex items-center justify-between border-b border-white/20 h-16 md:h-auto">
+          {isSidebarOpen ? (
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl font-bold tracking-wide truncate">Student Portal</h1>
+              <p className="text-xs text-white/80 truncate">{getStoredIdentifier() || "STUDENT"}</p>
             </div>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`p-2 rounded-lg lg:hidden ${theme.text} hover:bg-white/10`}
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
+          ) : (
+            <div className="w-8 h-8 rounded-lg mx-auto flex items-center justify-center bg-white/15">
+              <GraduationCap className="h-5 w-5 text-white" />
+            </div>
+          )}
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg md:inline-block hidden">
+            <Menu className="h-5 w-5" />
+          </button>
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg md:hidden">
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
 
-          <nav className="flex-1 p-4 space-y-1">
-            <SidebarItem
-              icon={<LayoutDashboard className="w-5 h-5" />}
-              label="Dashboard"
-              active={activeTab === "dashboard"}
-              onClick={() => setActiveTab("dashboard")}
-              theme={theme}
-            />
-            {hasAssignedRoom && (
-              <>
-                <SidebarItem
-                  icon={<FileText className="w-5 h-5" />}
-                  label="Leave Management"
-                  active={activeTab === "leave"}
-                  onClick={() => {
-                    setLeaveInitialTab("list");
-                    setActiveTab("leave");
-                  }}
-                  theme={theme}
-                />
-                <SidebarItem
-                  icon={<CalendarCheck className="w-5 h-5" />}
-                  label="Attendance"
-                  active={activeTab === "attendance"}
-                  onClick={() => setActiveTab("attendance")}
-                  theme={theme}
-                />
-                <SidebarItem
-                  icon={<CreditCard className="w-5 h-5" />}
-                  label="Fees"
-                  active={activeTab === "fees"}
-                  onClick={() => setActiveTab("fees")}
-                  theme={theme}
-                />
-                <SidebarItem
-                  icon={<MessageSquare className="w-5 h-5" />}
-                  label="Feedback"
-                  active={activeTab === "feedback"}
-                  onClick={() => setActiveTab("feedback")}
-                  theme={theme}
-                />
-              </>
-            )}
-            <SidebarItem
-              icon={<Coffee className="w-5 h-5" />}
-              label="Canteen Menu"
-              active={activeTab === "canteen"}
-              onClick={() => setActiveTab("canteen")}
-              theme={theme}
-            />
-            <SidebarItem
-              icon={<User className="w-5 h-5" />}
-              label="Profile"
-              active={activeTab === "profile"}
-              onClick={() => setActiveTab("profile")}
-              theme={theme}
-            />
-          </nav>
+        <nav className="flex-1 px-4 space-y-2 mt-6 overflow-y-auto">
+          <SidebarItem
+            icon={<LayoutDashboard className="w-5 h-5 shrink-0" />}
+            label="Dashboard"
+            active={activeTab === "dashboard"}
+            onClick={() => { setActiveTab("dashboard"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
+            isOpen={isSidebarOpen}
+            theme={theme}
+          />
+          {hasAssignedRoom && (
+            <>
+              <SidebarItem
+                icon={<FileText className="w-5 h-5 shrink-0" />}
+                label="Leave Management"
+                active={activeTab === "leave"}
+                onClick={() => {
+                  setLeaveInitialTab("list");
+                  setActiveTab("leave");
+                  if (window.innerWidth < 768) setIsSidebarOpen(false);
+                }}
+                isOpen={isSidebarOpen}
+                theme={theme}
+              />
+              <SidebarItem
+                icon={<CalendarCheck className="w-5 h-5 shrink-0" />}
+                label="Attendance"
+                active={activeTab === "attendance"}
+                onClick={() => { setActiveTab("attendance"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
+                isOpen={isSidebarOpen}
+                theme={theme}
+              />
+              <SidebarItem
+                icon={<CreditCard className="w-5 h-5 shrink-0" />}
+                label="Fees"
+                active={activeTab === "fees"}
+                onClick={() => { setActiveTab("fees"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
+                isOpen={isSidebarOpen}
+                theme={theme}
+              />
+              <SidebarItem
+                icon={<MessageSquare className="w-5 h-5 shrink-0" />}
+                label="Feedback"
+                active={activeTab === "feedback"}
+                onClick={() => { setActiveTab("feedback"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
+                isOpen={isSidebarOpen}
+                theme={theme}
+              />
+            </>
+          )}
+          <SidebarItem
+            icon={<Coffee className="w-5 h-5 shrink-0" />}
+            label="Canteen Menu"
+            active={activeTab === "canteen"}
+            onClick={() => { setActiveTab("canteen"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
+            isOpen={isSidebarOpen}
+            theme={theme}
+          />
+          <SidebarItem
+            icon={<User className="w-5 h-5 shrink-0" />}
+            label="Profile"
+            active={activeTab === "profile"}
+            onClick={() => { setActiveTab("profile"); if (window.innerWidth < 768) setIsSidebarOpen(false); }}
+            isOpen={isSidebarOpen}
+            theme={theme}
+          />
+        </nav>
 
-          <div className="p-4 border-t border-white/20">
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full gap-3 px-4 py-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl font-medium transition-colors border border-slate-200 shadow-sm"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
-          </div>
+        <div className="p-4 border-t border-white/20">
+          <button
+            onClick={handleLogout}
+            className={`flex items-center w-full p-3 bg-white text-slate-800 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200 shadow-sm ${!isSidebarOpen && 'justify-center'}`}
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            {isSidebarOpen && <span className="ml-3 font-medium truncate">Logout</span>}
+          </button>
         </div>
       </motion.aside>
 
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      <main className="flex-1 p-8 ml-0 lg:ml-[280px] transition-all duration-300 min-h-[101vh]">
+      {/* Main Content */}
+      <main className="flex-1 p-4 md:p-8 transition-all duration-300 min-h-[101vh] overflow-x-hidden">
         <div className="max-w-5xl mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
@@ -732,14 +789,8 @@ export function StudentDashboard() {
             >
               <div className="mb-6 flex items-center justify-between gap-4 min-h-[44px]">
                 <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setMobileMenuOpen(true)}
-                    className="lg:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm"
-                  >
-                    <Menu className="h-5 w-5" />
-                  </button>
                   <div>
-                    <h2 className="text-3xl font-bold text-slate-900 leading-none">
+                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-none">
                       {activeTab === "dashboard"
                         ? "Student Dashboard"
                         : activeTab === "profile"
@@ -768,19 +819,17 @@ export function StudentDashboard() {
   );
 }
 
-function SidebarItem({ icon, label, active, onClick, theme }: SidebarItemProps) {
+function SidebarItem({ icon, label, active, onClick, isOpen, theme }: SidebarItemProps) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
-        active
-          ? "text-white shadow-lg"
-          : `${theme.text} hover:bg-white/10`
-      }`}
+      className={`w-full flex items-center p-3 rounded-xl transition-colors font-medium ${
+        active ? "text-white" : "text-white/80 hover:bg-white/5"
+      } ${!isOpen && "justify-center"}`}
       style={active ? { backgroundColor: theme.activeColor } : undefined}
     >
       {icon}
-      <span>{label}</span>
+      {isOpen && <span className="ml-3 truncate">{label}</span>}
     </button>
   );
 }

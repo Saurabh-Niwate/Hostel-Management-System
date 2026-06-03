@@ -2,6 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { Users, Home, AlertCircle, Calendar, TrendingUp } from "lucide-react";
 import { api } from "../../lib/api";
 import { jsonToCsv, downloadCsv } from "../../lib/csv";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
+  Cell
+} from "recharts";
 
 type CountRow = { STATUS: string; TOTAL: number };
 
@@ -31,6 +44,21 @@ type OverviewResponse = {
     VACANCY: number;
     IS_FULL: boolean;
   };
+  occupancyTrend?: Array<{
+    BLOCK_NAME: string;
+    OCCUPIED: number;
+    TOTAL_CAPACITY: number;
+  }>;
+  feeTrend?: Array<{
+    TERM_NAME: string;
+    TOTAL_AMOUNT: number;
+    PAID_AMOUNT: number;
+    DUE_AMOUNT: number;
+  }>;
+  gatePassActivity?: Array<{
+    EXIT_TYPE: string;
+    TOTAL: number;
+  }>;
 };
 
 const sumByStatus = (rows: CountRow[] = [], status: string) =>
@@ -134,63 +162,191 @@ export function AdminReportsOverview() {
       <h2 className="text-2xl font-bold text-slate-800">Reports Overview</h2>
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
-      <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-3 md:items-end">
-        <div>
+      <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-4 md:items-end">
+        <div className="w-full md:w-auto">
           <label htmlFor="dateFrom" className="block text-xs text-slate-500 mb-1">From Date</label>
-          <input id="dateFrom" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
+          <input id="dateFrom" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full md:w-auto px-3 py-2 border border-slate-300 rounded-lg text-sm" />
         </div>
-        <div>
+        <div className="w-full md:w-auto">
           <label htmlFor="dateTo" className="block text-xs text-slate-500 mb-1">To Date</label>
-          <input id="dateTo" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-300 rounded-lg" />
+          <input id="dateTo" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full md:w-auto px-3 py-2 border border-slate-300 rounded-lg text-sm" />
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={load} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-600">Apply Date Filter</button>
-          <button onClick={() => handleDownload()} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500">Download Report (CSV)</button>
+        <div className="flex flex-wrap items-center gap-3 mt-2 md:mt-0">
+          <button onClick={load} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-600 text-sm font-medium transition-colors">Apply Date Filter</button>
+          <button onClick={() => handleDownload()} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 text-sm font-medium transition-colors">Download Report (CSV)</button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
-          <div className="p-4 bg-indigo-100 text-indigo-600 rounded-xl">
-            <Users size={28} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-2.5 sm:space-x-4">
+          <div className="p-2.5 sm:p-4 bg-indigo-100 text-indigo-600 rounded-xl shrink-0">
+            <Users size={20} className="sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <h3 className="text-slate-500 text-sm font-medium">Total Leave Requests</h3>
-            <p className="text-2xl font-bold text-slate-800">{cards.leaveTotal}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
-          <div className="p-4 bg-emerald-100 text-emerald-600 rounded-xl">
-            <Home size={28} />
-          </div>
-          <div>
-            <h3 className="text-slate-500 text-sm font-medium">Pending Leaves</h3>
-            <p className="text-2xl font-bold text-slate-800">{cards.pendingLeaves}</p>
-            <p className="text-xs text-slate-500 mt-1">Awaiting admin review</p>
+          <div className="min-w-0">
+            <h3 className="text-slate-500 text-xs font-medium truncate">Total Leaves</h3>
+            <p className="text-base sm:text-xl md:text-2xl font-bold text-slate-800 break-words">{cards.leaveTotal}</p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
-          <div className="p-4 bg-amber-100 text-amber-600 rounded-xl">
-            <AlertCircle size={28} />
+        <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-2.5 sm:space-x-4">
+          <div className="p-2.5 sm:p-4 bg-emerald-100 text-emerald-600 rounded-xl shrink-0">
+            <Home size={20} className="sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <h3 className="text-slate-500 text-sm font-medium">Fee Due Amount</h3>
-            <p className="text-2xl font-bold text-slate-800">Rs {cards.dueAmount.toLocaleString()}</p>
+          <div className="min-w-0">
+            <h3 className="text-slate-500 text-xs font-medium truncate">Pending Leaves</h3>
+            <p className="text-base sm:text-xl md:text-2xl font-bold text-slate-800 break-words">{cards.pendingLeaves}</p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-4">
-          <div className="p-4 bg-blue-100 text-blue-600 rounded-xl">
-            <Calendar size={28} />
+        <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-2.5 sm:space-x-4">
+          <div className="p-2.5 sm:p-4 bg-amber-100 text-amber-600 rounded-xl shrink-0">
+            <AlertCircle size={20} className="sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <h3 className="text-slate-500 text-sm font-medium">Attendance Entries</h3>
-            <p className="text-2xl font-bold text-slate-800">{cards.attendanceTotal}</p>
-            <p className="text-xs text-slate-500 mt-1">Absent: {cards.absentTotal}</p>
+          <div className="min-w-0">
+            <h3 className="text-slate-500 text-xs font-medium truncate">Fee Due Amount</h3>
+            <p className="text-base sm:text-xl md:text-2xl font-bold text-slate-800 break-all leading-tight">Rs {cards.dueAmount.toLocaleString()}</p>
           </div>
         </div>
+
+        <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center space-x-2.5 sm:space-x-4">
+          <div className="p-2.5 sm:p-4 bg-blue-100 text-blue-600 rounded-xl shrink-0">
+            <Calendar size={20} className="sm:w-6 sm:h-6" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-slate-500 text-xs font-medium truncate">Attendance</h3>
+            <p className="text-base sm:text-xl md:text-2xl font-bold text-slate-800 break-words">{cards.attendanceTotal}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Visual Analytics Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        
+        {/* Block Occupancy Chart */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+            <Home size={20} className="mr-2 text-indigo-500" />
+            Block-wise Hostel Occupancy
+          </h3>
+          <div className="h-72 w-full flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data?.occupancyTrend || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="BLOCK_NAME" stroke="#94a3b8" fontSize={12} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: "#1e293b", borderRadius: "8px", border: "none", color: "#f8fafc" }}
+                  itemStyle={{ color: "#38bdf8" }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                <Bar name="Occupied Beds" dataKey="OCCUPIED" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar name="Total Capacity" dataKey="TOTAL_CAPACITY" fill="#e2e8f0" radius={[4, 4, 0, 0]} maxBarSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Fee Collection Trend Chart */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+            <TrendingUp size={20} className="mr-2 text-indigo-500" />
+            Term-wise Fee Breakdown
+          </h3>
+          <div className="h-72 w-full flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data?.feeTrend || []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="TERM_NAME" stroke="#94a3b8" fontSize={12} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} tickFormatter={(v) => `₹${v >= 1000 ? (v / 1000) + 'k' : v}`} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: "#1e293b", borderRadius: "8px", border: "none", color: "#f8fafc" }}
+                  formatter={(value: any) => [`₹${Number(value).toLocaleString()}`]}
+                />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                <Bar name="Total Billed" dataKey="TOTAL_AMOUNT" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                <Bar name="Paid" dataKey="PAID_AMOUNT" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                <Bar name="Due" dataKey="DUE_AMOUNT" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={30} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Gate Pass Exits Distribution Chart */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+            <Users size={20} className="mr-2 text-indigo-500" />
+            Security Exit Categories
+          </h3>
+          <div className="h-72 w-full flex-1 flex items-center justify-center">
+            {(!data?.gatePassActivity || data.gatePassActivity.length === 0) ? (
+              <p className="text-slate-400 text-sm">No exit records logged yet</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data.gatePassActivity}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={5}
+                    dataKey="TOTAL"
+                    nameKey="EXIT_TYPE"
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
+                    {data.gatePassActivity.map((entry, index) => {
+                      const colors = ["#f59e0b", "#10b981"]; // Amber for daily exit, Emerald for approved leave
+                      return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                    })}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value} exits`]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Attendance breakdown ratio */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+            <Calendar size={20} className="mr-2 text-indigo-500" />
+            Overall Attendance Split
+          </h3>
+          <div className="h-72 w-full flex-1 flex items-center justify-center">
+            {(!data?.attendanceSummary || data.attendanceSummary.length === 0) ? (
+              <p className="text-slate-400 text-sm">No attendance records logged yet</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data.attendanceSummary}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={0}
+                    outerRadius={90}
+                    dataKey="TOTAL"
+                    nameKey="STATUS"
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
+                    {data.attendanceSummary.map((entry, index) => {
+                      const colors: Record<string, string> = {
+                        "Present": "#10b981", // Emerald
+                        "Absent": "#ef4444",  // Red
+                        "Late": "#f59e0b"    // Amber
+                      };
+                      const fill = colors[entry.STATUS] || "#6366f1";
+                      return <Cell key={`cell-${index}`} fill={fill} />;
+                    })}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value} entries`]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
       </div>
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-8">

@@ -62,20 +62,21 @@ export function StudentsManagement() {
                           : "border-gray-200 hover:bg-gray-50"
                       }`}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-medium text-gray-900">{student.FULL_NAME || "Student"}</h3>
-                            <Badge variant="outline">{student.STUDENT_ID}</Badge>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                            <h3 className="font-medium text-gray-900 truncate max-w-[120px] sm:max-w-none">{student.FULL_NAME || "Student"}</h3>
+                            <Badge variant="outline" className="shrink-0">{student.STUDENT_ID}</Badge>
                           </div>
-                          <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                            <span>Room: {student.ROOM_NO || "-"}</span>
-                            <span>{student.EMAIL || "No email"}</span>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
+                            <span className="shrink-0">Room: {student.ROOM_NO || "-"}</span>
+                            <span className="truncate block max-w-[120px] sm:max-w-none" title={student.EMAIL}>{student.EMAIL || "No email"}</span>
                           </div>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="shrink-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             loadStudentBasic(student.STUDENT_ID);

@@ -27,7 +27,9 @@ const getStudentProfile = async (conn, studentId) => {
       u.email,
       s.full_name,
       s.phone,
-      s.room_no
+      s.room_no,
+      s.guardian_name,
+      s.guardian_email
     FROM users u
     JOIN roles r ON r.role_id = u.role_id
     LEFT JOIN students s ON s.user_id = u.user_id
@@ -70,24 +72,21 @@ const getActiveApprovedLeave = async (conn, userId, refDate) => {
 const getOpenExitLog = async (conn, userId) => {
   const result = await conn.execute(
     `
-    SELECT *
-    FROM (
-      SELECT
-        log_id,
-        user_id,
-        TO_CHAR(exit_time, 'YYYY-MM-DD HH24:MI:SS') AS exit_time,
-        TO_CHAR(entry_time, 'YYYY-MM-DD HH24:MI:SS') AS entry_time,
-        status,
-        leave_id,
-        exit_remarks,
-        entry_remarks
-      FROM entry_exit_logs
-      WHERE user_id = :b_user_id
-        AND status = 'OUT'
-        AND entry_time IS NULL
-      ORDER BY exit_time DESC, log_id DESC
-    )
-    WHERE ROWNUM = 1
+    SELECT
+      log_id,
+      user_id,
+      TO_CHAR(exit_time, 'YYYY-MM-DD HH24:MI:SS') AS exit_time,
+      TO_CHAR(entry_time, 'YYYY-MM-DD HH24:MI:SS') AS entry_time,
+      status,
+      leave_id,
+      exit_remarks,
+      entry_remarks
+    FROM entry_exit_logs
+    WHERE user_id = :b_user_id
+      AND status = 'OUT'
+      AND entry_time IS NULL
+    ORDER BY exit_time DESC, log_id DESC
+    LIMIT 1
     `,
     { b_user_id: userId },
     { outFormat: oracledb.OUT_FORMAT_OBJECT }
@@ -123,11 +122,7 @@ exports.markExit = async (req, res) => {
     }
 
     const activeLeave = await getActiveApprovedLeave(conn, Number(student.USER_ID), today);
-    if (!activeLeave) {
-      return res.status(400).json({
-        message: "Student does not have an approved leave for today"
-      });
-    }
+    const leaveId = activeLeave ? Number(activeLeave.LEAVE_ID) : null;
 
     await conn.execute(
       `
@@ -142,7 +137,7 @@ exports.markExit = async (req, res) => {
       )
       VALUES (
         :b_user_id,
-        SYSDATE,
+        CURRENT_TIMESTAMP,
         'OUT',
         :b_leave_id,
         :b_exit_remarks,
@@ -152,7 +147,7 @@ exports.markExit = async (req, res) => {
       `,
       {
         b_user_id: Number(student.USER_ID),
-        b_leave_id: Number(activeLeave.LEAVE_ID),
+        b_leave_id: leaveId,
         b_exit_remarks: normalizedRemarks,
         b_created_by: actorUserId,
         b_updated_by: actorUserId
@@ -160,14 +155,47 @@ exports.markExit = async (req, res) => {
       { autoCommit: true }
     );
 
+    // Asynchronously trigger guardian notification if on long leave
+    if (activeLeave && student.GUARDIAN_EMAIL) {
+      const { sendGuardianLeaveAlert } = require("../utils/notificationService");
+      sendGuardianLeaveAlert({
+        studentName: student.FULL_NAME,
+        studentId: student.STUDENT_ID,
+        guardianName: student.GUARDIAN_NAME,
+        guardianEmail: student.GUARDIAN_EMAIL,
+        type: "EXIT",
+        details: {
+          time: new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
+          leaveType: activeLeave.LEAVE_TYPE,
+          fromDate: activeLeave.FROM_DATE,
+          toDate: activeLeave.TO_DATE,
+          reason: activeLeave.REASON,
+          remarks: normalizedRemarks || "None"
+        }
+      }).catch(err => console.error("Error in background exit alert:", err));
+    }
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("gatePassLogged", {
+        studentId: student.STUDENT_ID,
+        studentName: student.FULL_NAME,
+        type: "EXIT",
+        time: new Date().toISOString(),
+        remarks: normalizedRemarks
+      });
+    }
+
     return res.status(201).json({
-      message: "Student exit marked successfully",
+      message: activeLeave
+        ? "Student exit marked successfully (Long Leave Alert Triggered)"
+        : "Student exit marked successfully (Daily Routine Exit)",
       student: {
         studentId: student.STUDENT_ID,
         fullName: student.FULL_NAME,
         roomNo: student.ROOM_NO
       },
-      leave: activeLeave
+      leave: activeLeave || null
     });
   } catch (err) {
     console.error(err);
@@ -211,7 +239,7 @@ exports.markEntry = async (req, res) => {
     await conn.execute(
       `
       UPDATE entry_exit_logs
-      SET entry_time = SYSDATE,
+      SET entry_time = CURRENT_TIMESTAMP,
           entry_remarks = :b_entry_remarks,
           status = 'IN',
           updated_by = :b_updated_by
@@ -225,8 +253,55 @@ exports.markEntry = async (req, res) => {
       { autoCommit: true }
     );
 
+    // If it was a long leave exit, fetch details to trigger return notification to guardian
+    let leaveDetails = null;
+    if (openLog.LEAVE_ID && student.GUARDIAN_EMAIL) {
+      const leaveResult = await conn.execute(
+        `
+        SELECT leave_type, reason, TO_CHAR(from_date, 'YYYY-MM-DD') AS from_date, TO_CHAR(to_date, 'YYYY-MM-DD') AS to_date
+        FROM leave_requests
+        WHERE leave_id = :b_leave_id
+        `,
+        { b_leave_id: Number(openLog.LEAVE_ID) },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      leaveDetails = leaveResult.rows && leaveResult.rows[0] ? leaveResult.rows[0] : null;
+
+      if (leaveDetails) {
+        const { sendGuardianLeaveAlert } = require("../utils/notificationService");
+        sendGuardianLeaveAlert({
+          studentName: student.FULL_NAME,
+          studentId: student.STUDENT_ID,
+          guardianName: student.GUARDIAN_NAME,
+          guardianEmail: student.GUARDIAN_EMAIL,
+          type: "ENTRY",
+          details: {
+            time: new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
+            leaveType: leaveDetails.LEAVE_TYPE,
+            fromDate: leaveDetails.FROM_DATE,
+            toDate: leaveDetails.TO_DATE,
+            reason: leaveDetails.REASON,
+            remarks: normalizedRemarks || "None"
+          }
+        }).catch(err => console.error("Error in background entry alert:", err));
+      }
+    }
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("gatePassLogged", {
+        studentId: student.STUDENT_ID,
+        studentName: student.FULL_NAME,
+        type: "ENTRY",
+        time: new Date().toISOString(),
+        remarks: normalizedRemarks
+      });
+    }
+
     return res.json({
-      message: "Student entry marked successfully",
+      message: leaveDetails
+        ? "Student entry marked successfully (Long Leave Return Alert Triggered)"
+        : "Student entry marked successfully (Daily Routine Return)",
       student: {
         studentId: student.STUDENT_ID,
         fullName: student.FULL_NAME,
