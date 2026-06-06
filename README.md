@@ -115,9 +115,9 @@ Use these credentials to log into different portals:
 
 | Role | Username / ID | Password | Portal |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `Admin@gmail.com` | `admin123` | Admin Portal |
-| **Student** | `STU001` | `student123` | Student Dashboard |
-| **Technical Staff** | `TES001` | `tech123` | User/Fee Management |
-| **Warden** | `WAR001` | `warden123` | Leave/Anomaly Dashboard |
-| **Security** | `SEC001` | `security123` | Barcode/OCR Camera Gate Scanner |
-| **Canteen Owner** | `CAN001` | `canteen123` | Canteen Menu & AI Hub |
+| **Admin** | `Admin@gmail.com` | `000111` | Admin Portal |
+| **Student** | `STU001` | `123456` | Student Dashboard |
+| **Technical Staff** | `TES001` | `123456` | User/Fee Management |
+| **Warden** | `WAR001` | `123456` | Leave/Anomaly Dashboard |
+| **Security** | `SEC001` | `123456` | Barcode/OCR Camera Gate Scanner |
+| **Canteen Owner** | `CAN001` | `123456` | Canteen Menu & AI Hub |

@@ -11,7 +11,7 @@ INSERT INTO roles (role_name) VALUES ('Security');
 INSERT INTO roles (role_name) VALUES ('Canteen Owner');
 
 -- 2. Insert Users
-INSERT INTO users (email, password, role_id) VALUES ('Admin@gmail.com', '$2b$10$OLYP0CjzE1ghZzwNHlKMsOJ2o2.hn3EAxERpmESX1tle0JTW6QCPm', 1);
+INSERT INTO users (email, password, role_id) VALUES ('Admin@gmail.com', '$2b$10$QIJqBn0th71Ikh3mwp6uCOOb0XLRTYbfo3MHMeErcLM4B1gGErDNy', 1);
 INSERT INTO users (student_id, password, role_id) VALUES ('STU001', '$2b$10$Rx5aXkQGvk427RUSkKbVp.IMxUbkTQLp9cxeu7IZLw8ahjrbK08US', 2);
 INSERT INTO users (emp_id, password, role_id) VALUES ('TES001', '$2b$10$fr1g93UKlCx/RmGuWsmt0esfHh11PUp2132QkKeKnxk/v4f7drZne', 3);
 INSERT INTO users (emp_id, password, role_id) VALUES ('WAR001', '$2b$10$JpGvhCDmY7x6OPm3vGXA6uHqFxeJgYBdZj3EXNAnpOZfsA0UzilF6', 4);
