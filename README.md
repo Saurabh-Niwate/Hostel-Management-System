@@ -51,8 +51,23 @@ A state-of-the-art, full-stack Hostel Management System built with **React**, **
 git clone https://github.com/Saurabh-Niwate/Hostel-Management-System.git
 cd Hostel-Management-System
 ```
+### 2. Setup the Database
+You can initialize your PostgreSQL database (either a local instance or your cloud Neon/Supabase database) by executing the schema and seed scripts using the `psql` command line or your database dashboard SQL editor:
 
-### 2. Configure Backend Env variables
+**Option A: Via command line (`psql`)**
+```bash
+# Connect to your database and execute schema.sql to create tables
+psql "your_postgresql_connection_string" -f database/schema.sql
+
+# Execute seed.sql to populate demo users and initial system data
+psql "your_postgresql_connection_string" -f database/seed.sql
+```
+
+**Option B: Via Neon / Cloud SQL Console Editor**
+1. Copy and paste the contents of the [database/schema.sql](file:///c:/Users/Hp/Desktop/FP/Hostel-Management-System/database/schema.sql) file into your cloud provider's SQL editor and execute it to create all tables and relationships.
+2. Copy and paste the contents of [database/seed.sql](file:///c:/Users/Hp/Desktop/FP/Hostel-Management-System/database/seed.sql) and execute it to load the initial system roles, default rooms, and demo login accounts.
+
+### 3. Configure Backend Env variables
 Create a `.env` file in the `/backend` folder:
 ```env
 PORT=5000
@@ -74,7 +89,7 @@ npm install
 npm run dev
 ```
 
-### 3. Configure Frontend Env variables
+### 4. Configure Frontend Env variables
 Create a `.env` file in the `/frontend` folder:
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api
